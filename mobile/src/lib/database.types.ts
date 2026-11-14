@@ -23,6 +23,59 @@ export type Database = {
   };
   public: {
     Tables: {
+      claimed_cells: {
+        Row: {
+          cell: number;
+          first_claimed_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          cell: number;
+          first_claimed_at: string;
+          user_id: string;
+        };
+        Update: {
+          cell?: number;
+          first_claimed_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      location_batches: {
+        Row: {
+          accepted_points: number;
+          batch_id: string;
+          created_at: string;
+          new_cells: number;
+          received_points: number;
+          rejected_points: number;
+          session_id: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          accepted_points?: number;
+          batch_id: string;
+          created_at?: string;
+          new_cells?: number;
+          received_points: number;
+          rejected_points?: number;
+          session_id: string;
+          user_id: string;
+        };
+        Update: {
+          accepted_points?: number;
+          batch_id?: string;
+          created_at?: string;
+          new_cells?: number;
+          received_points?: number;
+          rejected_points?: number;
+          session_id?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       player_state: {
         Row: {
           created_at: string;
@@ -48,12 +101,96 @@ export type Database = {
         };
         Relationships: [];
       };
+      walk_points: {
+        Row: {
+          accuracy_m: number;
+          batch_id: string;
+          created_at: string;
+          geom: unknown;
+          id: number;
+          recorded_at: string;
+          session_id: string;
+          speed_mps: number | null;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          accuracy_m: number;
+          batch_id: string;
+          created_at?: string;
+          geom: unknown;
+          id?: never;
+          recorded_at: string;
+          session_id: string;
+          speed_mps?: number | null;
+          user_id: string;
+        };
+        Update: {
+          accuracy_m?: number;
+          batch_id?: string;
+          created_at?: string;
+          geom?: unknown;
+          id?: never;
+          recorded_at?: string;
+          session_id?: string;
+          speed_mps?: number | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      walk_sessions: {
+        Row: {
+          batch_count: number;
+          created_at: string;
+          distance_on_foot_m: number;
+          first_point_at: string | null;
+          last_point_at: string | null;
+          new_cells: number;
+          point_count: number;
+          rejected_count: number;
+          session_id: string;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          batch_count?: number;
+          created_at?: string;
+          distance_on_foot_m?: number;
+          first_point_at?: string | null;
+          last_point_at?: string | null;
+          new_cells?: number;
+          point_count?: number;
+          rejected_count?: number;
+          session_id: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          batch_count?: number;
+          created_at?: string;
+          distance_on_foot_m?: number;
+          first_point_at?: string | null;
+          last_point_at?: string | null;
+          new_cells?: number;
+          point_count?: number;
+          rejected_count?: number;
+          session_id?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      get_territory: { Args: Record<PropertyKey, never>; Returns: Json };
+      submit_location_batch: {
+        Args: { p_batch_id: string; p_points: Json; p_session_id: string };
+        Returns: Json;
+      };
     };
     Enums: {
       [_ in never]: never;
@@ -95,8 +232,7 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
@@ -118,8 +254,7 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
@@ -141,8 +276,7 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
   EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
@@ -156,8 +290,7 @@ export type Enums<
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
+    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }

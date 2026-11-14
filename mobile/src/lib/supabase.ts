@@ -26,7 +26,9 @@ export const supabase =
   supabaseUrl && supabaseKey
     ? createClient<Database>(supabaseUrl, supabaseKey, {
         auth: {
-          storage: localStorage,
+          // The build evaluates the root layout in Node to make the router's server
+          // manifest, where localStorage doesn't exist.
+          storage: typeof localStorage === 'undefined' ? undefined : localStorage,
           autoRefreshToken: true,
           persistSession: true,
           detectSessionInUrl: false,
