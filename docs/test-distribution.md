@@ -81,8 +81,10 @@ In development builds, `Updates.channel` and `Updates.updateId` are `null`, and 
 3. Publish the update to the `preview` channel:
 
    ```sh
-   npm run update:preview -- "Change build marker"
+   npm run update:preview -- "Change build marker" --platform android
    ```
+
+   Pass `--platform android` (or `ios`) because the web export fails on `expo-sqlite`. Pass it on the command line, not in the script: the runtime fingerprint includes the `scripts` section of `mobile/package.json`, so editing any script changes the runtime version and installed builds stop receiving updates.
 
 4. On each phone, either tap **Check for update**, or force-close and reopen the app. By default, the app downloads an update in the background at launch and applies it on the next cold start, so you might need to force-close and reopen it twice.
 5. Confirm on both phones:

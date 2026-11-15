@@ -53,7 +53,7 @@
     "build:dev:ios": "npx -y eas-cli@latest build --profile development --platform ios",
     "build:preview:android": "npx -y eas-cli@latest build --profile preview --platform android",
     "build:preview:ios": "npx -y eas-cli@latest build --profile preview --platform ios",
-    "update:preview": "npx -y eas-cli@latest update --channel preview --environment preview --platform android --message",
+    "update:preview": "npx -y eas-cli@latest update --channel preview --environment preview --message",
     "test": "jest"
   },
   "private": true,

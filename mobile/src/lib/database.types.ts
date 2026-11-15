@@ -101,6 +101,77 @@ export type Database = {
         };
         Relationships: [];
       };
+      site_areas: {
+        Row: {
+          area: number;
+          fail_count: number;
+          failed_at: string | null;
+          fetched_at: string | null;
+          last_error: string | null;
+          lease_until: string | null;
+          mine_count: number;
+          place_count: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          area: number;
+          fail_count?: number;
+          failed_at?: string | null;
+          fetched_at?: string | null;
+          last_error?: string | null;
+          lease_until?: string | null;
+          mine_count?: number;
+          place_count?: number;
+        };
+        Update: {
+          area?: number;
+          fail_count?: number;
+          failed_at?: string | null;
+          fetched_at?: string | null;
+          last_error?: string | null;
+          lease_until?: string | null;
+          mine_count?: number;
+          place_count?: number;
+        };
+        Relationships: [];
+      };
+      sites: {
+        Row: {
+          area: number;
+          cell: number;
+          geom: unknown;
+          id: string;
+          kind: string;
+          name: string | null;
+          subtype: string;
+          tags: NonNullable<Json>;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          area: number;
+          cell: number;
+          geom: unknown;
+          id: string;
+          kind: string;
+          name?: string | null;
+          subtype: string;
+          tags?: NonNullable<Json>;
+          updated_at?: string;
+        };
+        Update: {
+          area?: number;
+          cell?: number;
+          geom?: unknown;
+          id?: string;
+          kind?: string;
+          name?: string | null;
+          subtype?: string;
+          tags?: NonNullable<Json>;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       walk_points: {
         Row: {
           accuracy_m: number;
@@ -141,6 +212,7 @@ export type Database = {
       walk_sessions: {
         Row: {
           batch_count: number;
+          closed_at: string | null;
           created_at: string;
           distance_on_foot_m: number;
           first_point_at: string | null;
@@ -155,6 +227,7 @@ export type Database = {
         ComputedFields: never;
         Insert: {
           batch_count?: number;
+          closed_at?: string | null;
           created_at?: string;
           distance_on_foot_m?: number;
           first_point_at?: string | null;
@@ -168,6 +241,7 @@ export type Database = {
         };
         Update: {
           batch_count?: number;
+          closed_at?: string | null;
           created_at?: string;
           distance_on_foot_m?: number;
           first_point_at?: string | null;
@@ -186,7 +260,36 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      claim_site_areas: {
+        Args: {
+          east: number;
+          north: number;
+          p_max?: number;
+          p_user: string;
+          south: number;
+          west: number;
+        };
+        Returns: {
+          area: number;
+          source: Json;
+        }[];
+      };
+      close_walk_session: { Args: { p_session_id: string }; Returns: Json };
+      fail_site_area: { Args: { p_area: number; p_error: string }; Returns: undefined };
+      get_sites: {
+        Args: { east: number; north: number; south: number; west: number };
+        Returns: {
+          id: string;
+          kind: string;
+          lat: number;
+          lng: number;
+          name: string;
+          subtype: string;
+          visibility: string;
+        }[];
+      };
       get_territory: { Args: Record<PropertyKey, never>; Returns: Json };
+      ingest_site_area: { Args: { p_area: number; p_data: Json }; Returns: Json };
       submit_location_batch: {
         Args: { p_batch_id: string; p_points: Json; p_session_id: string };
         Returns: Json;
@@ -232,7 +335,8 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
@@ -254,7 +358,8 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
@@ -276,7 +381,8 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }
@@ -290,7 +396,8 @@ export type Enums<
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals;
   }

@@ -1,20 +1,28 @@
-import {
-  Camera,
-  type CameraRef,
-  GeoJSONSource,
-  Layer,
-  Map,
-  NativeUserLocation,
-} from '@maplibre/maplibre-react-native';
-import * as Location from 'expo-location';
+import { Camera, type CameraRef, Map, NativeUserLocation } from '@maplibre/maplibre-react-native';
 import { Link } from 'expo-router';
 import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
-import { AppState, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import {
+  FogLayer,
+  GridLayer,
+  ParchmentLayer,
+  RevealLayer,
+  SitesLayer,
+  TerritoryLayer,
+  TrackLayer,
+} from '@/components/map-layers';
+import { PerfReadout, type PerfStats } from '@/components/perf-readout';
+import { useFollowCamera } from '@/hooks/use-follow-camera';
+import { useSites } from '@/hooks/use-sites';
 import { onQueueEvent } from '@/lib/db';
-import { buildFog, revealArea } from '@/lib/geo';
+import { useDebugSettings } from '@/lib/debugSettings';
+import { fakeWorld, type FakeWorld } from '@/lib/fakeTerritory';
+import { buildFog, cellGridLines, geometryStats, revealArea } from '@/lib/geo';
 import { pendingTrack } from '@/lib/queue';
+import type { BBox, Site } from '@/lib/sitesApi';
+import { siteType } from '@/lib/siteTypes';
 import { fetchTerritory, type Territory, type TerritoryGeoJSON } from '@/lib/territoryApi';
 import {
   isTrackingWanted,
@@ -29,11 +37,11 @@ import {
 } from '@/lib/tracking';
 
 const STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
-const FOG_COLOR = '#5b6b85';
-const FOG_OPACITY = 0.5;
 const MAP_BACKGROUND = '#f2efe9';
 const REVEAL_MS = 1800;
 const EMPTY: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] };
+const EMPTY_JSON = JSON.stringify(EMPTY);
+const GRID_MIN_ZOOM = 17;
 
 const PROMPTS: Record<Exclude<PermissionState, 'granted'>, { text: string; action: string }> = {
   'foreground-ask': {
@@ -58,12 +66,57 @@ function message(e: unknown) {
   return e instanceof Error ? e.message : String(e);
 }
 
+const now = () => globalThis.performance?.now() ?? Date.now();
+
+/** Fog and outline data for the map, serialized once per territory change, with timings. */
+function prepareTerritory(claimed: TerritoryGeoJSON | undefined) {
+  let t0 = now();
+  const fog = buildFog(claimed);
+  const fogBuildMs = now() - t0;
+  t0 = now();
+  const fogJson = JSON.stringify(fog);
+  const fogJsonMs = now() - t0;
+  return { fogJson, fogBuildMs, fogJsonMs, claimedJson: claimed ? JSON.stringify(claimed) : EMPTY_JSON, ...geometryStats(claimed) };
+}
+
+/** Sites as map features; the icon, label and draw priority are worked out here. */
+function sitesJson(sites: Site[]): string {
+  return JSON.stringify({
+    type: 'FeatureCollection',
+    features: sites.map((s) => {
+      const owned = s.visibility === 'owned';
+      return {
+        type: 'Feature',
+        properties: {
+          id: s.id,
+          icon: siteType(s.kind, s.subtype).icon,
+          type: siteType(s.kind, s.subtype).label,
+          kind: s.kind,
+          name: s.name,
+          vis: s.visibility,
+          label: owned ? (s.name ?? '') : '',
+          rank: owned ? 0 : 1,
+        },
+        geometry: { type: 'Point', coordinates: [s.lng, s.lat] },
+      };
+    }),
+  });
+}
+
+// The fake realm is generated once per app run, around wherever the map was first.
+let fakeCache: FakeWorld | null = null;
+function getFakeWorld(center: { lat: number; lng: number }) {
+  fakeCache ??= fakeWorld({ center });
+  return fakeCache;
+}
+
+type SelectedSite = { name: string | null; type: string; kind: string; owned: boolean };
+
 export default function MapScreen() {
   const prevClaimed = useRef<TerritoryGeoJSON | null>(null);
   const cameraRef = useRef<CameraRef>(null);
   const [showMist, setShowMist] = useState(true);
   const [mapError, setMapError] = useState<string | null>(null);
-  const [follow, setFollow] = useState(true);
   const [territory, setTerritory] = useState<Territory | null>(null);
   const [territoryError, setTerritoryError] = useState<string | null>(null);
   const [track, setTrack] = useState(pendingTrack);
@@ -72,18 +125,77 @@ export default function MapScreen() {
   const [prompt, setPrompt] = useState<Exclude<PermissionState, 'granted'> | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reveal, setReveal] = useState(EMPTY);
-  const [revealOpacity, setRevealOpacity] = useState(0);
+  const [revealK, setRevealK] = useState(0);
+  const [view, setView] = useState<{ bounds: BBox; zoom: number } | null>(null);
+  const [selected, setSelected] = useState<SelectedSite | null>(null);
+  const [fake, setFake] = useState<FakeWorld | null>(fakeCache);
+  const debug = useDebugSettings();
 
-  const fog = useMemo(() => buildFog(territory?.claimed), [territory]);
-  const claimed = (territory?.claimed as GeoJSON.FeatureCollection | undefined) ?? EMPTY;
+  const fakeOn = debug.fakeTerritory && fake !== null;
+  const shown = fakeOn ? fake.territory : territory;
+  const prepared = useMemo(() => prepareTerritory(shown?.claimed), [shown]);
+  const revealJson = useMemo(() => JSON.stringify(reveal), [reveal]);
+  const trackJson = useMemo(() => JSON.stringify(track), [track]);
+
+  const sitesState = useSites(view, String(territory?.totalCells ?? 'none'), !debug.fakeTerritory);
+  const sites = fakeOn ? fake.sites : sitesState.sites;
+  const sitesData = useMemo(() => sitesJson(sites), [sites]);
+
+  const gridOn = debug.alignmentGrid && !!view && view.zoom >= GRID_MIN_ZOOM;
+  const gridBounds = gridOn ? view.bounds.map((v) => v.toFixed(6)).join(',') : null;
+  const gridJson = useMemo(() => {
+    const fc = gridBounds && cellGridLines(gridBounds.split(',').map(Number) as BBox);
+    return fc ? JSON.stringify(fc) : EMPTY_JSON;
+  }, [gridBounds]);
+
+  const perf: PerfStats | null =
+    debug.perfReadout || debug.fakeTerritory
+      ? {
+          label: fakeOn ? 'FAKE realm' : 'real realm',
+          fogBuildMs: prepared.fogBuildMs,
+          fogJsonMs: prepared.fogJsonMs,
+          fogJsonMB: prepared.fogJson.length / 1e6,
+          polygons: prepared.polygons,
+          rings: prepared.rings,
+          vertices: prepared.vertices,
+          sites: sites.length,
+          zoom: view?.zoom ?? 0,
+          generateMs: fakeOn ? fake.generateMs : null,
+        }
+      : null;
+
+  // Fake realm: generate on first use (a second or two on the phone), centered on the map.
+  const fakeCenter = view ? { lng: (view.bounds[0] + view.bounds[2]) / 2, lat: (view.bounds[1] + view.bounds[3]) / 2 } : null;
+  const needFake = debug.fakeTerritory && !fake && fakeCenter !== null;
+  const onNeedFake = useEffectEvent(() => {
+    if (fakeCenter) setFake(getFakeWorld(fakeCenter));
+  });
+  useEffect(() => {
+    if (!needFake) return;
+    // Let the "Generating" pill render before the JS thread is busy.
+    const timer = setTimeout(onNeedFake, 50);
+    return () => clearTimeout(timer);
+  }, [needFake]);
+
+  function onSitePress(feature: GeoJSON.Feature) {
+    const p = feature.properties ?? {};
+    setSelected({
+      name: typeof p.name === 'string' ? p.name : null,
+      type: String(p.type ?? ''),
+      kind: String(p.kind ?? ''),
+      owned: p.vis === 'owned',
+    });
+  }
 
   function onTerritory(next: Territory) {
     const fresh = revealArea(prevClaimed.current, next.claimed);
     prevClaimed.current = next.claimed;
-    setTerritory(next);
+    // Claims only grow, so the same cell count means the same land: keep the old object
+    // and skip rebuilding and resending the fog.
+    setTerritory((cur) => (cur && cur.totalCells === next.totalCells && cur.areaM2 === next.areaM2 ? cur : next));
     setTerritoryError(null);
     if (fresh.features.length > 0) {
-      setRevealOpacity(FOG_OPACITY);
+      setRevealK(1);
       setReveal(fresh);
     }
   }
@@ -169,7 +281,7 @@ export default function MapScreen() {
     const start = Date.now();
     const timer = setInterval(() => {
       const k = Math.min(1, (Date.now() - start) / REVEAL_MS);
-      setRevealOpacity(FOG_OPACITY * (1 - k) ** 2);
+      setRevealK((1 - k) ** 2);
       if (k >= 1) clearInterval(timer);
     }, 50);
     return () => clearInterval(timer);
@@ -177,27 +289,7 @@ export default function MapScreen() {
 
   const canShowLocation = permission === 'granted' || !!permission?.startsWith('background');
 
-  // Without a center the camera starts at 0°, 0° in the ocean. Jump to the phone's
-  // position as soon as location is allowed, then let the camera follow it.
-  useEffect(() => {
-    if (!canShowLocation) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const pos =
-          (await Location.getLastKnownPositionAsync()) ??
-          (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
-        if (cancelled) return;
-        cameraRef.current?.jumpTo({ center: [pos.coords.longitude, pos.coords.latitude], zoom: 16 });
-        setFollow(true);
-      } catch (e) {
-        if (!cancelled) setError(`Location: ${message(e)}`);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [canShowLocation]);
+  const cam = useFollowCamera(cameraRef, canShowLocation);
 
   return (
     <View style={styles.container}>
@@ -209,34 +301,22 @@ export default function MapScreen() {
         attributionPosition={{ top: 64, left: 12 }}
         compassPosition={{ top: 72, right: 12 }}
         onDidFinishLoadingMap={() => setMapError(null)}
-        onDidFailLoadingMap={() => setMapError('The map failed to load. Check your internet connection.')}>
-        <Camera
-          ref={cameraRef}
-          initialViewState={{ zoom: 16 }}
-          trackUserLocation={follow && canShowLocation ? 'default' : undefined}
-          onTrackUserLocationChange={(e) => setFollow(e.nativeEvent.trackUserLocation !== null)}
-        />
-        <GeoJSONSource id="fog" data={fog}>
-          <Layer type="fill" id="fog-fill" paint={{ 'fill-color': FOG_COLOR, 'fill-opacity': showMist ? FOG_OPACITY : 0 }} />
-        </GeoJSONSource>
-        <GeoJSONSource id="reveal" data={reveal}>
-          <Layer type="fill" id="reveal-fill" paint={{ 'fill-color': FOG_COLOR, 'fill-opacity': showMist ? revealOpacity : 0 }} />
-        </GeoJSONSource>
-        <GeoJSONSource id="claimed" data={claimed}>
-          <Layer
-            type="line"
-            id="claimed-edge"
-            paint={{ 'line-color': '#eef3ff', 'line-width': 8, 'line-blur': 6, 'line-opacity': 0.7 }}
-          />
-        </GeoJSONSource>
-        <GeoJSONSource id="track" data={track}>
-          <Layer
-            type="line"
-            id="track-line"
-            layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-            paint={{ 'line-color': '#ff8a00', 'line-width': 3 }}
-          />
-        </GeoJSONSource>
+        onDidFailLoadingMap={() => setMapError('The map failed to load. Check your internet connection.')}
+        onRegionWillChange={cam.onRegionWillChange}
+        onRegionDidChange={(e) => {
+          cam.onRegionDidChange(e);
+          setView({ bounds: e.nativeEvent.bounds, zoom: e.nativeEvent.zoom });
+        }}
+        onPress={() => setSelected(null)}>
+        <Camera ref={cameraRef} initialViewState={cam.initialViewState} />
+        {/* Bottom to top; see components/map-layers.tsx. */}
+        <ParchmentLayer />
+        <FogLayer data={prepared.fogJson} visible={showMist} />
+        <RevealLayer data={revealJson} k={showMist ? revealK : 0} />
+        <TerritoryLayer data={prepared.claimedJson} />
+        <GridLayer data={gridJson} />
+        <SitesLayer data={sitesData} onPress={onSitePress} />
+        <TrackLayer data={trackJson} />
         {canShowLocation && <NativeUserLocation />}
       </Map>
 
@@ -244,7 +324,11 @@ export default function MapScreen() {
         <View style={styles.topRow} pointerEvents="box-none">
           <View style={styles.statusPill}>
             <Text style={styles.statusText}>
-              {territory ? `${territory.totalCells} cells · ${(territory.areaM2 / 1e6).toFixed(2)} km²` : 'Under the Mist'}
+              {debug.fakeTerritory && !fake
+                ? 'Generating fake realm…'
+                : shown
+                  ? `${fakeOn ? 'FAKE · ' : ''}${shown.totalCells} cells · ${(shown.areaM2 / 1e6).toFixed(2)} km²`
+                  : 'Under the Mist'}
             </Text>
           </View>
           <Pressable
@@ -261,15 +345,43 @@ export default function MapScreen() {
           </Link>
         </View>
 
+        <View style={styles.middle} pointerEvents="box-none">
+          {sitesState.loading && !debug.fakeTerritory && (
+            <View style={styles.loadingPill}>
+              <ActivityIndicator size="small" color="#fff" />
+              <Text style={styles.statusText}>Loading sites…</Text>
+            </View>
+          )}
+          {perf && <PerfReadout stats={perf} />}
+        </View>
+
         <View style={styles.bottom} pointerEvents="box-none">
-          {!follow && canShowLocation && (
+          {!cam.follow && canShowLocation && (
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Recenter on my location"
-              onPress={() => setFollow(true)}
+              onPress={cam.recenter}
               style={[styles.roundButton, styles.recenter]}>
               <Text style={styles.roundButtonText}>◎ Recenter</Text>
             </Pressable>
+          )}
+
+          {selected && (
+            <View style={styles.card}>
+              <View style={styles.siteCardRow}>
+                <View style={styles.flex}>
+                  <Text style={styles.siteName}>{selected.name ?? (selected.owned ? 'Unnamed' : 'Something under the Mist')}</Text>
+                  <Text style={styles.siteType}>
+                    {selected.type}
+                    {selected.kind === 'mine' ? ' · mine' : ''}
+                    {selected.owned ? '' : ' · walk closer to reveal it'}
+                  </Text>
+                </View>
+                <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={() => setSelected(null)} hitSlop={12}>
+                  <Text style={styles.close}>✕</Text>
+                </Pressable>
+              </View>
+            </View>
           )}
 
           {prompt && (
@@ -295,6 +407,12 @@ export default function MapScreen() {
           {(error || territoryError) && (
             <Text style={styles.error} numberOfLines={2}>
               {error ?? `Territory: ${territoryError}`}
+            </Text>
+          )}
+
+          {sitesState.error && !debug.fakeTerritory && (
+            <Text style={styles.error} numberOfLines={2}>
+              {`Sites: ${sitesState.error}`}
             </Text>
           )}
 
@@ -331,7 +449,23 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   roundButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  middle: { flex: 1, paddingHorizontal: 12, gap: 8 },
+  loadingPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(20,28,44,0.75)',
+    borderRadius: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
   bottom: { padding: 16, paddingBottom: 36, gap: 10 },
+  flex: { flex: 1 },
+  siteCardRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  siteName: { color: '#111', fontSize: 17, fontWeight: '700' },
+  siteType: { color: '#555', fontSize: 14, marginTop: 2 },
+  close: { color: '#555', fontSize: 18 },
   recenter: { alignSelf: 'flex-end' },
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 16, gap: 12 },
   cardText: { color: '#111', fontSize: 15, lineHeight: 21 },

@@ -1,4 +1,5 @@
 // Pure geometry helpers for the Mist (fog of war), reveal effect and gap detection.
+import type { BBox } from './sitesApi';
 import type { TerritoryGeoJSON } from './territoryApi';
 
 export type Position = [number, number];
@@ -145,4 +146,110 @@ export function findGaps(fixes: Fix[], thresholdMs: number): Gap[] {
 /** Upload retry delay after `failures` consecutive failures: 30 s, 1, 2, 4 … capped at 15 min. */
 export function retryDelayMs(failures: number): number {
   return Math.min(30_000 * 2 ** Math.max(0, failures - 1), 15 * 60_000);
+}
+
+// ---------------------------------------------------------------------------
+// Cells: square Web Mercator tiles at zoom 21, the backend's claim grid
+// (supabase/migrations/*_territory.sql). x grows east, y grows south, and
+// cell id = x * 2^21 + y.
+// ---------------------------------------------------------------------------
+
+export const CELL_ZOOM = 21;
+const CELLS = 2 ** CELL_ZOOM;
+const MAX_LAT = 85.0511287798066;
+
+/** Tile containing a point at `zoom` (fractional coordinates, not floored). */
+export function lngLatToTileXY(lng: number, lat: number, zoom: number): { x: number; y: number } {
+  const n = 2 ** zoom;
+  const phi = (Math.max(-MAX_LAT, Math.min(MAX_LAT, lat)) * Math.PI) / 180;
+  return {
+    x: ((lng + 180) / 360) * n,
+    y: ((1 - Math.log(Math.tan(phi) + 1 / Math.cos(phi)) / Math.PI) / 2) * n,
+  };
+}
+
+/** Longitude/latitude of tile coordinates at `zoom` (the tile's north-west corner for integers). */
+export function tileXYToLngLat(x: number, y: number, zoom: number): Position {
+  const n = 2 ** zoom;
+  return [(x / n) * 360 - 180, (Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / n))) * 180) / Math.PI];
+}
+
+/** The zoom-21 cell containing a point. */
+export function cellXY(lng: number, lat: number): { x: number; y: number } {
+  const t = lngLatToTileXY(lng, lat, CELL_ZOOM);
+  return {
+    x: Math.min(CELLS - 1, Math.max(0, Math.floor(t.x))),
+    y: Math.min(CELLS - 1, Math.max(0, Math.floor(t.y))),
+  };
+}
+
+export function cellId(x: number, y: number): number {
+  return x * CELLS + y;
+}
+
+export function cellFromId(id: number): { x: number; y: number } {
+  return { x: Math.floor(id / CELLS), y: id % CELLS };
+}
+
+/** Cell edge length on the ground, in meters, at a latitude. */
+export function cellSizeM(lat: number): number {
+  return (40075016.68557849 / CELLS) * Math.cos((lat * Math.PI) / 180);
+}
+
+/** Expands a box by `fraction` of its width and height on each side. */
+export function padBBox([w, s, e, n]: BBox, fraction: number): BBox {
+  const dx = (e - w) * fraction;
+  const dy = (n - s) * fraction;
+  return [w - dx, Math.max(-MAX_LAT, s - dy), e + dx, Math.min(MAX_LAT, n + dy)];
+}
+
+/**
+ * Outlines of the zoom-21 cells covering `bbox`, as one MultiLineString of grid lines
+ * running along cell edges. Null when it would need more than `maxLines` lines (zoomed
+ * out too far to be useful).
+ */
+export function cellGridLines(bbox: BBox, maxLines = 400): GeoJSON.FeatureCollection | null {
+  const [w, s, e, n] = bbox;
+  const nw = lngLatToTileXY(w, n, CELL_ZOOM);
+  const se = lngLatToTileXY(e, s, CELL_ZOOM);
+  const x0 = Math.floor(nw.x);
+  const x1 = Math.ceil(se.x);
+  const y0 = Math.floor(nw.y);
+  const y1 = Math.ceil(se.y);
+  if (x1 - x0 + (y1 - y0) + 2 > maxLines) return null;
+  const west = tileXYToLngLat(x0, 0, CELL_ZOOM)[0];
+  const east = tileXYToLngLat(x1, 0, CELL_ZOOM)[0];
+  const north = tileXYToLngLat(0, y0, CELL_ZOOM)[1];
+  const south = tileXYToLngLat(0, y1, CELL_ZOOM)[1];
+  const lines: Position[][] = [];
+  for (let x = x0; x <= x1; x++) {
+    const lng = tileXYToLngLat(x, 0, CELL_ZOOM)[0];
+    lines.push([
+      [lng, south],
+      [lng, north],
+    ]);
+  }
+  for (let y = y0; y <= y1; y++) {
+    const lat = tileXYToLngLat(0, y, CELL_ZOOM)[1];
+    lines.push([
+      [west, lat],
+      [east, lat],
+    ]);
+  }
+  return {
+    type: 'FeatureCollection',
+    features: [{ type: 'Feature', properties: {}, geometry: { type: 'MultiLineString', coordinates: lines } }],
+  };
+}
+
+/** Polygon, ring and vertex counts, for the perf readout. */
+export function geometryStats(fc: TerritoryGeoJSON | null | undefined): { polygons: number; rings: number; vertices: number } {
+  let rings = 0;
+  let vertices = 0;
+  const polygons = polygonsOf(fc);
+  for (const p of polygons) {
+    rings += p.length;
+    for (const r of p) vertices += r.length;
+  }
+  return { polygons: polygons.length, rings, vertices };
 }

@@ -2,11 +2,12 @@ import * as Battery from 'expo-battery';
 import Constants from 'expo-constants';
 import * as Updates from 'expo-updates';
 import { useEffect, useState } from 'react';
-import { Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View, useColorScheme } from 'react-native';
+import { Linking, Platform, Pressable, ScrollView, Share, StyleSheet, Switch, Text, View, useColorScheme } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { PlayerSection } from '@/components/player-section';
 import { onQueueEvent } from '@/lib/db';
+import { setDebugSetting, useDebugSettings, type DebugSettings } from '@/lib/debugSettings';
 import { batchLog, getDiagnostics, sessionLog } from '@/lib/diagnostics';
 import { uploadNow } from '@/lib/queue';
 
@@ -47,6 +48,7 @@ export default function DebugScreen() {
   const [status, setStatus] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const { diag, log, battery, optimized } = useDiagnostics();
+  const mapSettings = useDebugSettings();
 
   const rows: [string, string][] = [
     ['Build marker', BUILD_MARKER],
@@ -80,6 +82,7 @@ export default function DebugScreen() {
     ['Retry', diag.nextRetryAt ? `${time(diag.nextRetryAt)} (${diag.failedAttempts} failures)` : '—'],
     ['Battery', battery === null || battery < 0 ? '—' : `${Math.round(battery * 100)}%`],
     ['Last task error', diag.lastTaskError ?? '—'],
+    ['Last close error', diag.lastCloseError ?? '—'],
   ];
 
   async function checkForUpdate() {
@@ -118,6 +121,16 @@ export default function DebugScreen() {
 
   const text = { color: dark ? '#f2f2f2' : '#111' };
   const muted = { color: dark ? '#a0a0a0' : '#555' };
+
+  const toggle = (key: keyof DebugSettings, label: string, hint: string) => (
+    <View style={styles.inline}>
+      <View style={styles.flex}>
+        <Text style={[styles.value, text]}>{label}</Text>
+        <Text style={[styles.label, muted]}>{hint}</Text>
+      </View>
+      <Switch accessibilityLabel={label} value={mapSettings[key]} onValueChange={(v) => setDebugSetting(key, v)} />
+    </View>
+  );
 
   const table = (items: [string, string][]) => (
     <View style={styles.table}>
@@ -172,6 +185,15 @@ export default function DebugScreen() {
         <Text style={[styles.log, text]} selectable>
           {log}
         </Text>
+
+        <Text style={[styles.heading, text]}>Map overlays</Text>
+        {toggle('alignmentGrid', 'Show alignment grid', 'Claim cell outlines (zoom 21 tiles) at map zoom 17+.')}
+        {toggle(
+          'fakeTerritory',
+          'Fake territory (50 km²)',
+          'Replaces your land and sites on this phone with a synthetic realm around the map center. Nothing is uploaded.',
+        )}
+        {toggle('perfReadout', 'Perf readout', 'Fog build time, feature counts and JS frame drops on the map.')}
 
         <Text style={[styles.heading, text]}>Build</Text>
         {table(rows)}

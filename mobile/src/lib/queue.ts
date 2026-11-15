@@ -6,12 +6,17 @@
 // on batch id. Points are marked sent only after the server accepts their batch. Within a
 // runtime, concurrent upload triggers share one in-flight run; if a second runtime sends
 // the same batch at the same moment, it is still the same batch id.
+//
+// Closing: the server claims the last 2 minutes of a session only once it knows the session is
+// finished. After the batches, every stopped session with no unsent points or batches is closed
+// with close_walk_session, and marked closed locally only after the server confirms. A failed
+// close is retried on the next run; closing twice is harmless.
 import * as Battery from 'expo-battery';
 import { randomUUID } from 'expo-crypto';
 
 import { db, emit, getKv, immediate, setKv } from './db';
 import { findGaps, retryDelayMs, type Fix } from './geo';
-import { submitLocationBatch, type BatchResult, type LocationPoint } from './territoryApi';
+import { closeWalkSession, submitLocationBatch, type BatchResult, type LocationPoint } from './territoryApi';
 
 export const BATCH_SIZE = 200;
 export const GAP_MS = 2 * 60_000;
@@ -122,11 +127,43 @@ function isPermanentRejection(e: unknown) {
   return !!e && typeof e === 'object' && 'code' in e && e.code === '22023';
 }
 
+/** Stopped sessions whose points are all uploaded and that the server doesn't know are finished. */
+function sessionsToClose(): string[] {
+  return db
+    .getAllSync<{ id: string }>(
+      `SELECT id FROM sessions s
+       WHERE stopped_at IS NOT NULL AND closed_at IS NULL
+         AND NOT EXISTS (SELECT 1 FROM points p WHERE p.session_id = s.id AND p.sent_at IS NULL)
+         AND NOT EXISTS (SELECT 1 FROM batches b WHERE b.session_id = s.id AND b.sent_at IS NULL)
+       ORDER BY stopped_at`,
+    )
+    .map((r) => r.id);
+}
+
+/** Closes finished sessions on the server. Returns the number of cells claimed. Stops at the first error. */
+async function closeStoppedSessions(): Promise<number> {
+  let newCells = 0;
+  for (const id of sessionsToClose()) {
+    try {
+      // closed: false means the server never saw a batch of this session; there's nothing to
+      // claim and nothing more will come, so it counts as done too.
+      const result = await closeWalkSession(id);
+      db.runSync('UPDATE sessions SET closed_at = ? WHERE id = ? AND closed_at IS NULL', Date.now(), id);
+      newCells += result.newCells;
+    } catch (e) {
+      setKv('last_close_error', `${new Date().toISOString()} ${id.slice(0, 8)}: ${message(e)}`);
+      break;
+    }
+  }
+  return newCells;
+}
+
 async function runUpload() {
   const now = Date.now();
   setKv('last_upload_attempt', now);
   prune(now);
   let uploaded = 0;
+  let failed = false;
   for (let i = 0; i < MAX_BATCHES_PER_RUN; i++) {
     const batch = claimNextBatch(await batteryLevel());
     if (!batch) break;
@@ -176,10 +213,13 @@ async function runUpload() {
         setKv('next_retry_at', at + retryDelayMs(failures));
         setKv('last_upload', JSON.stringify({ at, ok: false, batchId: batch.id, error: message(e) }));
       });
+      failed = true;
       break;
     }
   }
-  if (uploaded > 0) emit('upload');
+  // After a transient failure the server is likely unreachable; the next run closes them.
+  const closedCells = failed ? 0 : await closeStoppedSessions();
+  if (uploaded > 0 || closedCells > 0) emit('upload');
 }
 
 let inFlight: Promise<void> | null = null;

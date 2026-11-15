@@ -14,6 +14,7 @@ export type Diagnostics = {
   lastFix: LocationPoint | null;
   lastUpload: LastUpload | null;
   lastTaskError: string | null;
+  lastCloseError: string | null;
 };
 
 function parse<T>(value: string | null): T | null {
@@ -43,6 +44,7 @@ export function getDiagnostics(): Diagnostics {
     lastFix: parse<LocationPoint>(getKv('last_fix')),
     lastUpload: parse<LastUpload>(getKv('last_upload')),
     lastTaskError: getKv('last_task_error'),
+    lastCloseError: getKv('last_close_error'),
   };
 }
 
@@ -56,6 +58,7 @@ export function sessionLog(limit = 20): string {
     id: string;
     started_at: number;
     stopped_at: number | null;
+    closed_at: number | null;
     battery_start: number | null;
     battery_end: number | null;
     points: number;
@@ -87,6 +90,7 @@ export function sessionLog(limit = 20): string {
       const lines = [
         `Session ${s.id.slice(0, 8)}`,
         `  ${time(s.started_at)} → ${s.stopped_at ? time(s.stopped_at) : 'running'} (${mins(end - s.started_at)})`,
+        ...(s.stopped_at ? [`  closed on server: ${s.closed_at ? time(s.closed_at) : 'not yet'}`] : []),
         `  points ${s.points} in ${s.batches} batches (kept 7 days), first fix ${time(s.first_t)}, last fix ${time(s.last_t)}`,
         `  battery ${pct(s.battery_start)} → ${pct(s.battery_end)}${drain}`,
         `  gaps > 2 min: ${gaps.length}`,

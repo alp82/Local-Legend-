@@ -11,8 +11,9 @@ allows a player to read, create, and update only their own row.
 ## Territory
 
 The phone reports walks as batches of GPS points. The server validates the
-points and saves the land the player claimed as map cells. The migration
-`migrations/*_territory.sql` defines everything below.
+points and saves the land the player claimed as map cells. The migrations
+`migrations/*_territory.sql` and `migrations/*_vehicle_buffer.sql` define
+everything below.
 
 ### Cells
 
@@ -30,15 +31,18 @@ in plain SQL with PostGIS. No Edge Function is needed.
 | Function                                                  | Purpose |
 | --------------------------------------------------------- | ------- |
 | `submit_location_batch(p_batch_id, p_session_id, p_points)` | Validates one batch and claims cells. Idempotent per player and batch id. |
+| `close_walk_session(p_session_id)`                        | Marks a session finished and claims its last, now settled segments. Idempotent. Returns `newCells`, `totalCells`, and `closed` (false for an unknown session). |
 | `get_territory()`                                         | Returns the caller's land as merged GeoJSON polygons, `totalCells`, and `areaM2`. |
 | `private.purge_walk_points(older_than)`                   | Deletes `walk_points` rows older than 30 days by default. Not callable by clients. |
 
 Clients can only `SELECT` their own rows from the territory tables. All
-writes go through `submit_location_batch`.
+writes go through `submit_location_batch` and `close_walk_session`.
 
 `submit_location_batch` raises `42501` when the caller isn't signed in, and
 `22023` when the batch is malformed or has more than 500 points. Retrying
-won't fix a `22023` error. Invalid individual points don't raise an error;
+won't fix a `22023` error. `close_walk_session` raises the same codes for a
+caller who isn't signed in or a bad session id. The app closes a session
+after it stops and all its points are uploaded. Invalid individual points don't raise an error;
 they're counted in `rejectedPoints`.
 
 ### Rules
@@ -49,17 +53,28 @@ All thresholds live in `private.claim_rules()`:
 - Points more than 1 minute in the future or more than 7 days old are
   rejected, as are repeated timestamps within a session.
 - Consecutive points of a session are connected in time order, across
-  batches and regardless of arrival order. A segment is claimed only if its
-  speed is at most 3.5 m/s.
+  batches and regardless of arrival order. A segment with a speed of at most
+  3.5 m/s is a walking segment; a faster one is a fast segment and is never
+  claimed.
 - A segment longer than 2 minutes or 250 m is a gap and isn't claimed. A
-  point with a gap on both sides claims a 30 m disk around itself. A point
-  next to a too-fast segment claims nothing, so a car trip claims no land.
+  point with a gap on both sides claims a 30 m disk around itself.
+- Vehicle buffer: a car in slow traffic or at a red light moves at walking
+  speed, so a walking segment (or an isolated point) is claimed only if both
+  hold:
+  - No fast segment of the same player, in any of their sessions, lies
+    within 2 minutes before its start or after its end. Stopping and restarting
+    tracking at a red light doesn't get around this.
+  - It's settled: the session has a point at least 2 minutes after its end, or
+    the session is closed with `close_walk_session`.
+- So the last 2 minutes of a walk are claimed by the next batch or when the
+  session is closed, not right away. Claims are never taken back: a fast
+  segment that arrives later doesn't undo a claim.
 
 ### Tables
 
 - `claimed_cells`: one row per player and cell.
 - `walk_sessions`: per-session stats: accepted and rejected points, first and
-  last point time, distance on foot, and new cells.
+  last point time, distance on foot, new cells, and `closed_at`.
 - `location_batches`: one row per processed batch, used for idempotency.
 - `walk_points`: raw accepted GPS points.
 
@@ -68,6 +83,140 @@ diagnose tracking quality. It stores GPS tracks, which conflicts with the
 design rule that the app stores land, not tracks. It's also used to connect
 batches that arrive out of order. Run `select private.purge_walk_points();`
 to delete points older than 30 days. Drop the table before launch.
+
+## Sites
+
+Sites are the map overlays near the player's land: places worth knowing
+(future place cards) and mine sites. The migrations `migrations/*_sites.sql`
+and `migrations/*_sites_openfreemap.sql` and the Edge Function
+`functions/sites/` define everything below.
+
+### How it works
+
+The data comes from OpenStreetMap through
+[OpenFreeMap](https://openfreemap.org) vector tiles in the
+[OpenMapTiles schema](https://openmaptiles.org/schema/), the same tiles the
+app's map uses. Postgres can't make HTTP requests, so the `sites` Edge
+Function fetches the data:
+
+1. The app calls the function with a bounding box. The function verifies the
+   caller's JWT.
+1. `claim_site_areas` finds the areas in the box within 150 m of the caller's
+   land that were never fetched or are older than 30 days. An area is a zoom
+   14 Web Mercator tile, about 1.6 km wide at 50°N. The function leases at
+   most 4 areas per call, so two requests never fetch the same area. With
+   each area it returns the source filter: the tile layers and values the
+   rules can match.
+1. The function reads the current tile URL from the OpenFreeMap TileJSON at
+   `https://tiles.openfreemap.org/planet` and caches it for 6 hours. The URL
+   names a dated build, so it's never hardcoded. The function then downloads
+   the zoom 14 vector tile of each area, in parallel, and decodes it.
+1. The function turns the tile into elements that `ingest_site_area`
+   understands:
+   - The element id is the OSM id, such as `way/785550415`. OpenFreeMap
+     encodes it in the feature id as `osm_id * 10 + type`. A feature without
+     an id gets `hash/<16 hex digits>`, a hash of its layer, class, subclass,
+     name, and first vertex.
+   - The tags are the feature properties as `<layer>.<field>`, such as
+     `poi.subclass: castle`, plus `name` and `name:en`. Features that share
+     an OSM id are merged, so a park POI carries its landcover polygon.
+   - Polygons arrive as rings, lines as their middle vertex.
+   - `building_cover` holds the share of each of the 8 × 8 grid cells (about
+     200 m) covered by building footprints.
+1. `ingest_site_area` filters and classifies the elements, derives mine
+   sites, and replaces the area's rows in `sites`.
+1. `get_sites` returns the caller's visible sites.
+
+A tile downloads in about 200 ms and an area ingests in about 300 ms in
+total, so the first call for a new area usually returns its sites directly.
+If fetching takes longer than 8 seconds, the function answers from the cache
+and keeps fetching in the background. The response's `pending` field counts
+the areas still loading; a later call returns their sites. A tile download
+stops after 10 seconds. A failed fetch is retried after 10 minutes. A cached
+call takes about 50 ms locally.
+
+The function holds no game rules. The filters and all thresholds live in the
+migrations, in `private.site_rules()`, `private.place_rules()`,
+`private.green_rules()`, `private.exclude_rules()`, and
+`private.source_filter()`.
+
+### Rules
+
+Rules match OpenMapTiles layers and fields.
+
+| Site | Matches |
+| ---- | ------- |
+| Viewpoint | `poi` subclass `viewpoint` |
+| Castle | `poi` subclass `castle`, which includes palaces |
+| Ruins, monument | `poi` subclass `ruins`, `monument` |
+| Historic | named `poi` subclass `sally_port` (city gates) |
+| Artwork, museum, attraction, café | `poi` subclass `artwork`, `museum`, `attraction`, `cafe` |
+| Steps | named `transportation_name` subclass `steps` |
+| Park | named `poi` subclass `park` whose polygon (landcover subclass `park`) has at least 0.5 ha |
+| Exclusion zone | `landuse` class `cemetery`, `religious`, `military`, `railway`, `education`, `school`, `university`, `college`, `kindergarten`, `hospital`, `prison` |
+| Never a place | `poi` class `place_of_worship`, `cemetery`, `school`, `college`, `hospital`, `railway`, and subclass `grave_yard`, `kindergarten`, `university`, `clinic`, `doctors`, `dentist`, `nursing_home`, `prison`, `memorial` |
+| Sawmill area | `landcover` class `wood`, landcover subclass `park`, `garden`, `recreation_ground`, and `park` class `nature_reserve`, `national_park` |
+
+No site lies inside an exclusion zone, so a café in a cemetery or a statue in
+a schoolyard never shows.
+
+OpenMapTiles leaves out some OSM data, which changes these rules compared
+with the earlier Overpass version:
+
+- There are no fountains, memorials, or historic buildings other than the
+  classes above.
+- There are no `access`, `memorial`, `religion`, or Wikipedia tags, so
+  private places can't be filtered and notability has no Wikipedia bonus.
+- Churches are POI points without a polygon, so they're not exclusion zones.
+
+**Mines,** at most 5 per area and at least 150 m apart:
+
+- Gold mine (at most 1): the zoom 17 grid cell (about 200 m) whose places
+  score at least 10, at the centroid of those places. Castles, museums, and
+  attractions score 2; viewpoints, ruins, monuments, gates, and artworks 1.
+- Sawmill (at most 2): sawmill areas with at least 0.5 ha inside the area,
+  largest first, at a point inside the polygon.
+- Quarry (at most 2): grid cells at least 40% covered by buildings, densest
+  first, at the cell center. Tiles merge many buildings into one feature, so
+  the rule uses footprint area instead of a building count.
+
+The same tile always gives the same sites. Areas are fetched again after 30
+days, from the build the TileJSON names at that time.
+
+### Attribution and terms
+
+OpenFreeMap is free, has no usage limits, and needs no API key. Its tiles
+are served from a CDN. The data is © OpenStreetMap contributors under the
+[ODbL](https://www.openstreetmap.org/copyright), and the schema is ©
+OpenMapTiles. Show "OpenFreeMap © OpenMapTiles Data from OpenStreetMap" in
+the app, as the map style's attribution already does, and keep it if place
+cards show the names. Requests identify the app with the user agent
+`LocalLegendPrototype/0.1`.
+
+### Visibility
+
+`get_sites(west, south, east, north)` returns each site with `visibility`:
+
+- `owned`: the site's cell is claimed by the caller.
+- `silhouette`: the center of a claimed cell is within 150 m of the site. The
+  name is withheld.
+
+Sites farther from the caller's land aren't returned. The check uses the cell
+grid, one index range scan per cell column, so it stays fast with many
+thousands of claimed cells. Boxes larger than 0.25° per side are refused
+with `22023`.
+
+### Tables and functions
+
+- `sites`: shared by all players. One row per site, with `osm:<type>/<id>`,
+  `omt:<hash>`, or a derived mine id, `kind`, `subtype`, `name`, the point, its claim `cell`,
+  its `area`, and a few source tags.
+- `site_areas`: the fetch cache, with `fetched_at`, the lease, and the last
+  error.
+
+Clients have no access to either table and call only `get_sites`.
+`claim_site_areas`, `ingest_site_area`, and `fail_site_area` are callable
+only with the service role.
 
 ## Before you begin
 
@@ -111,13 +260,37 @@ npx supabase@latest db reset
 ## Run the database tests
 
 The pgTAP tests in `tests/` check the RLS policies, table and function
-privileges, the `player_state` constraints and trigger, and the territory
-rules: idempotency, connecting batches, speed, gap, and accuracy rejection,
-and the shape of `get_territory`.
+privileges, the `player_state` constraints and trigger, the territory
+rules (idempotency, connecting batches, speed, gap, and accuracy rejection,
+and the shape of `get_territory`), and the site rules (filters, mine
+derivation and its determinism, area leases, and visibility).
 
 ```sh
 npx supabase@latest test db
 ```
+
+The Edge Function has Deno unit tests for decoding vector tiles. They use a
+real tile of Krakow's old town, `functions/sites/testdata/krakow_14_9099_5552.pbf`:
+
+```sh
+deno test --allow-read --allow-env supabase/functions/sites/
+```
+
+## Run the Edge Function locally
+
+To serve the functions in `functions/` with their logs, run:
+
+```sh
+npx supabase@latest functions serve
+```
+
+The function is at `http://127.0.0.1:54321/functions/v1/sites`. It needs a
+signed-in user's access token in the `Authorization` header. It downloads
+real tiles from OpenFreeMap.
+
+The function needs no secrets. To use another tile server with the
+OpenMapTiles schema, set `TILEJSON_URL` to its TileJSON URL in
+`functions/.env`.
 
 ## Change the schema
 
@@ -163,6 +336,15 @@ When you're ready to use a hosted Supabase project, do the following:
    **Sign In / Providers**. Don't run `config push`: `config.toml` holds
    local-development defaults, and pushing it would turn off email
    confirmations and MFA on the hosted project. Run `config diff` to compare.
+
+1. Deploy the Edge Functions:
+
+   ```sh
+   npx supabase@latest functions deploy sites
+   ```
+
+   To use another tile server, run
+   `npx supabase@latest secrets set TILEJSON_URL=<url>`.
 
 1. In the mobile app, use the hosted project URL and publishable key from the
    dashboard instead of the local values.

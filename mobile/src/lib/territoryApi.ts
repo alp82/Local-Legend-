@@ -1,6 +1,7 @@
 // Contract between the app and the territory backend.
 // The backend implementation replaces the bodies; the signatures are fixed.
-// Server side: supabase/migrations/*_territory.sql (submit_location_batch, get_territory).
+// Server side: supabase/migrations/*_territory.sql (submit_location_batch, get_territory) and
+// *_vehicle_buffer.sql (the claiming rule, close_walk_session).
 
 import { ensureSession } from './playerState';
 import { supabase, supabaseConfigError } from './supabase';
@@ -26,6 +27,13 @@ export type BatchResult = {
   duplicate: boolean;
 };
 
+export type CloseResult = {
+  newCells: number;
+  totalCells: number;
+  /** False when the server has no such session (no batch of it was ever processed). */
+  closed: boolean;
+};
+
 export type TerritoryGeoJSON = {
   type: 'FeatureCollection';
   features: {
@@ -45,7 +53,10 @@ export type Territory = {
 /**
  * Uploads one batch of points from a tracking session. Idempotent per
  * batchId: retrying a batch never claims twice. Points within a session are
- * connected across batches in time order. Throws on network or server error.
+ * connected across batches in time order. The server claims a walking stretch
+ * only once the next 2 minutes of the session are known (or the session is closed)
+ * and no fast, vehicle-like movement lies within 2 minutes of it, so the end of the
+ * latest batch is claimed later. Throws on network or server error.
  */
 export async function submitLocationBatch(
   batchId: string,
@@ -62,6 +73,18 @@ export async function submitLocationBatch(
   // more than 500 points): retrying won't help. Other errors are transient.
   if (error) throw error;
   return data as BatchResult;
+}
+
+/**
+ * Tells the server a stopped session is finished, so it claims the session's
+ * last 2 minutes. Call it after every point of the session is uploaded.
+ * Idempotent. Throws on network or server error.
+ */
+export async function closeWalkSession(sessionId: string): Promise<CloseResult> {
+  await ensureSession();
+  const { data, error } = await client().rpc('close_walk_session', { p_session_id: sessionId });
+  if (error) throw error;
+  return data as CloseResult;
 }
 
 /** Loads the signed-in player's claimed territory. Throws on error. */

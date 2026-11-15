@@ -39,7 +39,8 @@ CREATE TABLE IF NOT EXISTS sessions (
   started_at INTEGER NOT NULL,
   stopped_at INTEGER,
   battery_start REAL,
-  battery_end REAL
+  battery_end REAL,
+  closed_at INTEGER
 );
 CREATE TABLE IF NOT EXISTS gaps (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,6 +51,20 @@ CREATE TABLE IF NOT EXISTS gaps (
 );
 CREATE TABLE IF NOT EXISTS kv (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 `);
+
+// Columns added after the first release. CREATE TABLE IF NOT EXISTS leaves an existing table as
+// it is, so add them here. sessions.closed_at: when the server confirmed close_walk_session.
+function addColumn(table: string, column: string, type: string) {
+  const has = () => db.getAllSync<{ name: string }>(`PRAGMA table_info(${table})`).some((c) => c.name === column);
+  if (has()) return;
+  try {
+    db.execSync(`ALTER TABLE ${table} ADD COLUMN ${column} ${type}`);
+  } catch (e) {
+    // Another runtime (headless background task) may have added it at the same moment.
+    if (!has()) throw e;
+  }
+}
+addColumn('sessions', 'closed_at', 'INTEGER');
 
 export function getKv(key: string): string | null {
   return db.getFirstSync<{ value: string }>('SELECT value FROM kv WHERE key = ?', key)?.value ?? null;
