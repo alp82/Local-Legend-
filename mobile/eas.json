@@ -18,6 +18,11 @@
       },
       "environment": "preview"
     },
+    "testflight": {
+      "extends": "preview",
+      "distribution": "store",
+      "autoIncrement": true
+    },
     "production": {
       "channel": "production",
       "autoIncrement": true,
@@ -25,6 +30,12 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {},
+    "testflight": {
+      "ios": {
+        "appleTeamId": "QKFZC8CC8J",
+        "bundleIdentifier": "com.alperortac.locallegend"
+      }
+    }
   }
 }
