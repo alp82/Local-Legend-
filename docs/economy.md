@@ -21,8 +21,11 @@ down).
 
 Every change is also written to `public.economy_ledger`, so a balance always
 equals the sum of its ledger rows. The ledger records the reason (`start`,
-`keep_tax`, `walk`, or `terrain`) and the batch, session, day, or area that
-caused it.
+`keep_tax`, `walk`, `terrain`, `build`, or `recruit`) and the batch, session,
+day, area, or request that caused it.
+
+Once a player has a Treasury, gold, wood, and stone pay only up to its storage
+caps. See [The kingdom](kingdom.md#treasury-caps).
 
 ## The game day and time zones
 
@@ -57,8 +60,12 @@ pay and that Treasury caps limit what a player can save up. Calling again on
 the same game day pays nothing.
 
 The tax comes from the Keep level's `goldTaxPerDay`: 300 gold a day at
-level 1 in the sheet (the design document says 500; the sheet wins). Every
-player has the Keep's starting level until the kingdom screen adds buildings.
+level 1 in the sheet (the design document says 500; the sheet wins), and 100
+more for each Keep level. Missed days pay at the current Keep level, but
+building settles the tax first, so days before an upgrade pay at the old
+level. The whole rule is `private.settle_keep_tax` in
+`supabase/migrations/*_economy.sql`; to cap or drop the missed days, change
+how it counts `v_days`.
 
 ## Walking pay
 
@@ -147,9 +154,8 @@ These rules are in the sheet or the design document but aren't paid yet:
 
 - Weekly distance goals (10, 20, and 40 km). The sheet has the values, but not
   when a week starts.
-- Construction, detour, surge, boss, place card, and outpost XP. They come
-  with the features that award them.
-- Treasury storage caps. Players start without a Treasury (level 0), and the
-  sheet has caps only from level 1.
+- Detour, surge, boss, place card, and outpost XP. They come with the
+  features that award them. Construction XP is paid when building (see
+  [The kingdom](kingdom.md)).
 - Feast Days (the booster multiplier) and bike km.
 - Half pay for new ground after 6 km a day, which the sheet has no value for.

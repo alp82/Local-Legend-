@@ -1,3 +1,4 @@
+import { useNavigation } from 'expo-router';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
@@ -13,9 +14,9 @@ function message(error: unknown) {
 }
 
 /**
- * The player's economy, loaded on mount, when the app comes back to the
- * foreground (which also pays the Keep tax after 4 a.m.), and after every
- * upload. When walks wait for terrain, it asks the terrain function to
+ * The player's economy, loaded whenever the screen gains focus (so it shows
+ * what the kingdom screen spent), when the app comes back to the foreground
+ * (which also pays the Keep tax after 4 a.m.), and after every upload. When walks wait for terrain, it asks the terrain function to
  * classify it, then reloads.
  */
 export function useEconomy() {
@@ -48,16 +49,20 @@ export function useEconomy() {
     load();
   });
 
+  const navigation = useNavigation();
+
   useEffect(() => {
     onEvent();
+    const unfocus = navigation.addListener('focus', () => onEvent());
     const sub = AppState.addEventListener('change', (s) => s === 'active' && onEvent());
     const unsubscribe = onQueueEvent((e) => e === 'upload' && onEvent());
     return () => {
+      unfocus();
       sub.remove();
       unsubscribe();
       if (terrainTimer.current) clearTimeout(terrainTimer.current);
     };
-  }, []);
+  }, [navigation]);
 
   return { economy, error, reload: load };
 }

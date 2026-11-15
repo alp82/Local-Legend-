@@ -341,6 +341,11 @@ export default function MapScreen() {
             style={styles.roundButton}>
             <Text style={styles.roundButtonText}>{showMist ? 'Hide Mist' : 'Show Mist'}</Text>
           </Pressable>
+          <Link href="/kingdom" asChild>
+            <Pressable accessibilityRole="button" style={styles.roundButton}>
+              <Text style={styles.roundButtonText}>Kingdom</Text>
+            </Pressable>
+          </Link>
           <Link href="/debug" asChild>
             <Pressable accessibilityRole="button" style={styles.roundButton}>
               <Text style={styles.roundButtonText}>Debug</Text>

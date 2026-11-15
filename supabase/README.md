@@ -270,6 +270,45 @@ the same OpenFreeMap tiles as `sites`, in about half a second each. `pending`
 counts areas still loading; call again later for them. The classes and
 distances live in `private.terrain_classes()`, not in the function.
 
+## Kingdom
+
+Buildings, the daily construction, Pikemen, and Treasury caps. The migration
+`migrations/*_kingdom.sql` defines everything below;
+[docs/kingdom.md](../docs/kingdom.md) explains the rules.
+
+### How it works
+
+- `build_building` and `recruit_units` take a request id, a UUID the app makes
+  once per tap and reuses on retries. A repeated id returns the first result
+  with `duplicate: true` and changes nothing. A request a game rule refuses
+  changes nothing and isn't stored.
+- Each player's actions run one at a time: both functions lock the player's
+  `player_economy` row first.
+- A refused request returns `{ok: false, reason}` rather than an error, so the
+  app can say why. Errors are for bad input (`22023`) and signed-out callers
+  (`42501`).
+
+### Functions
+
+| Function | Purpose |
+| -------- | ------- |
+| `get_kingdom(p_time_zone)` | Like `get_economy`, plus `kingdom`: building levels, `buildsToday`, `buildsPerDay`, `nextBuildAt`, Treasury `caps`, the `garrison`, `recruits`, and `nextRecruitsAt`. |
+| `build_building(p_building, p_level, p_request_id)` | Builds level `p_level` of a Keep, Treasury, Walls, or Barracks. Refusals: `already_built`, `not_next_level`, `max_level`, `ruler_level`, `keep_level`, `daily_limit`, `not_enough`. |
+| `recruit_units(p_unit, p_count, p_request_id)` | Recruits Pikemen (`pikeman`) into the garrison. Refusals: `needs_building`, `not_enough_recruits`, `not_enough`. |
+
+Both actions return the result together with `economy` and `kingdom` as they
+are afterward.
+
+### Tables
+
+- `player_buildings`: building levels. A missing row is the start level (Keep
+  1, everything else 0).
+- `player_garrison`: units per player.
+- `kingdom_actions`: every construction and recruitment, keyed by request id,
+  with its game day and result.
+
+Clients can only `SELECT` their own rows. All writes go through the functions.
+
 ## Before you begin
 
 - Install Docker and make sure it's running.
@@ -318,7 +357,10 @@ and the shape of `get_territory`), the site rules (filters, mine
 derivation and its determinism, area leases, and visibility), and the economy
 (starting resources, pay that happens once despite retries and out-of-order
 batches, daily caps, the Keep tax and walks across the 4 a.m. reset in several
-time zones, terrain settlement, Ruler levels, the ledger, and privileges).
+time zones, terrain settlement, Ruler levels, the ledger, and privileges),
+and the kingdom (construction costs and XP, the daily construction across the
+4 a.m. reset and time zone changes, Keep and Ruler level gates, retries,
+Pikemen and their weekly recruits, Treasury caps, and privileges).
 
 ```sh
 npx supabase@latest test db

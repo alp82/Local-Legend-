@@ -119,6 +119,52 @@ export type Database = {
         };
         Relationships: [];
       };
+      kingdom_actions: {
+        Row: {
+          batches: Json | null;
+          building: string | null;
+          count: number | null;
+          created_at: string;
+          game_day: string;
+          id: number;
+          kind: string;
+          level: number | null;
+          request_id: string;
+          result: NonNullable<Json>;
+          unit: string | null;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          batches?: Json | null;
+          building?: string | null;
+          count?: number | null;
+          created_at?: string;
+          game_day: string;
+          id?: never;
+          kind: string;
+          level?: number | null;
+          request_id: string;
+          result: NonNullable<Json>;
+          unit?: string | null;
+          user_id: string;
+        };
+        Update: {
+          batches?: Json | null;
+          building?: string | null;
+          count?: number | null;
+          created_at?: string;
+          game_day?: string;
+          id?: never;
+          kind?: string;
+          level?: number | null;
+          request_id?: string;
+          result?: NonNullable<Json>;
+          unit?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       location_batches: {
         Row: {
           accepted_points: number;
@@ -149,6 +195,28 @@ export type Database = {
           received_points?: number;
           rejected_points?: number;
           session_id?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      player_buildings: {
+        Row: {
+          building: string;
+          level: number;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          building: string;
+          level: number;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          building?: string;
+          level?: number;
+          updated_at?: string;
           user_id?: string;
         };
         Relationships: [];
@@ -196,6 +264,28 @@ export type Database = {
           updated_at?: string;
           user_id?: string;
           wood?: number;
+        };
+        Relationships: [];
+      };
+      player_garrison: {
+        Row: {
+          count: number;
+          unit: string;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          count: number;
+          unit: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          count?: number;
+          unit?: string;
+          updated_at?: string;
+          user_id?: string;
         };
         Relationships: [];
       };
@@ -442,6 +532,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      build_building: {
+        Args: { p_building: string; p_level: number; p_request_id: string };
+        Returns: Json;
+      };
       claim_site_areas: {
         Args: {
           east: number;
@@ -467,6 +561,7 @@ export type Database = {
       fail_site_area: { Args: { p_area: number; p_error: string }; Returns: undefined };
       fail_terrain_area: { Args: { p_area: number; p_error: string }; Returns: undefined };
       get_economy: { Args: { p_time_zone?: string }; Returns: Json };
+      get_kingdom: { Args: { p_time_zone?: string }; Returns: Json };
       get_sites: {
         Args: { east: number; north: number; south: number; west: number };
         Returns: {
@@ -482,6 +577,10 @@ export type Database = {
       get_territory: { Args: Record<PropertyKey, never>; Returns: Json };
       ingest_site_area: { Args: { p_area: number; p_data: Json }; Returns: Json };
       ingest_terrain_area: { Args: { p_area: number; p_grid: string }; Returns: Json };
+      recruit_units: {
+        Args: { p_count: number; p_request_id: string; p_unit: string };
+        Returns: Json;
+      };
       submit_location_batch: {
         Args: { p_batch_id: string; p_points: Json; p_session_id: string };
         Returns: Json;
