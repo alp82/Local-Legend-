@@ -23,6 +23,40 @@ export type Database = {
   };
   public: {
     Tables: {
+      analytics_events: {
+        Row: {
+          created_at: string;
+          dedup_key: string;
+          event: string;
+          game_day: string;
+          id: number;
+          occurred_at: string;
+          props: NonNullable<Json>;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          dedup_key: string;
+          event: string;
+          game_day: string;
+          id?: never;
+          occurred_at: string;
+          props?: NonNullable<Json>;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          dedup_key?: string;
+          event?: string;
+          game_day?: string;
+          id?: never;
+          occurred_at?: string;
+          props?: NonNullable<Json>;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       claimed_cells: {
         Row: {
           cell: number;
@@ -766,6 +800,7 @@ export type Database = {
       ingest_detour_area: { Args: { p_area: number; p_data: Json }; Returns: Json };
       ingest_site_area: { Args: { p_area: number; p_data: Json }; Returns: Json };
       ingest_terrain_area: { Args: { p_area: number; p_grid: string }; Returns: Json };
+      record_app_open: { Args: { p_open_id: string; p_time_zone?: string }; Returns: Json };
       recruit_units: {
         Args: { p_count: number; p_request_id: string; p_unit: string };
         Returns: Json;

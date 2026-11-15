@@ -3,11 +3,14 @@ import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { useEffect } from 'react';
 import { AppState, useColorScheme } from 'react-native';
 
+import { recordAppOpen } from '@/lib/analyticsApi';
 import { uploadNow } from '@/lib/queue';
 // Importing tracking also defines the background location task at module load (needed for headless starts).
 import { resumeTrackingIfWanted } from '@/lib/tracking';
 
 function onForeground() {
+  // Analytics: every launch and every return to the foreground is one app open.
+  recordAppOpen().catch(() => {});
   resumeTrackingIfWanted().catch(() => {});
   void uploadNow();
 }

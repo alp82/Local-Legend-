@@ -350,6 +350,39 @@ walking within 30 m. The migration `migrations/*_detours.sql` and the
 Clients can only `SELECT` their own rows of the first three. All writes go
 through the functions.
 
+## Analytics
+
+App opens, walks, detours, builds, recruits, and surge results, stored in
+`public.analytics_events`, with SQL for the beta targets. The migration
+`migrations/*_analytics.sql` defines everything below;
+[docs/analytics.md](../docs/analytics.md) explains the events and metrics.
+
+### How it works
+
+1. The app calls `record_app_open` on launch and on every return to the
+   foreground.
+1. Triggers on `location_batches`, `detour_offers`, and `kingdom_actions`
+   record walks, detours, builds, and recruits in the transaction of the
+   function that writes the row.
+1. The Mist surge (not built yet) will call `private.record_surge_result`.
+1. The `analytics` schema computes the targets. It isn't exposed through the
+   Data API.
+
+### Functions
+
+| Function | Purpose |
+| -------- | ------- |
+| `record_app_open(p_open_id, p_time_zone)` | Records an app open once per open id, at server time. Returns `recorded`, `duplicate`, `capped`, `gameDay`, and `timeZoneAccepted`. |
+| `private.record_surge_result(...)` | For the surge job. Records a player's surge result once per week. |
+| `analytics.weekly_retention(p_from, p_to)` | Service role only. Retention per week. |
+| `analytics.weekly_detour_share(p_from, p_to)` | Service role only. Detour share per week. |
+| `analytics.beta_targets(p_from, p_to)` | Service role only. Both targets over a period. |
+
+### Tables
+
+- `analytics_events`: one row per event. Clients can only `SELECT` their own
+  rows and write nothing.
+
 ## Before you begin
 
 - Install Docker and make sure it's running.
