@@ -5,7 +5,7 @@
 -- Run with: npx supabase test db
 begin;
 
-select plan(109);
+select plan(117);
 
 insert into auth.users (id, aud, role, is_anonymous)
 select ('d0000000-0000-0000-0000-0000000000' || lpad(i::text, 2, '0'))::uuid, 'authenticated', 'authenticated', true
@@ -672,6 +672,38 @@ select is(private.generate_due_detour_offers(now()), 0, 'Running the job again d
 select is((select count(*)::int from public.detour_days where user_id = pg_temp.u(10)), 0,
   'Players who never walked are left to the app');
 select is((select schedule from cron.job where jobname = 'detour-offers'), '*/15 * * * *', 'The job runs every 15 minutes');
+
+-- ---------------------------------------------------------------------------
+-- Area leases: few at once (d16 in Kassel, d17 in Gdansk, by position)
+-- ---------------------------------------------------------------------------
+
+-- Each ingest is CPU-heavy; on November 15, 2026, 8 at once timed out on the
+-- hosted database. Leases are capped across all players.
+insert into auth.users (id, aud, role, is_anonymous)
+values (pg_temp.u(16), 'authenticated', 'authenticated', true), (pg_temp.u(17), 'authenticated', 'authenticated', true);
+update public.detour_spot_areas set lease_until = null where lease_until is not null;
+
+select is((select array[extract(epoch from lease)::int, max_areas_per_call, max_leased_areas] from private.detour_spot_settings()),
+  array[60, 4, 4], 'A lease lasts 60 s; a call leases up to 4 areas, and at most 4 are leased at once');
+
+create temp table kassel as select * from public.claim_detour_areas(pg_temp.u(16), 51.33, 9.45);
+select is((select count(*)::int from kassel where request is not null), 4, 'A first call leases 4 areas');
+create temp table gdansk as select * from public.claim_detour_areas(pg_temp.u(17), 54.35, 18.65);
+select is((select count(*)::int from gdansk where request is not null), 0,
+  'While 4 are leased, another player''s call leases none');
+select is((select count(*)::int from gdansk), 4,
+  'and reports the 4 areas it would have leased as busy (request null), so the app asks again later');
+select is((select count(*)::int from public.claim_detour_areas(pg_temp.u(16), 51.33, 9.45) where request is not null), 0,
+  'An overlapping call of the same player leases none either');
+
+-- Two of the Kassel areas finish loading: two slots free up.
+select public.ingest_detour_area(k.area, '{"features": []}') from (select area from kassel where request is not null order by area limit 1) k;
+select public.fail_detour_area(k.area, 'test') from (select area from kassel where request is not null order by area desc limit 1) k;
+create temp table gdansk2 as select * from public.claim_detour_areas(pg_temp.u(17), 54.35, 18.65);
+select is((select count(*)::int from gdansk2 where request is not null), 2, 'Once 2 areas finish, the next call leases 2');
+select is((select count(*)::int from gdansk2 where request is null), 2, 'and reports the other 2 as waiting');
+select is((select count(*)::int from public.detour_spot_areas where lease_until >= now()), 4, 'Still 4 leased at once');
+update public.detour_spot_areas set lease_until = null where lease_until is not null;
 
 -- ---------------------------------------------------------------------------
 -- Every balance still equals its ledger

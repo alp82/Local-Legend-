@@ -7,8 +7,9 @@
 // function leases the spot areas within reach of the player's routes that the
 // database hasn't loaded yet (claim_detour_areas, at most a few per call),
 // downloads each area's tile, and passes its walkable features to
-// ingest_detour_area. It then calls get_detour_offers as the player, which
-// fills the day's empty offer slots from the spots it knows. If fetching takes
+// ingest_detour_area, one area at a time (see areas.ts). It then calls
+// get_detour_offers as the player, which fills the day's empty offer slots
+// from the spots it knows. If fetching takes
 // longer than WAIT_MS, it answers anyway and keeps fetching in the background.
 // `pending` counts the areas still loading; call again later (about 20 s) and
 // the empty slots fill. lat and lng are the device's position, used only for a
@@ -16,48 +17,18 @@
 
 import { withSupabase } from 'npm:@supabase/server@1.9.2';
 import { fetchTile } from '../_shared/openfreemap.ts';
-import { spotFeatures, type SpotRequest } from './spots.ts';
+import { type Admin, type LeasedArea, loadAreas } from './areas.ts';
+import type { SpotRequest } from './spots.ts';
 
 /** How long a request waits for fresh areas before answering. */
 const WAIT_MS = 8_000;
-/** Hard stop for one tile download; stays below the database lease (30 s). */
+/** Hard stop for one tile download; well below the database lease (60 s). */
 const AREA_TIMEOUT_MS = 10_000;
 
 declare const EdgeRuntime: { waitUntil(p: Promise<unknown>): void } | undefined;
 
-type Admin = {
-  rpc(fn: string, args: Record<string, unknown>): PromiseLike<{ data: unknown; error: { message: string; code?: string } | null }>;
-};
-
 function coordinate(value: unknown, limit: number): number | null {
   return typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= limit ? value : null;
-}
-
-async function ingestArea(admin: Admin, area: number, request: SpotRequest): Promise<void> {
-  const started = Date.now();
-  try {
-    const n = 2 ** request.zoom;
-    const x = Math.floor(area / n);
-    const y = area % n;
-    const tile = await fetchTile(request.zoom, x, y, AbortSignal.timeout(AREA_TIMEOUT_MS));
-    const fetchMs = Date.now() - started;
-    const payload = spotFeatures(tile, x, y, request);
-    const { data, error } = await admin.rpc('ingest_detour_area', { p_area: area, p_data: payload });
-    if (error) throw new Error(`ingest: ${error.message}`);
-    console.log(JSON.stringify({
-      area,
-      tile: `${request.zoom}/${x}/${y}`,
-      bytes: tile.byteLength,
-      fetchMs,
-      ms: Date.now() - started,
-      features: payload.features.length,
-      result: data,
-    }));
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(JSON.stringify({ area, ms: Date.now() - started, error: message }));
-    await admin.rpc('fail_detour_area', { p_area: area, p_error: message });
-  }
 }
 
 Deno.serve(
@@ -80,13 +51,13 @@ Deno.serve(
     }
 
     const rows = (claimed ?? []) as { area: number; request: SpotRequest | null }[];
-    const mine = rows.filter((r): r is { area: number; request: SpotRequest } => r.request !== null);
+    const mine = rows.filter((r): r is LeasedArea => r.request !== null);
     const busyElsewhere = rows.length - mine.length;
     let finished = 0;
     if (mine.length > 0) {
-      // The tiles come from a CDN, so the areas load in parallel.
+      // Tiles download together; the CPU-heavy ingests run one at a time.
       const admin = ctx.supabaseAdmin as unknown as Admin;
-      const work = Promise.all(mine.map(({ area, request }) => ingestArea(admin, area, request).then(() => finished++)));
+      const work = loadAreas(admin, mine, { fetchTile, timeoutMs: AREA_TIMEOUT_MS, onDone: () => finished++ });
       if (typeof EdgeRuntime !== 'undefined') EdgeRuntime.waitUntil(work);
       await Promise.race([work, new Promise((resolve) => setTimeout(resolve, WAIT_MS))]);
     }

@@ -145,6 +145,15 @@ offer never changes once made:
   function loads missing spot areas (4 tile downloads per call), then calls
   `get_detour_offers`, which fills the empty slots. The app calls again while
   areas remain to load.
+
+  Loading an area is CPU-heavy for the database, so the function downloads
+  its tiles together but ingests them one at a time, and at most 4 areas
+  are leased at once across all players (`max_leased_areas` in
+  `private.detour_spot_settings()`). A call that finds no free slot reports
+  its areas as pending, and the app asks again in 20 s. Before this limit,
+  overlapping calls loaded 8 Kassel areas at once and pushed every statement,
+  the player's own included, past the 8 s statement timeout. See
+  `migrations/*_detour_ingest_one_at_a_time.sql`.
 - **A scheduled job.** `pg_cron` runs `private.generate_due_detour_offers()`
   every 15 minutes. It makes the day's offers for every player who walked in
   the last 7 days and has none for their current game day yet. That way the
