@@ -21,8 +21,8 @@ down).
 
 Every change is also written to `public.economy_ledger`, so a balance always
 equals the sum of its ledger rows. The ledger records the reason (`start`,
-`keep_tax`, `walk`, `terrain`, `build`, or `recruit`) and the batch, session,
-day, area, or request that caused it.
+`keep_tax`, `walk`, `terrain`, `build`, `recruit`, or `detour`) and the batch,
+session, day, area, request, or offer that caused it.
 
 Once a player has a Treasury, gold, wood, and stone pay only up to its storage
 caps. See [The kingdom](kingdom.md#treasury-caps).
@@ -154,8 +154,9 @@ These rules are in the sheet or the design document but aren't paid yet:
 
 - Weekly distance goals (10, 20, and 40 km). The sheet has the values, but not
   when a week starts.
-- Detour, surge, boss, place card, and outpost XP. They come with the
-  features that award them. Construction XP is paid when building (see
-  [The kingdom](kingdom.md)).
+- Surge, boss, place card, and outpost XP. They come with the features that
+  award them. Construction XP is paid when building (see
+  [The kingdom](kingdom.md)), and detour XP when an offer is collected (see
+  [Detour offers](detours.md)).
 - Feast Days (the booster multiplier) and bike km.
 - Half pay for new ground after 6 km a day, which the sheet has no value for.

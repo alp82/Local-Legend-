@@ -6,7 +6,7 @@
 // Mount order is draw order (each layer is appended on top of the base style), so the
 // map screen renders them bottom to top:
 //   base map → parchment → Mist → reveal → territory border → alignment grid → sites →
-//   track → user location (native puck, always on top).
+//   detour offers → track → user location (native puck, always on top).
 //
 // Zoom behavior runs natively through `interpolate`/`step` on ['zoom']: below about z14.5
 // the street map fades into parchment (0.9 opaque at z13), the Mist darkens, the inked
@@ -183,6 +183,72 @@ export const SitesLayer = memo(function SitesLayer({
         />
       </GeoJSONSource>
     </>
+  );
+});
+
+/**
+ * Detour offers: a pennant (placeholder: a colored dot by reward kind) labeled with the
+ * time it adds, and a dashed line from the usual route to it. Collected offers fade and
+ * show a check mark. Offers always draw, at every zoom, above the sites.
+ */
+export const DetoursLayer = memo(function DetoursLayer({
+  data,
+  onPress,
+}: {
+  data: string;
+  onPress: (feature: GeoJSON.Feature) => void;
+}) {
+  return (
+    <GeoJSONSource
+      id="detours"
+      data={data}
+      hitbox={{ top: 16, right: 16, bottom: 16, left: 16 }}
+      onPress={(e: NativeSyntheticEvent<PressEventWithFeatures>) => {
+        e.stopPropagation();
+        const feature = e.nativeEvent.features.find((f) => f.properties?.kind === 'offer');
+        if (feature) onPress(feature);
+      }}>
+      <Layer
+        type="line"
+        id="detours-route"
+        filter={['==', ['get', 'kind'], 'route']}
+        layout={{ 'line-cap': 'round' }}
+        paint={{
+          'line-color': INK,
+          'line-width': 2,
+          'line-dasharray': [1, 2],
+          'line-opacity': ['case', ['get', 'collected'], 0.25, 0.8],
+        }}
+      />
+      <Layer
+        type="circle"
+        id="detours-pennant"
+        filter={['==', ['get', 'kind'], 'offer']}
+        paint={{
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 11, 5, 15, 9],
+          'circle-color': ['get', 'color'],
+          'circle-stroke-color': INK,
+          'circle-stroke-width': 2,
+          'circle-opacity': ['case', ['get', 'collected'], 0.4, 1],
+          'circle-stroke-opacity': ['case', ['get', 'collected'], 0.4, 1],
+        }}
+      />
+      <Layer
+        type="symbol"
+        id="detours-label"
+        filter={['==', ['get', 'kind'], 'offer']}
+        layout={{
+          'text-field': ['get', 'label'],
+          'text-font': ['Noto Sans Bold'],
+          'text-size': 13,
+          'text-anchor': 'bottom',
+          'text-offset': [0, -0.9],
+          'text-allow-overlap': true,
+          'text-ignore-placement': true,
+        }}
+        paint={{ 'text-color': INK, 'text-halo-color': '#ffffff', 'text-halo-width': 2 }}
+      />
+    </GeoJSONSource>
   );
 });
 

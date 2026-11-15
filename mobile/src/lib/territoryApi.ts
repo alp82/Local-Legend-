@@ -3,6 +3,7 @@
 // Server side: supabase/migrations/*_territory.sql (submit_location_batch, get_territory) and
 // *_vehicle_buffer.sql (the claiming rule, close_walk_session).
 
+import type { CollectedDetour } from './detoursApi';
 import type { WalkReward } from './economyApi';
 import { ensureSession } from './playerState';
 import { supabase, supabaseConfigError } from './supabase';
@@ -28,6 +29,8 @@ export type BatchResult = {
   duplicate: boolean;
   /** What the walking this batch settled paid, or null when nothing paid (always null for a duplicate). */
   reward: WalkReward | null;
+  /** Detour offers this batch collected (each paid once, through the ledger), or null when none. */
+  detours: CollectedDetour[] | null;
 };
 
 export type CloseResult = {
@@ -37,6 +40,8 @@ export type CloseResult = {
   closed: boolean;
   /** What the walking the close settled paid, or null when nothing paid. */
   reward: WalkReward | null;
+  /** Detour offers the close collected, or null when none. */
+  detours: CollectedDetour[] | null;
 };
 
 export type TerritoryGeoJSON = {

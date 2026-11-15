@@ -309,6 +309,47 @@ are afterward.
 
 Clients can only `SELECT` their own rows. All writes go through the functions.
 
+## Detours
+
+Daily detour offers just off the routes a player walks often, collected by
+walking within 30 m. The migration `migrations/*_detours.sql` and the
+`functions/detours` Edge Function define everything below;
+[docs/detours.md](../docs/detours.md) explains the rules.
+
+### How it works
+
+1. The app calls the `detours` function. It leases the zoom 14 areas within
+   reach of the player's routes that have no spots yet
+   (`claim_detour_areas`), downloads their OpenFreeMap tiles, and passes the
+   walkable features to `ingest_detour_area`, which stores the spots.
+1. The function then calls `get_detour_offers` as the player, which fills the
+   day's empty offer slots and returns them.
+1. `submit_location_batch` and `close_walk_session` collect offers in
+   `private.claim_settled` and return them in `detours`.
+1. A `pg_cron` job, `detour-offers`, runs `private.generate_due_detour_offers()`
+   every 15 minutes for players who walked in the last week.
+
+### Functions
+
+| Function | Purpose |
+| -------- | ------- |
+| `get_detour_offers(p_time_zone, p_lat, p_lng)` | Stores the time zone like `get_economy`, fills the day's empty offer slots, and returns `gameDay`, `source`, `offers`, `offersPerDay`, `missingAreas`, `validFrom`, `validUntil`, and `timeZoneAccepted`. `p_lat` and `p_lng` are only used for a player with no walks and no land. |
+| `claim_detour_areas(p_user, p_lat, p_lng, p_max)` | Service role only. Leases spot areas to fetch. |
+| `ingest_detour_area(p_area, p_data)` | Service role only. Replaces an area's spots from its tile features. |
+| `fail_detour_area(p_area, p_error)` | Service role only. Releases a lease after a failed fetch. |
+
+### Tables
+
+- `route_tiles`: zoom 19 tiles walked per player and game day.
+- `detour_offers`: offers, with their spot, added time, reward, validity, and
+  `collected_at`.
+- `detour_days`: one row per player and day that offers were made for.
+- `detour_spots` and `detour_spot_areas`: the spot cache. Clients can't read
+  them.
+
+Clients can only `SELECT` their own rows of the first three. All writes go
+through the functions.
+
 ## Before you begin
 
 - Install Docker and make sure it's running.

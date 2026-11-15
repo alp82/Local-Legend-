@@ -241,7 +241,7 @@ select is((select count(*)::int from public.economy_ledger where user_id = 'e000
 insert into snap values ('e01_after_walk', pg_temp.bal('e0000000-0000-0000-0000-000000000001'));
 
 select is(pg_temp.submit_as('e0000000-0000-0000-0000-000000000001', 'e01-b1', 'e01-s1', pg_temp.slice((select pts from walk1), 1, 40)) - 'totalCells',
-  '{"acceptedPoints": 0, "rejectedPoints": 0, "newCells": 0, "duplicate": true, "reward": null}'::jsonb,
+  '{"acceptedPoints": 0, "rejectedPoints": 0, "newCells": 0, "duplicate": true, "reward": null, "detours": null}'::jsonb,
   'Resending the first batch is a duplicate with no reward');
 select is(pg_temp.submit_as('e0000000-0000-0000-0000-000000000001', 'e01-b2', 'e01-s1', pg_temp.slice((select pts from walk1), 41, 72)) -> 'reward',
   'null'::jsonb, 'Resending the second batch pays nothing');

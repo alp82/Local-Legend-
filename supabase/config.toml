@@ -432,3 +432,6 @@ verify_jwt = true
 
 [functions.terrain]
 verify_jwt = true
+
+[functions.detours]
+verify_jwt = true

@@ -5,6 +5,7 @@ import { ActivityIndicator, AppState, Linking, Pressable, StyleSheet, Text, View
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
+  DetoursLayer,
   FogLayer,
   GridLayer,
   ParchmentLayer,
@@ -15,10 +16,13 @@ import {
 } from '@/components/map-layers';
 import { PerfReadout, type PerfStats } from '@/components/perf-readout';
 import { ResourceBar } from '@/components/resource-bar';
+import { useDetours } from '@/hooks/use-detours';
 import { useEconomy } from '@/hooks/use-economy';
 import { useFollowCamera } from '@/hooks/use-follow-camera';
 import { useSites } from '@/hooks/use-sites';
 import { onQueueEvent } from '@/lib/db';
+import { detoursJson, offerPlace, offerTitle, rewardText } from '@/lib/detours';
+import type { DetourOffer } from '@/lib/detoursApi';
 import { useDebugSettings } from '@/lib/debugSettings';
 import { fakeWorld, type FakeWorld } from '@/lib/fakeTerritory';
 import { buildFog, cellGridLines, geometryStats, revealArea } from '@/lib/geo';
@@ -130,6 +134,7 @@ export default function MapScreen() {
   const [revealK, setRevealK] = useState(0);
   const [view, setView] = useState<{ bounds: BBox; zoom: number } | null>(null);
   const [selected, setSelected] = useState<SelectedSite | null>(null);
+  const [selectedOffer, setSelectedOffer] = useState<number | null>(null);
   const [fake, setFake] = useState<FakeWorld | null>(fakeCache);
   const debug = useDebugSettings();
 
@@ -142,6 +147,11 @@ export default function MapScreen() {
   const sitesState = useSites(view, String(territory?.totalCells ?? 'none'), !debug.fakeTerritory);
   const sites = fakeOn ? fake.sites : sitesState.sites;
   const sitesData = useMemo(() => sitesJson(sites), [sites]);
+
+  const detoursState = useDetours(!debug.fakeTerritory);
+  const offers = useMemo(() => (fakeOn ? [] : (detoursState.detours?.offers ?? [])), [fakeOn, detoursState.detours]);
+  const detoursData = useMemo(() => detoursJson(offers), [offers]);
+  const offer: DetourOffer | null = offers.find((o) => o.id === selectedOffer) ?? null;
 
   const gridOn = debug.alignmentGrid && !!view && view.zoom >= GRID_MIN_ZOOM;
   const gridBounds = gridOn ? view.bounds.map((v) => v.toFixed(6)).join(',') : null;
@@ -179,8 +189,14 @@ export default function MapScreen() {
     return () => clearTimeout(timer);
   }, [needFake]);
 
+  function onOfferPress(feature: GeoJSON.Feature) {
+    setSelected(null);
+    setSelectedOffer(Number(feature.properties?.id));
+  }
+
   function onSitePress(feature: GeoJSON.Feature) {
     const p = feature.properties ?? {};
+    setSelectedOffer(null);
     setSelected({
       name: typeof p.name === 'string' ? p.name : null,
       type: String(p.type ?? ''),
@@ -310,7 +326,10 @@ export default function MapScreen() {
           cam.onRegionDidChange(e);
           setView({ bounds: e.nativeEvent.bounds, zoom: e.nativeEvent.zoom });
         }}
-        onPress={() => setSelected(null)}>
+        onPress={() => {
+          setSelected(null);
+          setSelectedOffer(null);
+        }}>
         <Camera ref={cameraRef} initialViewState={cam.initialViewState} />
         {/* Bottom to top; see components/map-layers.tsx. */}
         <ParchmentLayer />
@@ -319,6 +338,7 @@ export default function MapScreen() {
         <TerritoryLayer data={prepared.claimedJson} />
         <GridLayer data={gridJson} />
         <SitesLayer data={sitesData} onPress={onSitePress} />
+        <DetoursLayer data={detoursData} onPress={onOfferPress} />
         <TrackLayer data={trackJson} />
         {canShowLocation && <NativeUserLocation />}
       </Map>
@@ -362,6 +382,13 @@ export default function MapScreen() {
               <Text style={styles.statusText}>Loading sites…</Text>
             </View>
           )}
+          {offers.length > 0 && (
+            <View style={styles.loadingPill}>
+              <Text style={styles.statusText}>
+                {`Detours today: ${offers.filter((o) => o.collectedAt).length} of ${offers.length} collected`}
+              </Text>
+            </View>
+          )}
           {perf && <PerfReadout stats={perf} />}
         </View>
 
@@ -394,6 +421,26 @@ export default function MapScreen() {
             </View>
           )}
 
+          {offer && (
+            <View style={styles.card}>
+              <View style={styles.siteCardRow}>
+                <View style={styles.flex}>
+                  <Text style={styles.siteName}>{`${offerTitle(offer)} · +${offer.addedMin} min`}</Text>
+                  <Text style={styles.siteType}>{`${offerPlace(offer)}, ${Math.round(offer.offRouteM)} m off your usual route`}</Text>
+                  <Text style={styles.siteType}>{rewardText(offer)}</Text>
+                  <Text style={styles.siteType}>
+                    {offer.collectedAt
+                      ? 'Collected'
+                      : `Walk within 30 m to collect it before ${new Date(offer.validUntil).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                  </Text>
+                </View>
+                <Pressable accessibilityRole="button" accessibilityLabel="Close" onPress={() => setSelectedOffer(null)} hitSlop={12}>
+                  <Text style={styles.close}>✕</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+
           {prompt && (
             <View style={styles.card}>
               <Text style={styles.cardText}>{PROMPTS[prompt].text}</Text>
@@ -417,6 +464,12 @@ export default function MapScreen() {
           {(error || territoryError) && (
             <Text style={styles.error} numberOfLines={2}>
               {error ?? `Territory: ${territoryError}`}
+            </Text>
+          )}
+
+          {detoursState.error && !debug.fakeTerritory && (
+            <Text style={styles.error} numberOfLines={2}>
+              {`Detours: ${detoursState.error}`}
             </Text>
           )}
 

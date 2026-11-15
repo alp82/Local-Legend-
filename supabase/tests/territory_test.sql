@@ -51,7 +51,7 @@ begin
   perform set_config('role', 'authenticated', true);
   perform set_config('request.jwt.claims',
     json_build_object('sub', who, 'role', 'authenticated')::text, true);
-  result := public.submit_location_batch(batch, session, points) - 'reward';
+  result := public.submit_location_batch(batch, session, points) - 'reward' - 'detours';
   perform set_config('role', 'postgres', true);
   return result;
 end;
@@ -68,7 +68,7 @@ begin
   perform set_config('role', 'authenticated', true);
   perform set_config('request.jwt.claims',
     json_build_object('sub', who, 'role', 'authenticated')::text, true);
-  result := public.close_walk_session(session) - 'reward';
+  result := public.close_walk_session(session) - 'reward' - 'detours';
   perform set_config('role', 'postgres', true);
   return result;
 end;

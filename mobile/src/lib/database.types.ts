@@ -42,6 +42,163 @@ export type Database = {
         };
         Relationships: [];
       };
+      detour_days: {
+        Row: {
+          game_day: string;
+          generated_at: string;
+          source: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          game_day: string;
+          generated_at: string;
+          source?: string | null;
+          updated_at: string;
+          user_id: string;
+        };
+        Update: {
+          game_day?: string;
+          generated_at?: string;
+          source?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      detour_offers: {
+        Row: {
+          added_m: number;
+          added_min: number;
+          anchor: unknown;
+          band: string;
+          collected_at: string | null;
+          collected_ref: string | null;
+          created_at: string;
+          game_day: string;
+          geom: unknown;
+          id: number;
+          name: string | null;
+          off_route_m: number;
+          reward: NonNullable<Json>;
+          reward_kind: string;
+          slot: number;
+          spot_id: number;
+          spot_kind: string;
+          spot_subtype: string | null;
+          user_id: string;
+          valid_from: string;
+          valid_until: string;
+          xp: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          added_m: number;
+          added_min: number;
+          anchor: unknown;
+          band: string;
+          collected_at?: string | null;
+          collected_ref?: string | null;
+          created_at: string;
+          game_day: string;
+          geom: unknown;
+          id?: never;
+          name?: string | null;
+          off_route_m: number;
+          reward: NonNullable<Json>;
+          reward_kind: string;
+          slot: number;
+          spot_id: number;
+          spot_kind: string;
+          spot_subtype?: string | null;
+          user_id: string;
+          valid_from: string;
+          valid_until: string;
+          xp: number;
+        };
+        Update: {
+          added_m?: number;
+          added_min?: number;
+          anchor?: unknown;
+          band?: string;
+          collected_at?: string | null;
+          collected_ref?: string | null;
+          created_at?: string;
+          game_day?: string;
+          geom?: unknown;
+          id?: never;
+          name?: string | null;
+          off_route_m?: number;
+          reward?: NonNullable<Json>;
+          reward_kind?: string;
+          slot?: number;
+          spot_id?: number;
+          spot_kind?: string;
+          spot_subtype?: string | null;
+          user_id?: string;
+          valid_from?: string;
+          valid_until?: string;
+          xp?: number;
+        };
+        Relationships: [];
+      };
+      detour_spot_areas: {
+        Row: {
+          area: number;
+          failed_at: string | null;
+          fetched_at: string | null;
+          last_error: string | null;
+          lease_until: string | null;
+          spot_count: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          area: number;
+          failed_at?: string | null;
+          fetched_at?: string | null;
+          last_error?: string | null;
+          lease_until?: string | null;
+          spot_count?: number;
+        };
+        Update: {
+          area?: number;
+          failed_at?: string | null;
+          fetched_at?: string | null;
+          last_error?: string | null;
+          lease_until?: string | null;
+          spot_count?: number;
+        };
+        Relationships: [];
+      };
+      detour_spots: {
+        Row: {
+          area: number;
+          geom: unknown;
+          id: number;
+          kind: string;
+          name: string | null;
+          subtype: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          area: number;
+          geom: unknown;
+          id: number;
+          kind: string;
+          name?: string | null;
+          subtype?: string | null;
+        };
+        Update: {
+          area?: number;
+          geom?: unknown;
+          id?: number;
+          kind?: string;
+          name?: string | null;
+          subtype?: string | null;
+        };
+        Relationships: [];
+      };
       economy_days: {
         Row: {
           game_day: string;
@@ -314,6 +471,25 @@ export type Database = {
         };
         Relationships: [];
       };
+      route_tiles: {
+        Row: {
+          game_day: string;
+          tile: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          game_day: string;
+          tile: number;
+          user_id: string;
+        };
+        Update: {
+          game_day?: string;
+          tile?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       site_areas: {
         Row: {
           area: number;
@@ -536,6 +712,13 @@ export type Database = {
         Args: { p_building: string; p_level: number; p_request_id: string };
         Returns: Json;
       };
+      claim_detour_areas: {
+        Args: { p_lat?: number; p_lng?: number; p_max?: number; p_user: string };
+        Returns: {
+          area: number;
+          request: Json;
+        }[];
+      };
       claim_site_areas: {
         Args: {
           east: number;
@@ -558,8 +741,13 @@ export type Database = {
         }[];
       };
       close_walk_session: { Args: { p_session_id: string }; Returns: Json };
+      fail_detour_area: { Args: { p_area: number; p_error: string }; Returns: undefined };
       fail_site_area: { Args: { p_area: number; p_error: string }; Returns: undefined };
       fail_terrain_area: { Args: { p_area: number; p_error: string }; Returns: undefined };
+      get_detour_offers: {
+        Args: { p_lat?: number; p_lng?: number; p_time_zone?: string };
+        Returns: Json;
+      };
       get_economy: { Args: { p_time_zone?: string }; Returns: Json };
       get_kingdom: { Args: { p_time_zone?: string }; Returns: Json };
       get_sites: {
@@ -575,6 +763,7 @@ export type Database = {
         }[];
       };
       get_territory: { Args: Record<PropertyKey, never>; Returns: Json };
+      ingest_detour_area: { Args: { p_area: number; p_data: Json }; Returns: Json };
       ingest_site_area: { Args: { p_area: number; p_data: Json }; Returns: Json };
       ingest_terrain_area: { Args: { p_area: number; p_grid: string }; Returns: Json };
       recruit_units: {
