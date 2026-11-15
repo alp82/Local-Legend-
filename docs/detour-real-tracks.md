@@ -209,6 +209,10 @@ distance on the walkable ways that `ingest_detour_area` already reads, or
 raise `route_factor` for short offers (for example to 2.0 below 200 m), so a
 "3 to 5 minute" offer rarely takes 10.
 
+Applied on November 15, 2026: spots less than 200 m from the route now use a
+factor of 2.0 (`supabase/migrations/*_detour_short_factor.sql`). See
+[Added time](detours.md#added-time).
+
 ## Collection
 
 | Check | Walks | Collected | Expected |

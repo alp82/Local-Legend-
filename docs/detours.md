@@ -70,10 +70,33 @@ holds no rules: it forwards the features that the database's filter names.
 
 ### Added time
 
-The added time is the walk there and back from the nearest route point, about
-30% longer than a straight line (the plan's estimate): 2 × 1.3 × the distance,
-at 5 km/h, rounded to whole minutes. A spot 120 m off the route adds about
-4 minutes. Real walking routes come later.
+The added time is the walk there and back from the nearest route point:
+twice the straight-line distance times a street factor, at 5 km/h, rounded to
+whole minutes.
+
+| Straight-line distance from the route | Street factor | Source |
+| ------------------------------------- | ------------- | ------ |
+| Less than 200 m | 2.0 | The user's decision, from testers' real tracks |
+| 200 m or more | 1.3 | The plan's estimate (walking is about 30% longer) |
+
+On real streets, 1.3 fit expeditions (a median of 1.26) but not short offers,
+where a fence, a block without a cut-through, or a river decides the route (a
+median of 2.53). See
+[Added time against real streets](detour-real-tracks.md#added-time-against-real-streets).
+
+Some examples:
+
+- A spot 90 m off the route adds 2 × 2.0 × 90 m = 360 m, about 4 minutes.
+- A spot 400 m off the route adds 2 × 1.3 × 400 m = 1,040 m, about 12 minutes.
+
+With 2.0, the short band (3 to 5 minutes) holds spots about 52 to 114 m off
+the route. Longer offers and expeditions are more than 200 m off, so they keep
+1.3. The added time jumps down at 200 m: a spot 199 m off is labeled
+10 minutes, and one 200 m off 6 minutes.
+
+Both factors and the 200 m are in `private.detour_rules()`
+(`short_route_factor`, `short_route_max_m`, and `route_factor`), and
+`private.detour_added_m` applies them. Real walking routes come later.
 
 ### Offers a day and their lengths
 
@@ -163,6 +186,7 @@ Neither the sheet nor the plan gives these values. They are in
 | Value | Placeholder |
 | ----- | ----------- |
 | Walking speed for the added time | 5 km/h |
+| Street factor for spots close to the route (the user's decision, from real tracks) | 2.0, below 200 m |
 | Route history window | 28 days |
 | Days a tile must be walked to count as a frequent route | 2 |
 | Upper bound of an expedition (the design document says 30+ minutes) | 40 minutes |

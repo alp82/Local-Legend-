@@ -5,16 +5,17 @@
 -- Run with: npx supabase test db
 begin;
 
-select plan(105);
+select plan(109);
 
 insert into auth.users (id, aud, role, is_anonymous)
 select ('d0000000-0000-0000-0000-0000000000' || lpad(i::text, 2, '0'))::uuid, 'authenticated', 'authenticated', true
-from generate_series(1, 14) as i;
+from generate_series(1, 15) as i;
 
 -- d01: generation, collection, retries, the next day. d02: reordered batches
 -- and a second session. d03: the 30 m radius and offers made after a walk.
 -- d04 to d08: the 4 a.m. boundary in two zones. d09: a new player. d10:
 -- offers a day. d11: privileges. d12 to d14: offer days in Warsaw and New York.
+-- d15: the short band's fallback.
 
 -- ---------------------------------------------------------------------------
 -- Helpers. Positions are meters north (n) and east (e) of a point in Krakow.
@@ -255,6 +256,10 @@ select isnt(pg_temp.tz_b(), null, 'Found a zone where it is 20:00');
 
 select is((select collect_radius_m from private.detour_rules()), 30.0::float8, 'Offers collect within 30 m (the plan)');
 select is((select route_factor from private.detour_rules()), 1.3::float8, 'Walking is 30% longer than a straight line (the plan)');
+select is((select array[short_route_factor, short_route_max_m] from private.detour_rules()), array[2.0, 200.0]::float8[],
+  'Below 200 m from the route, walking is twice the straight line (the user''s decision)');
+select is(array[private.detour_added_m(80), private.detour_added_m(199.9), private.detour_added_m(200), private.detour_added_m(400)],
+  array[320, 799.6, 520, 1040]::float8[], 'There and back: 2 x 2.0 x the distance below 200 m, 2 x 1.3 from 200 m up');
 select is(private.economy_rules() -> 'detours' -> 'rewards',
   '{"common": {"gold": 600, "wood": 8, "stone": 8}, "crystal": {"crystal": 3}, "gem": {"gems": 1}}'::jsonb,
   'Rewards come from the sheet''s detour section');
@@ -267,7 +272,7 @@ select is((private.economy_rules() -> 'xp' ->> 'detour')::int, 75, 'A detour pay
 create temp table features as
 select jsonb_build_array(
   -- Kept.
-  pg_temp.point('{"poi.subclass": "artwork", "name": "Short statue"}', 120, 300),
+  pg_temp.point('{"poi.subclass": "artwork", "name": "Short statue"}', 80, 300),
   pg_temp.point('{"poi.subclass": "artwork", "name": "Long statue"}', 400, 300),
   pg_temp.point('{"poi.subclass": "monument", "name": "Far statue"}', -1100, 300),
   pg_temp.point('{"poi.subclass": "monument", "name": "Far statue 2"}', -1100, -100),
@@ -385,10 +390,13 @@ select ok((select bool_and(case o.band
       else o.added_min between 30 and 40 end)
     from public.detour_offers o where o.user_id = pg_temp.u(1)),
   'Every offer''s added time fits its band');
-select ok((select bool_and(o.added_min = round(2 * 1.3 * o.off_route_m / (5 / 3.6) / 60)
-                       and o.added_m = round(2 * 1.3 * o.off_route_m, 1))
-           from public.detour_offers o where o.user_id = pg_temp.u(1)),
-  'Added time is there and back at 1.3 times the straight line, at 5 km/h');
+select ok((select bool_and(o.added_min = round(o.added_m / (5 / 3.6) / 60)
+                       and abs(o.added_m - 2 * f * o.off_route_m) <= 0.25)
+           from public.detour_offers o, lateral (select case when o.off_route_m < 200 then 2.0 else 1.3 end as f) x
+           where o.user_id = pg_temp.u(1)),
+  'Added time is there and back at 2.0 times the straight line below 200 m and 1.3 beyond, at 5 km/h');
+select is((select array[(off_route_m between 52 and 114)::int, added_min] from pg_temp.offer(pg_temp.u(1), (select day from d01_y), 1)),
+  array[1, 4], 'The short landmark, about 90 m off the route, takes 4 minutes (it was 3 at 1.3)');
 select ok((select bool_and(abs(extensions.st_distance(o.geom::extensions.geography, o.anchor::extensions.geography) - o.off_route_m) < 0.02 * o.off_route_m + 1)
            from public.detour_offers o where o.user_id = pg_temp.u(1)),
   'The distance is measured from the anchor, a point on the route');
@@ -630,6 +638,15 @@ select is((select array_agg(band order by slot) from public.detour_offers where 
 select ok((select name in ('Far statue', 'Far statue 2') and added_min between 30 and 40
            from public.detour_offers where user_id = pg_temp.u(14) and slot = 2),
   'at a landmark 30 to 40 minutes away');
+
+-- d15: from 300 m south of the short landmark, no spot is 3 to 5 minutes
+-- away. The nearest is the pedestrian square 180 m off: 9 minutes at 2.0 (it
+-- was 6 at 1.3). With every area loaded, the short slot takes the closest fit
+-- from any band, as documented.
+select private.set_time_zone(pg_temp.u(15), 'Europe/Warsaw', '2026-11-01');
+select private.generate_detour_offers(pg_temp.u(15), '2026-11-10 12:00 Europe/Warsaw', pg_temp.lat(-300), pg_temp.lng(300));
+select is((select array[band, spot_kind, added_min::text] from public.detour_offers where user_id = pg_temp.u(15) and slot = 1),
+  array['short', 'square', '9'], 'With no spot 3 to 5 minutes away, the short slot takes the closest fit (9 minutes)');
 
 -- ---------------------------------------------------------------------------
 -- The scheduled job

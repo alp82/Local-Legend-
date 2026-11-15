@@ -30,7 +30,7 @@ export type DetourOffer = {
   band: DetourBand;
   /** Straight-line distance from the route, in meters. */
   offRouteM: number;
-  /** Walking there and back, in meters (1.3 times the straight line). */
+  /** Walking there and back, in meters: 2.0 times the straight line below 200 m, 1.3 times from 200 m up. */
   addedM: number;
   /** The time the detour adds, in whole minutes. */
   addedMin: number;
