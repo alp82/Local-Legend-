@@ -10,3 +10,6 @@ npm run update:preview -- "What changed"  # publish an OTA update to the preview
 ```
 
 See `../docs/` for the full test-distribution workflow.
+
+The game rules in `src/lib/rules.generated.ts` are generated from the economy
+spreadsheet. Don't edit them by hand; see `../docs/rules.md`.
