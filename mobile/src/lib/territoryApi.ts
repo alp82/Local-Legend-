@@ -1,7 +1,8 @@
 // Contract between the app and the territory backend.
 // The backend implementation replaces the bodies; the signatures are fixed.
 // Server side: supabase/migrations/*_territory.sql (submit_location_batch, get_territory) and
-// *_vehicle_buffer.sql (the claiming rule, close_walk_session).
+// *_vehicle_buffer.sql (the claiming rule, close_walk_session), and *_gps_accuracy.sql (the
+// walking-speed test, which allows for GPS accuracy). The app doesn't classify segments itself.
 
 import type { CollectedDetour } from './detoursApi';
 import type { WalkReward } from './economyApi';

@@ -125,16 +125,8 @@ create function pg_temp.walk_cells(who uuid, session text)
 returns setof bigint
 language sql
 as $$
-  select distinct private.cells_near(extensions.st_transform(extensions.st_makeline(prev, geom), 3857), 30)
-  from (
-    select geom, lag(geom) over w as prev,
-      private.segment_kind(
-        extract(epoch from recorded_at - lag(recorded_at) over w)::float8,
-        extensions.st_distance(lag(geom) over w::extensions.geography, geom::extensions.geography, false)) as kind
-    from public.walk_points
-    where user_id = who and session_id = session
-    window w as (order by recorded_at)
-  ) s
+  select distinct private.cells_near(extensions.st_transform(extensions.st_makeline(prev_geom, geom), 3857), 30)
+  from private.classified_points(who, session, '-infinity', 'infinity')
   where kind = 'walk'
 $$;
 

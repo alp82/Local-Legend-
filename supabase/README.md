@@ -12,8 +12,8 @@ allows a player to read, create, and update only their own row.
 
 The phone reports walks as batches of GPS points. The server validates the
 points and saves the land the player claimed as map cells. The migrations
-`migrations/*_territory.sql` and `migrations/*_vehicle_buffer.sql` define
-everything below.
+`migrations/*_territory.sql`, `migrations/*_vehicle_buffer.sql`, and
+`migrations/*_gps_accuracy.sql` define everything below.
 
 ### Cells
 
@@ -56,6 +56,23 @@ All thresholds live in `private.claim_rules()`:
   batches and regardless of arrival order. A segment with a speed of at most
   3.5 m/s is a walking segment; a faster one is a fast segment and is never
   claimed.
+- The speed test allows for GPS error, so a short GPS jump on a walk isn't
+  mistaken for a vehicle:
+  - The reported accuracy of both ends is subtracted from the distance before
+    the speed is computed, at most 10 m per end (`max_accuracy_credit_m`).
+    Missing accuracy subtracts nothing.
+  - The speed is measured over at least the last 10 s (`speed_span_s`): when
+    the previous point is less than 10 s back, the distance runs from the
+    latest point at least 10 s back, without a gap in between. GPS error
+    doesn't grow with time, but at a fix every second, 2 × 10 m would hide a
+    car at 20 m/s. With no point that far back, the 10 m per end shrinks in
+    proportion to the time.
+  - Together, accuracy lowers a measured speed by at most 2 m/s, so anything
+    faster than 5.5 m/s is fast whatever accuracy the phone reports. Both
+    values are placeholders in `private.claim_rules()`.
+  - `private.classified_points()` is the one place segments are classified.
+    Land, walking pay, route history, detour collection, the vehicle buffer,
+    and distance on foot all use it. See `migrations/*_gps_accuracy.sql`.
 - A segment longer than 2 minutes or 250 m is a gap and isn't claimed. A
   point with a gap on both sides claims a 30 m disk around itself.
 - Vehicle buffer: a car in slow traffic or at a red light moves at walking
@@ -427,7 +444,8 @@ npx supabase@latest db reset
 The pgTAP tests in `tests/` check the RLS policies, table and function
 privileges, the `player_state` constraints and trigger, the territory
 rules (idempotency, connecting batches, speed, gap, and accuracy rejection,
-and the shape of `get_territory`), the site rules (filters, mine
+and the shape of `get_territory`), GPS jumps on a walk against vehicle trips
+with noisy or large reported accuracy (`gps_jumps_test.sql`), the site rules (filters, mine
 derivation and its determinism, area leases, and visibility), and the economy
 (starting resources, pay that happens once despite retries and out-of-order
 batches, daily caps, the Keep tax and walks across the 4 a.m. reset in several

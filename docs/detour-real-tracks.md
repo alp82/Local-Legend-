@@ -19,6 +19,7 @@ November 15, 2026, against the local Supabase stack, with the detour code from
   up to 4 minutes of walking from route history. On the one real 1 km walk, 5
   such jumps removed 65% of the walk. This is the biggest problem found. See
   [GPS jumps remove most of a real walk](#gps-jumps-remove-most-of-a-real-walk).
+  Fixed on November 15, 2026, by allowing for GPS accuracy in the speed test.
 - **Offers land in sensible places.** All 168 generated offers were in their
   band or the documented fallback, every spot was on or next to a public way,
   and no spot was inside a building or an excluded zone. No offer was within
@@ -137,6 +138,22 @@ and fast segments together) each would keep claimable, against 359 m today:
   speed remain.
 - **Require a sustained vehicle.** Apply the buffer only around at least 2
   consecutive fast segments: 752 m kept, for the same reason.
+
+Applied on November 15, 2026: the first fix, subtracting the accuracies
+(`supabase/migrations/*_gps_accuracy.sql`). Two limits keep vehicles out:
+
+- At most 10 m of each end's accuracy is subtracted.
+- The speed is measured over at least 10 s. The app records a fix every
+  10 m, so on iOS a car at 10 m/s sends one every second, and 10 m minus
+  2 × 5 m of accuracy would read as standing still.
+
+Accuracy can then lower a measured speed by at most 2 m/s. On a 20-minute
+test walk with 5 jumps like tester B's, the walk now keeps all of its land,
+route tiles, and pay (it kept 13% before). Cars, a bus, and a train,
+including ones reporting 35 m accuracy, still claim nothing. See
+[Rules](../supabase/README.md#rules). The 2 segments with a 5.3 m/s phone
+speed may still count as fast: over 10 s, they could be a real run. Without
+the real points, this wasn't checked.
 
 ## Offers
 
