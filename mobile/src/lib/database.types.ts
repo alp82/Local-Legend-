@@ -42,6 +42,83 @@ export type Database = {
         };
         Relationships: [];
       };
+      economy_days: {
+        Row: {
+          game_day: string;
+          new_ground_km: number;
+          new_ground_xp: number;
+          user_id: string;
+          usual_km: number;
+          usual_paid_km: number;
+          usual_xp: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          game_day: string;
+          new_ground_km?: number;
+          new_ground_xp?: number;
+          user_id: string;
+          usual_km?: number;
+          usual_paid_km?: number;
+          usual_xp?: number;
+        };
+        Update: {
+          game_day?: string;
+          new_ground_km?: number;
+          new_ground_xp?: number;
+          user_id?: string;
+          usual_km?: number;
+          usual_paid_km?: number;
+          usual_xp?: number;
+        };
+        Relationships: [];
+      };
+      economy_ledger: {
+        Row: {
+          created_at: string;
+          crystal: number;
+          details: Json | null;
+          gems: number;
+          gold: number;
+          id: number;
+          reason: string;
+          ref: string | null;
+          stone: number;
+          user_id: string;
+          wood: number;
+          xp: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          crystal?: number;
+          details?: Json | null;
+          gems?: number;
+          gold?: number;
+          id?: never;
+          reason: string;
+          ref?: string | null;
+          stone?: number;
+          user_id: string;
+          wood?: number;
+          xp?: number;
+        };
+        Update: {
+          created_at?: string;
+          crystal?: number;
+          details?: Json | null;
+          gems?: number;
+          gold?: number;
+          id?: never;
+          reason?: string;
+          ref?: string | null;
+          stone?: number;
+          user_id?: string;
+          wood?: number;
+          xp?: number;
+        };
+        Relationships: [];
+      };
       location_batches: {
         Row: {
           accepted_points: number;
@@ -73,6 +150,52 @@ export type Database = {
           rejected_points?: number;
           session_id?: string;
           user_id?: string;
+        };
+        Relationships: [];
+      };
+      player_economy: {
+        Row: {
+          created_at: string;
+          crystal: number;
+          gems: number;
+          gold: number;
+          keep_tax_paid_through: string | null;
+          ruler_xp: number;
+          stone: number;
+          time_zone: string;
+          time_zone_set_at: string | null;
+          updated_at: string;
+          user_id: string;
+          wood: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          crystal: number;
+          gems: number;
+          gold: number;
+          keep_tax_paid_through?: string | null;
+          ruler_xp?: number;
+          stone: number;
+          time_zone?: string;
+          time_zone_set_at?: string | null;
+          updated_at?: string;
+          user_id: string;
+          wood: number;
+        };
+        Update: {
+          created_at?: string;
+          crystal?: number;
+          gems?: number;
+          gold?: number;
+          keep_tax_paid_through?: string | null;
+          ruler_xp?: number;
+          stone?: number;
+          time_zone?: string;
+          time_zone_set_at?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          wood?: number;
         };
         Relationships: [];
       };
@@ -172,6 +295,62 @@ export type Database = {
         };
         Relationships: [];
       };
+      terrain_areas: {
+        Row: {
+          area: number;
+          failed_at: string | null;
+          fetched_at: string | null;
+          grid: string | null;
+          last_error: string | null;
+          lease_until: string | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          area: number;
+          failed_at?: string | null;
+          fetched_at?: string | null;
+          grid?: string | null;
+          last_error?: string | null;
+          lease_until?: string | null;
+        };
+        Update: {
+          area?: number;
+          failed_at?: string | null;
+          fetched_at?: string | null;
+          grid?: string | null;
+          last_error?: string | null;
+          lease_until?: string | null;
+        };
+        Relationships: [];
+      };
+      terrain_pending: {
+        Row: {
+          area: number;
+          game_day: string;
+          kind: string;
+          km: number;
+          pos: number;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          area: number;
+          game_day: string;
+          kind: string;
+          km: number;
+          pos: number;
+          user_id: string;
+        };
+        Update: {
+          area?: number;
+          game_day?: string;
+          kind?: string;
+          km?: number;
+          pos?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       walk_points: {
         Row: {
           accuracy_m: number;
@@ -179,6 +358,7 @@ export type Database = {
           created_at: string;
           geom: unknown;
           id: number;
+          paid_segment_start: string | null;
           recorded_at: string;
           session_id: string;
           speed_mps: number | null;
@@ -191,6 +371,7 @@ export type Database = {
           created_at?: string;
           geom: unknown;
           id?: never;
+          paid_segment_start?: string | null;
           recorded_at: string;
           session_id: string;
           speed_mps?: number | null;
@@ -202,6 +383,7 @@ export type Database = {
           created_at?: string;
           geom?: unknown;
           id?: never;
+          paid_segment_start?: string | null;
           recorded_at?: string;
           session_id?: string;
           speed_mps?: number | null;
@@ -274,8 +456,17 @@ export type Database = {
           source: Json;
         }[];
       };
+      claim_terrain_areas: {
+        Args: { p_max?: number; p_user: string };
+        Returns: {
+          area: number;
+          request: Json;
+        }[];
+      };
       close_walk_session: { Args: { p_session_id: string }; Returns: Json };
       fail_site_area: { Args: { p_area: number; p_error: string }; Returns: undefined };
+      fail_terrain_area: { Args: { p_area: number; p_error: string }; Returns: undefined };
+      get_economy: { Args: { p_time_zone?: string }; Returns: Json };
       get_sites: {
         Args: { east: number; north: number; south: number; west: number };
         Returns: {
@@ -290,6 +481,7 @@ export type Database = {
       };
       get_territory: { Args: Record<PropertyKey, never>; Returns: Json };
       ingest_site_area: { Args: { p_area: number; p_data: Json }; Returns: Json };
+      ingest_terrain_area: { Args: { p_area: number; p_grid: string }; Returns: Json };
       submit_location_batch: {
         Args: { p_batch_id: string; p_points: Json; p_session_id: string };
         Returns: Json;

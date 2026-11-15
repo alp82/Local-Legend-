@@ -39,7 +39,8 @@ as $$
   from generate_series(i0, i0 + n - 1) as i
 $$;
 
--- Runs submit_location_batch as the given player.
+-- Runs submit_location_batch as the given player. The reward field is left
+-- out here; economy_test.sql covers it.
 create function pg_temp.submit_as(who uuid, batch text, session text, points jsonb)
 returns jsonb
 language plpgsql
@@ -50,13 +51,13 @@ begin
   perform set_config('role', 'authenticated', true);
   perform set_config('request.jwt.claims',
     json_build_object('sub', who, 'role', 'authenticated')::text, true);
-  result := public.submit_location_batch(batch, session, points);
+  result := public.submit_location_batch(batch, session, points) - 'reward';
   perform set_config('role', 'postgres', true);
   return result;
 end;
 $$;
 
--- Runs close_walk_session as the given player.
+-- Runs close_walk_session as the given player, without the reward field.
 create function pg_temp.close_as(who uuid, session text)
 returns jsonb
 language plpgsql
@@ -67,7 +68,7 @@ begin
   perform set_config('role', 'authenticated', true);
   perform set_config('request.jwt.claims',
     json_build_object('sub', who, 'role', 'authenticated')::text, true);
-  result := public.close_walk_session(session);
+  result := public.close_walk_session(session) - 'reward';
   perform set_config('role', 'postgres', true);
   return result;
 end;

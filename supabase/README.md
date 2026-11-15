@@ -218,6 +218,58 @@ Clients have no access to either table and call only `get_sites`.
 `claim_site_areas`, `ingest_site_area`, and `fail_site_area` are callable
 only with the service role.
 
+## Economy
+
+Resources, the daily Keep tax, walking pay, and Ruler XP. The migration
+`migrations/*_economy.sql` and the Edge Function `functions/terrain/` define
+everything below; [docs/economy.md](../docs/economy.md) explains the rules.
+The numbers come from `private.economy_rules()`, which
+`scripts/generate-rules.mjs` writes into `migrations/*_economy_rules.sql` from
+the spreadsheet (see [docs/rules.md](../docs/rules.md)).
+
+### How it works
+
+- `submit_location_batch` and `close_walk_session` pay for the walking they
+  claim, in the same transaction, and return it as `reward` (null when
+  nothing paid). A repeated batch pays nothing.
+- Cells claimed for the first time pay as new ground. Walking segments on land
+  claimed earlier pay as usual routes, up to 5 km a day.
+- Days reset at 4 a.m. in the player's time zone, which the app sends to
+  `get_economy`.
+- Terrain resources need the area's terrain. When it isn't stored yet, the
+  gold and XP pay at once and the rest waits in `terrain_pending` until the
+  `terrain` function classifies the area.
+
+### Functions
+
+| Function | Purpose |
+| -------- | ------- |
+| `get_economy(p_time_zone)` | Stores the time zone, pays any Keep tax due, and returns resources (whole units), `rulerXp`, `rulerLevel`, today's walking, and `pendingTerrainKm`. |
+| `claim_terrain_areas(p_user, p_max)` | Service role only. Leases areas where the player has terrain pay waiting. |
+| `ingest_terrain_area(p_area, p_grid)` | Service role only. Stores an area's terrain and pays everyone waiting on it. Raises `22023` for a malformed grid. |
+| `fail_terrain_area(p_area, p_error)` | Service role only. Releases a lease after a failed fetch. |
+
+### Tables
+
+- `player_economy`: balances, Ruler XP, time zone, and the last day the Keep
+  tax was paid.
+- `economy_days`: walking per game day, for the caps and XP bands.
+- `economy_ledger`: every change to a balance. Balances equal the sums.
+- `terrain_pending`: paid km whose terrain resources wait for terrain.
+- `terrain_areas`: terrain per claim cell, one string per zoom 14 area. No
+  client access.
+
+Clients can only `SELECT` their own rows from the first four tables. All
+writes go through the functions.
+
+### The terrain function
+
+`POST /functions/v1/terrain` with a signed-in user's token and an empty body
+returns `{classified, pending}`. It classifies at most 4 areas per call, from
+the same OpenFreeMap tiles as `sites`, in about half a second each. `pending`
+counts areas still loading; call again later for them. The classes and
+distances live in `private.terrain_classes()`, not in the function.
+
 ## Before you begin
 
 - Install Docker and make sure it's running.
@@ -262,18 +314,23 @@ npx supabase@latest db reset
 The pgTAP tests in `tests/` check the RLS policies, table and function
 privileges, the `player_state` constraints and trigger, the territory
 rules (idempotency, connecting batches, speed, gap, and accuracy rejection,
-and the shape of `get_territory`), and the site rules (filters, mine
-derivation and its determinism, area leases, and visibility).
+and the shape of `get_territory`), the site rules (filters, mine
+derivation and its determinism, area leases, and visibility), and the economy
+(starting resources, pay that happens once despite retries and out-of-order
+batches, daily caps, the Keep tax and walks across the 4 a.m. reset in several
+time zones, terrain settlement, Ruler levels, the ledger, and privileges).
 
 ```sh
 npx supabase@latest test db
 ```
 
-The Edge Function has Deno unit tests for decoding vector tiles. They use a
-real tile of Krakow's old town, `functions/sites/testdata/krakow_14_9099_5552.pbf`:
+The Edge Functions have Deno unit tests for decoding and classifying vector
+tiles. They use a real tile of Krakow's old town,
+`functions/sites/testdata/krakow_14_9099_5552.pbf`. The terrain tests read
+the classes from `migrations/*_economy.sql`:
 
 ```sh
-deno test --allow-read --allow-env supabase/functions/sites/
+deno test --allow-read --allow-env supabase/functions/sites/ supabase/functions/terrain/
 ```
 
 ## Run the Edge Function locally
@@ -284,9 +341,10 @@ To serve the functions in `functions/` with their logs, run:
 npx supabase@latest functions serve
 ```
 
-The function is at `http://127.0.0.1:54321/functions/v1/sites`. It needs a
-signed-in user's access token in the `Authorization` header. It downloads
-real tiles from OpenFreeMap.
+The functions are at `http://127.0.0.1:54321/functions/v1/sites` and
+`http://127.0.0.1:54321/functions/v1/terrain`. They need a signed-in user's
+access token in the `Authorization` header. They download real tiles from
+OpenFreeMap.
 
 The function needs no secrets. To use another tile server with the
 OpenMapTiles schema, set `TILEJSON_URL` to its TileJSON URL in
@@ -341,6 +399,7 @@ When you're ready to use a hosted Supabase project, do the following:
 
    ```sh
    npx supabase@latest functions deploy sites
+   npx supabase@latest functions deploy terrain
    ```
 
    To use another tile server, run

@@ -5,16 +5,26 @@
 //   mobile/src/lib/rules.generated.ts            (the app, bundled by Metro)
 //   supabase/functions/_shared/rules.generated.ts (Edge Functions, run by Deno)
 //
+// It also writes the same rules as JSON into a migration that defines
+// private.economy_rules(), which Postgres reads when it pays rewards:
+//
+//   supabase/migrations/<timestamp>_economy_rules.sql
+//
+// Applied migrations never change, so when the rules change the script adds a
+// new migration, unless the latest one isn't tracked by git yet (then it
+// rewrites that one in place, so rebalancing locally doesn't pile them up).
+//
 // Usage, from the repository root:
-//   node scripts/generate-rules.mjs                  write both files
-//   node scripts/generate-rules.mjs --check          fail if either file is stale
+//   node scripts/generate-rules.mjs                  write all outputs
+//   node scripts/generate-rules.mjs --check          fail if any output is stale
 //   node scripts/generate-rules.mjs --xlsx <path>    read another workbook
 //
 // The script reads the values the spreadsheet app last calculated (the cached
 // cell values), not the formulas, so the rules always match what the sheet
 // shows. Save the workbook in LibreOffice Calc or Excel after editing it.
 // Built-in Node modules only; needs Node 22+.
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { readFileSync, readdirSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { inflateRawSync } from 'node:zlib';
@@ -24,6 +34,8 @@ const OUTPUTS = [
   join(root, 'mobile', 'src', 'lib', 'rules.generated.ts'),
   join(root, 'supabase', 'functions', '_shared', 'rules.generated.ts'),
 ];
+const MIGRATIONS = join(root, 'supabase', 'migrations');
+const RULES_MIGRATION = /^(\d{14})_economy_rules\.sql$/;
 
 // ---------------------------------------------------------------------------
 // Reading the workbook: a minimal ZIP and SpreadsheetML reader.
@@ -228,7 +240,14 @@ function makeInput(wb) {
     if (v < min || v > max) fail(`${at} should be between ${min} and ${max} but is ${v}.`);
     return clean(v);
   };
-  return { input, used };
+  /** The Notes column (F) next to a named input cell. */
+  const note = (name) => {
+    const n = wb.names.get(name);
+    if (!n) return undefined;
+    const v = sheet(wb, n.sheet).get(`F${n.ref.match(/\d+$/)[0]}`);
+    return typeof v === 'string' ? { text: v, at: `${n.sheet}!F${n.ref.match(/\d+$/)[0]}` } : undefined;
+  };
+  return { input, used, note };
 }
 
 // Named inputs that are deliberately not copied as constants: they only feed
@@ -336,7 +355,7 @@ function cost(row, headers) {
 // Building the rules.
 
 function buildRules(wb, sourceName) {
-  const { input, used } = makeInput(wb);
+  const { input, used, note } = makeInput(wb);
 
   // Buildings: what they are, plus every level from Building Costs.
   const buildingRows = table(wb, 'Buildings', 'Building', [
@@ -538,8 +557,23 @@ function buildRules(wb, sourceName) {
 
   // Constants from Inputs.
   const share = { max: 1 };
+
+  // The daily reset hour has no input cell; it's only written in the note next
+  // to Build_Per_Day ("... resets 4 a.m."). Read it from there so the sheet
+  // stays the one source, and stop if the note no longer says it.
+  const resetNote = note('Build_Per_Day');
+  const resetMatch = resetNote?.text.match(/resets (\d{1,2})(?::00)?\s*(a\.?m\.?|p\.?m\.?)/i);
+  let dailyResetHour = NaN;
+  if (!resetMatch) {
+    fail(`${resetNote?.at ?? 'Inputs (Build_Per_Day notes)'} should say when the day resets, like "resets 4 a.m.", but is ${JSON.stringify(resetNote?.text)}.`);
+  } else {
+    const h = Number(resetMatch[1]) % 12;
+    dailyResetHour = /^p/i.test(resetMatch[2]) ? h + 12 : h;
+  }
+
   const rules = {
     source: sourceName,
+    dailyResetHour,
     startingResources: {
       gold: input('Start_Gold', { int: true }),
       wood: input('Start_Wood', { int: true }),
@@ -829,6 +863,11 @@ export interface RulerLevel {
 export interface Rules {
   /** The workbook these rules were generated from. */
   source: string;
+  /**
+   * Daily limits, daily caps, and the Keep tax reset at this hour (0 to 23) in
+   * the player's local time. From the note next to Build_Per_Day on Inputs.
+   */
+  dailyResetHour: number;
   startingResources: Resources;
   construction: {
     /** Constructions are instant; this many a day. */
@@ -937,11 +976,79 @@ function render(rules, sourceName) {
 // Source: ${sourceName}
 // Regenerate with \`node scripts/generate-rules.mjs\` from the repository root;
 // see docs/rules.md. Identical copies live in mobile/src/lib/ and
-// supabase/functions/_shared/.
+// supabase/functions/_shared/, and the same values are in the latest
+// supabase/migrations/*_economy_rules.sql as private.economy_rules().
 
 ${TYPES}
 export const rules: Rules = ${JSON.stringify(rules, null, 2)};
 `;
+}
+
+function renderSql(rules, sourceName) {
+  const json = JSON.stringify(rules, null, 2);
+  if (json.includes('$json$')) throw new Error('The rules contain the text "$json$", which would end the SQL quote.');
+  return `-- GENERATED FILE. DO NOT EDIT.
+-- Source: ${sourceName}
+-- Regenerate with \`node scripts/generate-rules.mjs\` from the repository root;
+-- see docs/rules.md. The JSON is the \`rules\` object of
+-- mobile/src/lib/rules.generated.ts, value for value, so Postgres pays rewards
+-- from the same numbers the app shows. When the rules change, the script adds
+-- a new migration that replaces this function.
+
+create schema if not exists private;
+
+create or replace function private.economy_rules()
+returns jsonb
+language sql
+immutable
+parallel safe
+set search_path = ''
+as $rules$
+  select $json$${json}$json$::jsonb
+$rules$;
+
+comment on function private.economy_rules() is
+  'The game rules from ${sourceName}, as JSON. Generated by scripts/generate-rules.mjs; identical to the TypeScript rules.';
+
+revoke all on function private.economy_rules() from public, anon, authenticated;
+`;
+}
+
+/** Migration file names that define private.economy_rules(), oldest first. */
+function rulesMigrations() {
+  let names = [];
+  try {
+    names = readdirSync(MIGRATIONS);
+  } catch {}
+  return names.filter((n) => RULES_MIGRATION.test(n)).sort();
+}
+
+/** True only when git positively reports the file as untracked. Without git, files count as committed. */
+function isUntrackedByGit(path) {
+  try {
+    const out = execFileSync('git', ['status', '--porcelain', '--', path], { cwd: root, encoding: 'utf8' });
+    return out.startsWith('??');
+  } catch {
+    return false;
+  }
+}
+
+/** A migration timestamp (UTC, YYYYMMDDHHMMSS) later than every existing migration. */
+function nextMigrationStamp() {
+  const stamp = (d) => d.toISOString().replace(/\D/g, '').slice(0, 14);
+  let latest = '';
+  try {
+    for (const n of readdirSync(MIGRATIONS)) {
+      const m = n.match(/^(\d{14})_/);
+      if (m && m[1] > latest) latest = m[1];
+    }
+  } catch {}
+  let next = stamp(new Date());
+  if (next <= latest) {
+    const t = latest;
+    next = stamp(new Date(Date.UTC(+t.slice(0, 4), +t.slice(4, 6) - 1, +t.slice(6, 8), +t.slice(8, 10), +t.slice(10, 12), +t.slice(12, 14) + 1)));
+  }
+  return next;
 }
 
 const args = process.argv.slice(2);
@@ -989,5 +1096,32 @@ for (const out of OUTPUTS) {
     console.log(`Wrote ${rel}.`);
   }
 }
+
+// The SQL copy: the latest economy_rules migration must hold exactly these rules.
+const sql = renderSql(rules, sourceName);
+const latest = rulesMigrations().at(-1);
+const latestPath = latest ? join(MIGRATIONS, latest) : null;
+const latestSql = latestPath ? readFileSync(latestPath, 'utf8') : null;
+if (check) {
+  if (latestSql !== sql) {
+    console.error(
+      latest
+        ? `supabase/migrations/${latest} doesn't match the rules. Run: node scripts/generate-rules.mjs (it adds a new migration).`
+        : 'No supabase/migrations/*_economy_rules.sql defines private.economy_rules(). Run: node scripts/generate-rules.mjs',
+    );
+    stale = true;
+  }
+} else if (latestSql === sql) {
+  console.log(`supabase/migrations/${latest} is up to date.`);
+} else if (latestPath && isUntrackedByGit(latestPath)) {
+  writeFileSync(latestPath, sql);
+  console.log(`Rewrote supabase/migrations/${latest} in place: git doesn't track it yet.`);
+} else {
+  const name = `${nextMigrationStamp()}_economy_rules.sql`;
+  mkdirSync(MIGRATIONS, { recursive: true });
+  writeFileSync(join(MIGRATIONS, name), sql);
+  console.log(`Wrote supabase/migrations/${name}. Apply it locally with: npx supabase@latest migration up`);
+}
+
 if (check && !stale) console.log('Rules are up to date.');
 process.exit(stale ? 1 : 0);

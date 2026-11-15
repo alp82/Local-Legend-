@@ -429,3 +429,6 @@ enabled = true
 # (withSupabase auth: 'user').
 [functions.sites]
 verify_jwt = true
+
+[functions.terrain]
+verify_jwt = true

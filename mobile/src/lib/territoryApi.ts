@@ -3,6 +3,7 @@
 // Server side: supabase/migrations/*_territory.sql (submit_location_batch, get_territory) and
 // *_vehicle_buffer.sql (the claiming rule, close_walk_session).
 
+import type { WalkReward } from './economyApi';
 import { ensureSession } from './playerState';
 import { supabase, supabaseConfigError } from './supabase';
 
@@ -25,6 +26,8 @@ export type BatchResult = {
   totalCells: number;
   /** True when this batchId was already processed; nothing changed. */
   duplicate: boolean;
+  /** What the walking this batch settled paid, or null when nothing paid (always null for a duplicate). */
+  reward: WalkReward | null;
 };
 
 export type CloseResult = {
@@ -32,6 +35,8 @@ export type CloseResult = {
   totalCells: number;
   /** False when the server has no such session (no batch of it was ever processed). */
   closed: boolean;
+  /** What the walking the close settled paid, or null when nothing paid. */
+  reward: WalkReward | null;
 };
 
 export type TerritoryGeoJSON = {

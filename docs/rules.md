@@ -6,12 +6,13 @@ the workbook into one TypeScript file, so rebalancing needs no code changes.
 
 ## Where the rules live
 
-The script writes the same file to two places:
+The script writes the same rules to three places:
 
 | File | Used by |
 | ---- | ------- |
 | `mobile/src/lib/rules.generated.ts` | The app. Import it as `@/lib/rules.generated`. |
 | `supabase/functions/_shared/rules.generated.ts` | Edge Functions. Import it as `../_shared/rules.generated.ts`. |
+| `supabase/migrations/<timestamp>_economy_rules.sql` | Postgres. The migration defines `private.economy_rules()`, which returns the same `rules` object as JSON. The economy functions pay rewards from it. |
 
 Each file holds the `Rules` type and a `rules` constant with no imports, so
 Metro, Node, and Deno all load it as is. Two copies avoid configuring Metro to
@@ -20,11 +21,19 @@ read files outside `mobile/`, and keep Edge Function imports inside
 shared between functions. Supabase doesn't deploy folders whose names start
 with an underscore as functions.
 
-Don't edit either file by hand. `node scripts/generate-rules.mjs --check` fails
-if either copy no longer matches the workbook.
+Don't edit any of these files by hand. `node scripts/generate-rules.mjs --check`
+fails if any copy no longer matches the workbook, including the latest
+`*_economy_rules.sql` migration, so the SQL and TypeScript rules can't drift
+apart.
+
+Applied migrations never change. When the rules change, the script adds a new
+`*_economy_rules.sql` migration that replaces `private.economy_rules()`. If
+the latest one isn't tracked by git yet, the script rewrites it in place
+instead, so rebalancing several times before a commit leaves one migration.
 
 The server stays the authority for every reward. The app reads the rules to
-show costs and previews.
+show costs and previews. [Resources, walking pay, and Ruler XP](economy.md)
+describes how the server applies them.
 
 ## Regenerate the rules after editing the spreadsheet
 
@@ -41,13 +50,15 @@ show costs and previews.
 
    Or, from `mobile/`, run `npm run rules`.
 
-1. Review the diff of the two generated files, then run the checks:
+1. Review the diff of the two generated files and the new or rewritten
+   `supabase/migrations/*_economy_rules.sql`, then run the checks:
 
    ```sh
    cd mobile && npm run typecheck && npm test -- rules
+   cd .. && npx supabase@latest migration up && npx supabase@latest test db
    ```
 
-1. Commit the workbook and both generated files together.
+1. Commit the workbook, both generated files, and the migration together.
 
 To check that the generated files match the workbook without writing them, run
 `node scripts/generate-rules.mjs --check` (or `npm run rules:check`). To
@@ -66,6 +77,10 @@ expects, and lists every problem with its cell. Common causes:
   is already in a table, add it to `INPUTS_IN_TABLES` instead.
 - **A new building, mine, unit, or spell.** Add its name and id to the id
   tables at the top of the script, and the id to the matching type.
+- **The reset note changed.** The script reads the daily reset hour from the
+  note next to `Build_Per_Day` on **Inputs**, which must say something like
+  "resets 4 a.m.". Keep that wording, or give the hour its own named input
+  cell and map it in the script.
 - **Stale values.** If a base cost on **Buildings** doesn't match level 1 on
   **Building Costs**, the workbook was saved without recalculating. Open it in
   a spreadsheet app, recalculate (in Calc, **Data** > **Calculate** >
@@ -83,6 +98,7 @@ expects, and lists every problem with its cell. Common causes:
 | **Trading** | `trading.levels` |
 | **XP** level table | `xp.rulerLevels` |
 | **Inputs** named cells | Walking pay and caps, detour rewards, XP sources, the Mist, seasons, and starting resources |
+| **Inputs** F7, the note next to `Build_Per_Day` | `dailyResetHour`: the hour daily limits reset, from "resets 4 a.m." |
 
 The **Players** and **Income** sheets, the weekly XP estimates, the surge and
 siege calculators, and the terrain-share inputs model typical players. They

@@ -14,6 +14,8 @@ import {
   TrackLayer,
 } from '@/components/map-layers';
 import { PerfReadout, type PerfStats } from '@/components/perf-readout';
+import { ResourceBar } from '@/components/resource-bar';
+import { useEconomy } from '@/hooks/use-economy';
 import { useFollowCamera } from '@/hooks/use-follow-camera';
 import { useSites } from '@/hooks/use-sites';
 import { onQueueEvent } from '@/lib/db';
@@ -290,6 +292,7 @@ export default function MapScreen() {
   const canShowLocation = permission === 'granted' || !!permission?.startsWith('background');
 
   const cam = useFollowCamera(cameraRef, canShowLocation);
+  const economy = useEconomy();
 
   return (
     <View style={styles.container}>
@@ -298,8 +301,8 @@ export default function MapScreen() {
         mapStyle={STYLE_URL}
         logo={false}
         attribution
-        attributionPosition={{ top: 64, left: 12 }}
-        compassPosition={{ top: 72, right: 12 }}
+        attributionPosition={{ top: 174, left: 12 }}
+        compassPosition={{ top: 182, right: 12 }}
         onDidFinishLoadingMap={() => setMapError(null)}
         onDidFailLoadingMap={() => setMapError('The map failed to load. Check your internet connection.')}
         onRegionWillChange={cam.onRegionWillChange}
@@ -344,6 +347,8 @@ export default function MapScreen() {
             </Pressable>
           </Link>
         </View>
+
+        <ResourceBar economy={economy.economy} error={economy.error} />
 
         <View style={styles.middle} pointerEvents="box-none">
           {sitesState.loading && !debug.fakeTerritory && (
@@ -449,7 +454,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   roundButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
-  middle: { flex: 1, paddingHorizontal: 12, gap: 8 },
+  middle: { flex: 1, paddingHorizontal: 12, paddingTop: 8, gap: 8 },
   loadingPill: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -2,7 +2,8 @@
 // Source: Local Legend_Economy.xlsx
 // Regenerate with `node scripts/generate-rules.mjs` from the repository root;
 // see docs/rules.md. Identical copies live in mobile/src/lib/ and
-// supabase/functions/_shared/.
+// supabase/functions/_shared/, and the same values are in the latest
+// supabase/migrations/*_economy_rules.sql as private.economy_rules().
 
 /** The five resources. Crystal and gems are never capped by the Treasury. */
 export type ResourceId = 'gold' | 'wood' | 'stone' | 'crystal' | 'gems';
@@ -143,6 +144,11 @@ export interface RulerLevel {
 export interface Rules {
   /** The workbook these rules were generated from. */
   source: string;
+  /**
+   * Daily limits, daily caps, and the Keep tax reset at this hour (0 to 23) in
+   * the player's local time. From the note next to Build_Per_Day on Inputs.
+   */
+  dailyResetHour: number;
   startingResources: Resources;
   construction: {
     /** Constructions are instant; this many a day. */
@@ -247,6 +253,7 @@ export interface Rules {
 
 export const rules: Rules = {
   "source": "Local Legend_Economy.xlsx",
+  "dailyResetHour": 4,
   "startingResources": {
     "gold": 2000,
     "wood": 20,
