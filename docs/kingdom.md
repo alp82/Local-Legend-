@@ -82,7 +82,9 @@ Recruits grow weekly, as the sheet describes:
 - The week a Barracks is first built, its recruits appear at once. Without
   this, a new player would wait until Monday.
 
-The garrison only grows for now. The weekly Mist surge will use and reduce it.
+The garrison defends against the weekly Mist surge, which costs it 5% when it
+holds and 20% (Pikemen 10%) when it breaks through. See
+[The weekly Mist surge](mist.md).
 
 ## Treasury caps
 
@@ -121,3 +123,7 @@ one place:
 | No caps without a Treasury; pay beyond a cap is lost; balances above a cap are kept. | `private.treasury_caps`, `private.credit` |
 | At most 1,000 Pikemen per request (an input guard, not a game rule). | `private.kingdom_settings` |
 | Only the four plots and Pikemen. | `private.kingdom_settings` |
+
+`build_building` and `recruit_units` resolve a due Mist surge before they
+run, so a construction or recruitment just after Monday 4 a.m. can't change
+the surge that closed the week.

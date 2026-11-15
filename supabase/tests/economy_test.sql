@@ -472,7 +472,7 @@ select is((select first -> 'keepTaxPaid' from e11), '{"days": 1, "gold": 300}'::
 select is(pg_temp.economy_as('e0000000-0000-0000-0000-000000000011', 'Asia/Kolkata') -> 'keepTaxPaid',
   '{"days": 0, "gold": 0}'::jsonb, 'A second call the same day pays nothing');
 select is((select first ->> 'timeZone' from e11), 'Asia/Kolkata', 'The first time zone is accepted');
-select is(pg_temp.economy_as('e0000000-0000-0000-0000-000000000011', 'Europe/Lisbon') - array['resources', 'rulerXp', 'rulerLevel', 'gameDay', 'keepTaxPaidThrough', 'today', 'pendingTerrainKm', 'keepTaxPaid'],
+select is(pg_temp.economy_as('e0000000-0000-0000-0000-000000000011', 'Europe/Lisbon') - array['resources', 'tradeTickets', 'rulerXp', 'rulerLevel', 'gameDay', 'keepTaxPaidThrough', 'today', 'pendingTerrainKm', 'keepTaxPaid'],
   '{"timeZone": "Asia/Kolkata", "timeZoneAccepted": false}'::jsonb, 'A change within 24 hours is ignored');
 select is(pg_temp.economy_as('e0000000-0000-0000-0000-000000000011', 'Not/AZone') ->> 'timeZoneAccepted',
   'false', 'An unknown time zone is ignored');

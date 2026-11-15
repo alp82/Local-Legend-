@@ -3,7 +3,8 @@
 // every spend; the app previews costs from the rules and shows what the server
 // returns.
 // Server side: supabase/migrations/*_kingdom.sql (get_kingdom, build_building,
-// recruit_units). docs/kingdom.md has the rules.
+// recruit_units) and *_mist_surge.sql (the surge in get_kingdom, set_rest).
+// docs/kingdom.md and docs/mist.md have the rules.
 
 import { randomUUID } from 'expo-crypto';
 
@@ -11,6 +12,7 @@ import type { Economy } from './economyApi';
 import { deviceTimeZone } from './economyApi';
 import { ensureSession } from './playerState';
 import type { Resources } from './rules.generated';
+import type { Rest, Surge } from './surge';
 import { supabase, supabaseConfigError } from './supabase';
 
 /** The buildings on the kingdom screen, in screen order. */
@@ -42,7 +44,7 @@ export type Kingdom = {
   nextRecruitsAt: string;
 };
 
-export type KingdomState = Economy & { kingdom: Kingdom };
+export type KingdomState = Economy & { kingdom: Kingdom; surge: Surge };
 
 export type BuildFailure =
   | { reason: 'already_built' | 'not_next_level' | 'max_level'; level: number }
@@ -103,6 +105,17 @@ export async function recruitPikemen(count: number): Promise<RecruitResult> {
     });
     if (error) throw error;
     return data as RecruitResult;
+  });
+}
+
+export type SetRestResult = { ok: true; rest: Rest } | { ok: false; reason: 'no_rest_days'; rest: Rest };
+
+/** Turns Rest on (from today) or off. Turning it on twice, or off twice, is harmless, so retries are safe. */
+export async function setRest(on: boolean): Promise<SetRestResult> {
+  return withRetries(async () => {
+    const { data, error } = await client().rpc('set_rest', { p_on: on });
+    if (error) throw error;
+    return data as SetRestResult;
   });
 }
 

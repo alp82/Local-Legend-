@@ -26,6 +26,8 @@ export type WalkReward = Resources & {
 export type Economy = {
   /** Whole units. */
   resources: Resources;
+  /** Trade tickets, from holding the weekly Mist surge. Nothing spends them yet. */
+  tradeTickets: number;
   rulerXp: number;
   rulerLevel: number;
   /** The IANA time zone the server uses for the 4 a.m. reset. */

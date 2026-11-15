@@ -1,4 +1,5 @@
-// The kingdom screen: four plots (Keep, Treasury, Walls, Barracks), the day's
+// The kingdom screen: the weekly Mist surge (Monday's result, the forecast,
+// and Rest), four plots (Keep, Treasury, Walls, Barracks), the day's
 // construction, and Pikemen. Placeholder layout; Keep and Barracks use the art
 // from UI Assets/, Treasury and Walls a plain tile.
 
@@ -13,11 +14,13 @@ import {
   buildBuilding,
   PLOTS,
   recruitPikemen,
+  setRest,
   type BuildResult,
   type PlotId,
   type RecruitResult,
 } from '@/lib/kingdomApi';
 import { rules } from '@/lib/rules.generated';
+import { isThisWeeksResult, surgeSummary, type Surge } from '@/lib/surge';
 
 const ART: Partial<Record<PlotId, Record<1 | 2 | 3, ImageSourcePropType>>> = {
   keep: {
@@ -90,10 +93,62 @@ function recruitOutcome(r: RecruitResult) {
   }
 }
 
+function SurgeCard({ surge, gameDay, busy, onRest }: { surge: Surge; gameDay: string; busy: boolean; onRest: (on: boolean) => void }) {
+  const last = isThisWeeksResult(surge.last, gameDay) ? surge.last : null;
+  const summary = last ? surgeSummary(last) : null;
+  const next = surge.next;
+  const rest = surge.rest;
+  let forecast: string;
+  if (next.notYet) forecast = 'No surge this Sunday: your first one comes the Sunday after, at half strength.';
+  else if (rest.on || next.rested) forecast = 'You\'re resting: this Sunday\'s surge will pass you by.';
+  else {
+    forecast = `This Sunday night: strength ${Math.round(next.strength)} against your defense ${Math.round(next.defense)}`
+      + `${next.gentle ? ' (gentle first surge)' : ''}. `
+      + (next.held ? 'Your defense would hold.' : 'The Mist would break through.');
+  }
+  return (
+    <View style={styles.card}>
+      <Text style={styles.name}>The Mist</Text>
+      {summary && (
+        <View accessibilityLiveRegion="polite" style={styles.surgeResult}>
+          <Text style={styles.statusText}>{summary.title}</Text>
+          {summary.lines.map((line) => (
+            <Text key={line} style={styles.muted}>
+              {line}
+            </Text>
+          ))}
+        </View>
+      )}
+      <Text style={styles.muted}>{forecast}</Text>
+      <Text style={styles.muted}>{`Season ${next.season}, week ${next.seasonWeek} · surge due ${timeOf(next.dueAt)}`}</Text>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ disabled: busy || (!rest.on && rest.left < 1) }}
+        disabled={busy || (!rest.on && rest.left < 1)}
+        onPress={() => onRest(!rest.on)}
+        style={({ pressed }) => [styles.button, styles.restButton, (busy || (!rest.on && rest.left < 1)) && styles.buttonOff, pressed && styles.pressed]}>
+        <Text style={styles.buttonText}>{rest.on ? 'Stop resting' : 'Rest'}</Text>
+      </Pressable>
+      <Text style={styles.hint}>{`${rest.left} of ${rest.perSeason} Rest days left this season. While you rest, surges skip you.`}</Text>
+    </View>
+  );
+}
+
 export default function KingdomScreen() {
-  const { state, error, busy, run } = useKingdom();
+  const { state, error, busy, run, reload } = useKingdom();
   const [notice, setNotice] = useState<string | null>(null);
   const [recruitCount, setRecruitCount] = useState(1);
+
+  async function rest(on: boolean) {
+    setNotice(null);
+    try {
+      const r = await setRest(on);
+      if (!r.ok) setNotice('You have no Rest days left this season.');
+      reload();
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : String(e));
+    }
+  }
 
   async function act<R extends BuildResult | RecruitResult>(call: () => Promise<R>, describe: (r: R) => string) {
     setNotice(null);
@@ -132,6 +187,8 @@ export default function KingdomScreen() {
             </Text>
           )}
         </View>
+
+        <SurgeCard surge={state.surge} gameDay={state.gameDay} busy={busy} onRest={rest} />
 
         {notice && (
           <Text style={styles.notice} accessibilityLiveRegion="polite">
@@ -257,6 +314,8 @@ const styles = StyleSheet.create({
   buttonText: { color: '#fff', fontSize: 15, fontWeight: '600' },
   pressed: { opacity: 0.7 },
   card: { marginHorizontal: 12, backgroundColor: 'rgba(20,28,44,0.85)', borderRadius: 12, padding: 14, gap: 8 },
+  surgeResult: { gap: 4, backgroundColor: 'rgba(120,130,160,0.2)', borderRadius: 8, padding: 10 },
+  restButton: { backgroundColor: '#4E5D7A' },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   stepButton: { backgroundColor: '#2F3A50', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
   count: { color: '#fff', fontSize: 18, fontWeight: '700', minWidth: 36, textAlign: 'center' },

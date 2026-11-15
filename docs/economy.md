@@ -21,8 +21,12 @@ down).
 
 Every change is also written to `public.economy_ledger`, so a balance always
 equals the sum of its ledger rows. The ledger records the reason (`start`,
-`keep_tax`, `walk`, `terrain`, `build`, `recruit`, or `detour`) and the batch,
-session, day, area, request, or offer that caused it.
+`keep_tax`, `walk`, `terrain`, `build`, `recruit`, `detour`, or `surge`) and
+the batch, session, day, area, request, offer, or surge week that caused it.
+
+Holding the weekly Mist surge also pays a trade ticket. Tickets are a separate
+balance, `player_economy.trade_tickets`, recorded in the ledger's `tickets`
+column. Nothing spends them yet. See [The weekly Mist surge](mist.md).
 
 Once a player has a Treasury, gold, wood, and stone pay only up to its storage
 caps. See [The kingdom](kingdom.md#treasury-caps).
@@ -53,19 +57,27 @@ it was walked.
 
 ## The Keep tax
 
-`get_economy` pays the Keep tax for every game day since the last one paid:
-one day on the first call, then one per game day since. Days the player didn't
-open the app still pay, because the design document says busy weeks still
-pay and that Treasury caps limit what a player can save up. Calling again on
-the same game day pays nothing.
+`get_economy` pays the Keep tax for every game day since the last one paid,
+up to 7 days: one day on the first call, then one per game day since. Days the
+player didn't open the app still pay, because the design document says busy
+weeks still pay and that Treasury caps limit what a player can save up.
+Calling again on the same game day pays nothing.
+
+Missed days pile up for at most 7 days. A player who comes back 30 game days
+after the last payment gets 7 days' tax, and the other 23 are gone. Days are
+counted from the last day paid up to today, so a player who last paid on
+Monday and comes back on the next Monday gets 7 days. The ledger row records
+both numbers in `details`: `days` (paid) and `owedDays` (before the cap). The
+sheet has no cell for the cap, so the 7 is a placeholder in
+`private.economy_placeholders()` (`supabase/migrations/*_keep_tax_cap.sql`).
 
 The tax comes from the Keep level's `goldTaxPerDay`: 300 gold a day at
 level 1 in the sheet (the design document says 500; the sheet wins), and 100
-more for each Keep level. Missed days pay at the current Keep level, but
-building settles the tax first, so days before an upgrade pay at the old
-level. The whole rule is `private.settle_keep_tax` in
-`supabase/migrations/*_economy.sql`; to cap or drop the missed days, change
-how it counts `v_days`.
+more for each Keep level. Every day pays at the Keep level it had: building
+settles the tax first, so the Keep level can't change between the last
+payment and today, and days before an upgrade pay at the old level. The whole
+rule is `private.settle_keep_tax`, last replaced in
+`supabase/migrations/*_keep_tax_cap.sql`.
 
 ## Walking pay
 
@@ -154,9 +166,10 @@ These rules are in the sheet or the design document but aren't paid yet:
 
 - Weekly distance goals (10, 20, and 40 km). The sheet has the values, but not
   when a week starts.
-- Surge, boss, place card, and outpost XP. They come with the features that
-  award them. Construction XP is paid when building (see
-  [The kingdom](kingdom.md)), and detour XP when an offer is collected (see
-  [Detour offers](detours.md)).
+- Boss, place card, and outpost XP. They come with the features that award
+  them. Construction XP is paid when building (see
+  [The kingdom](kingdom.md)), detour XP when an offer is collected (see
+  [Detour offers](detours.md)), and surge XP when a surge holds or partly
+  holds (see [The weekly Mist surge](mist.md)).
 - Feast Days (the booster multiplier) and bike km.
 - Half pay for new ground after 6 km a day, which the sheet has no value for.

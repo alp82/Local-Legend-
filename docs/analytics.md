@@ -18,7 +18,7 @@ There's no third-party analytics service or SDK.
 | `detour_collected` | A walk collects a detour offer. | `claim_settled` | Offer id | `offerId`, `slot`, `band`, `addedMin`, `rewardKind`, `reward`, `xp` |
 | `building_built` | A construction succeeds. | `build_building` | Request id | `building`, `level` |
 | `units_recruited` | A recruitment succeeds. | `recruit_units` | Request id | `unit`, `count` |
-| `surge_result` | The weekly Mist surge resolves for a player. | `private.record_surge_result`, called by step 5 | Surge week | See [Surge results](#surge-results) |
+| `surge_result` | The weekly Mist surge holds or breaks through for a player. | `private.resolve_surge`, through `private.record_surge_result` | Surge week | See [Surge results](#surge-results) |
 
 "Walks captured" are counted from `walk_batch`: the number of distinct
 `(user_id, props->>'sessionId')` pairs is the number of walks, and the batch
@@ -80,30 +80,33 @@ lost counts once.
 
 ### Surge results
 
-The Mist surge (plan step 5) isn't built yet. Its result event is defined now:
-step 5 calls `private.record_surge_result` for each player, in the same
-transaction that applies the result:
+The weekly Mist surge (see [The weekly Mist surge](mist.md)) records its
+result in the same transaction that applies it. `private.resolve_surge` calls
+`private.record_surge_result` for each player and week:
 
 ```sql
 perform private.record_surge_result(
-  p_user       => v_user,
-  p_week       => v_week,         -- Monday of the game week the surge closes
-  p_held       => v_pressure <= v_defense,
-  p_pressure   => v_pressure,     -- strength: Keep draw and frontier length
-  p_defense    => v_defense,      -- Walls and garrison
-  p_cells_lost => v_cells_lost,   -- frontier cells lost (a count, never which cells)
-  p_units_lost => v_units_lost,   -- garrison losses
-  p_reward     => v_reward,       -- JSON object of what a hold paid, or null
-  p_gentle     => v_first_surge,  -- the half-pressure first surge
-  p_at         => now());
+  p_user       => p_user,
+  p_week       => p_week,         -- Monday of the game week the surge closes
+  p_held       => v_outcome = 'held',
+  p_pressure   => strength,       -- the surge's strength: Keep draw and frontier length
+  p_defense    => defense,        -- Walls and garrison
+  p_cells_lost => v_cells,        -- frontier cells lost (a count, never which cells)
+  p_units_lost => v_units_total,  -- garrison losses
+  p_reward     => v_reward,       -- {gold, tickets, xp} of a hold or a partly-held breakthrough, or null
+  p_gentle     => gentle,         -- the half-pressure first surge
+  p_at         => v_row.due_at);  -- when the surge was due
 ```
 
-- It records once per player and week and returns `false` for a repeat, so a
-  rerun of the surge job records nothing new. Step 5 should still guard its
-  own payouts.
+- It records once per player and week and returns `false` for a repeat. The
+  surge also guards its own payouts: one `surge_results` row per week, and a
+  unique ledger row per week.
+- Only surges that hold or break through record an event. Weeks the player
+  rested, and weeks before their first surge, record nothing.
 - `p_week` must be a Monday; anything else raises `22023`.
-- The event's `game_day` is the game day of `p_at` in the player's time zone.
-  A surge that runs on Sunday night before 4 a.m. Monday belongs to Sunday.
+- The surge is due at 4 a.m. on Monday local, when the week ends, and
+  `p_at` is that moment even when the job runs late. The event's `game_day`
+  is therefore the Monday after the week it closes.
 - Clients can't call it.
 
 ## Privacy

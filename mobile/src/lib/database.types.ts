@@ -275,6 +275,7 @@ export type Database = {
           reason: string;
           ref: string | null;
           stone: number;
+          tickets: number;
           user_id: string;
           wood: number;
           xp: number;
@@ -290,6 +291,7 @@ export type Database = {
           reason: string;
           ref?: string | null;
           stone?: number;
+          tickets?: number;
           user_id: string;
           wood?: number;
           xp?: number;
@@ -304,6 +306,7 @@ export type Database = {
           reason?: string;
           ref?: string | null;
           stone?: number;
+          tickets?: number;
           user_id?: string;
           wood?: number;
           xp?: number;
@@ -423,6 +426,7 @@ export type Database = {
           stone: number;
           time_zone: string;
           time_zone_set_at: string | null;
+          trade_tickets: number;
           updated_at: string;
           user_id: string;
           wood: number;
@@ -438,6 +442,7 @@ export type Database = {
           stone: number;
           time_zone?: string;
           time_zone_set_at?: string | null;
+          trade_tickets?: number;
           updated_at?: string;
           user_id: string;
           wood: number;
@@ -452,6 +457,7 @@ export type Database = {
           stone?: number;
           time_zone?: string;
           time_zone_set_at?: string | null;
+          trade_tickets?: number;
           updated_at?: string;
           user_id?: string;
           wood?: number;
@@ -480,6 +486,25 @@ export type Database = {
         };
         Relationships: [];
       };
+      player_homes: {
+        Row: {
+          cell: number;
+          set_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          cell: number;
+          set_at?: string;
+          user_id: string;
+        };
+        Update: {
+          cell?: number;
+          set_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       player_state: {
         Row: {
           created_at: string;
@@ -501,6 +526,31 @@ export type Database = {
           display_name?: string | null;
           state?: NonNullable<Json>;
           updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      rest_periods: {
+        Row: {
+          created_at: string;
+          ends_on: string | null;
+          id: number;
+          starts_on: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          ends_on?: string | null;
+          id?: never;
+          starts_on: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          ends_on?: string | null;
+          id?: never;
+          starts_on?: string;
           user_id?: string;
         };
         Relationships: [];
@@ -592,6 +642,65 @@ export type Database = {
           subtype?: string;
           tags?: NonNullable<Json>;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      surge_lost_cells: {
+        Row: {
+          cell: number;
+          first_claimed_at: string;
+          user_id: string;
+          week: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          cell: number;
+          first_claimed_at: string;
+          user_id: string;
+          week: string;
+        };
+        Update: {
+          cell?: number;
+          first_claimed_at?: string;
+          user_id?: string;
+          week?: string;
+        };
+        Relationships: [];
+      };
+      surge_results: {
+        Row: {
+          cells_lost: number;
+          due_at: string;
+          numbers: NonNullable<Json>;
+          outcome: string;
+          resolved_at: string;
+          reward: Json | null;
+          units_lost: NonNullable<Json>;
+          user_id: string;
+          week: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          cells_lost?: number;
+          due_at: string;
+          numbers: NonNullable<Json>;
+          outcome: string;
+          resolved_at: string;
+          reward?: Json | null;
+          units_lost?: NonNullable<Json>;
+          user_id: string;
+          week: string;
+        };
+        Update: {
+          cells_lost?: number;
+          due_at?: string;
+          numbers?: NonNullable<Json>;
+          outcome?: string;
+          resolved_at?: string;
+          reward?: Json | null;
+          units_lost?: NonNullable<Json>;
+          user_id?: string;
+          week?: string;
         };
         Relationships: [];
       };
@@ -805,6 +914,7 @@ export type Database = {
         Args: { p_count: number; p_request_id: string; p_unit: string };
         Returns: Json;
       };
+      set_rest: { Args: { p_on: boolean }; Returns: Json };
       submit_location_batch: {
         Args: { p_batch_id: string; p_points: Json; p_session_id: string };
         Returns: Json;
