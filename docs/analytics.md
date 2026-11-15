@@ -89,7 +89,7 @@ perform private.record_surge_result(
   p_user       => p_user,
   p_week       => p_week,         -- Monday of the game week the surge closes
   p_held       => v_outcome = 'held',
-  p_pressure   => strength,       -- the surge's strength: Keep draw and frontier length
+  p_pressure   => strength,       -- the surge's strength, from frontier length
   p_defense    => defense,        -- Walls and garrison
   p_cells_lost => v_cells,        -- frontier cells lost (a count, never which cells)
   p_units_lost => v_units_total,  -- garrison losses

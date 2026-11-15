@@ -47,7 +47,7 @@ The analytics event's `game_day` is the Monday the surge was due, and its
 ## Strength and defense
 
 ```text
-strength = season pressure × first-surge factor × (Keep draw + 10 × effective frontier km)
+strength = season pressure × first-surge factor × 10 × effective frontier km
 defense  = (Walls defense + garrison power) × (1 + Watchtower defense bonus)
 ```
 
@@ -57,8 +57,8 @@ The surge holds when defense is at least the strength.
 | ----- | ------------------- | --------- |
 | Season pressure | Sheet (`Pressure_Start`, `Pressure_End`): rises linearly over the season's weeks | 1.0 in week 1 to 2.0 in week 9 |
 | First-surge factor | Design document, section 7 and 16 | 0.5 for the first surge, then 1 |
-| Keep draw | Design document, section 7 (the sheet has none) | 800 at Keep level 1, 1,200 at 2, up to 30,750 at 10 |
-| Strength per frontier km | Sheet (`Mist_Per_km`). The design document says 20; the sheet wins | 10 |
+| Keep draw | The user's decision: none, as in the sheet's own surge model. See [Balance](#balance-the-first-six-weeks) | 0 at every Keep level |
+| Strength per frontier km | Sheet (`Mist_Per_km`). The design document says 20; the user chose the sheet's value | 10 |
 | Faded frontier | Sheet (`Faded_Mult`, `Faded_Days`) | Counts twice after 30 days without a visit |
 | Walls defense | Sheet (**Building Effects**) | 150 at level 1, about ×1.5 a level |
 | Garrison power | Sheet (**Units**: `power`) | 1 per Pikeman |
@@ -210,43 +210,53 @@ tab (routine, detour-taker, and explorer), with these assumptions:
 - The player joins at the start of a season (pressure 1.0) or in week 4
   (pressure 1.375). No Rest.
 
-Results, as surges held out of 6:
+Results, as surges held out of 6, over the four scenarios (joining in season
+week 1 or 4, balanced or defensive):
 
 | Variant | Routine | Detour-taker | Explorer |
 | ------- | ------- | ------------ | -------- |
-| As built: Keep draw 800 and up, 10 per km | 0 | 0 | 0 |
-| Keep draw × 0.25 (200 and up) | 0 to 1 | 0 to 1 | 0 to 1 |
-| Keep draw × 0.1 (80 and up) | 4 to 6 | 1 to 3 | 1 |
-| Keep draw × 0.05 (40 and up) | 6 | 1 to 5 | 1 |
-| No Keep draw (the sheet's own surge calculator) | 6 | 2 to 6 | 1 to 3 |
+| **As built: no Keep draw, 10 per km** (the sheet's own surge calculator) | 6 | 2 to 6 | 1 to 3 |
+| Before the fix: design document Keep draw (800 and up), 10 per km | 0 | 0 | 0 |
+| Design document Keep draw × 0.1 (80 and up), 10 per km | 4 to 6 | 1 to 3 | 1 |
+| Design document Keep draw (800 and up), 20 per km | 0 | 0 | 0 |
 
-As built, holding is impossible. In week 2 a balanced detour-taker faces a
-strength of 1,455 with a defense of 248, and the gap grows every week. The
-Keep draw alone (800) is over five times the level 1 Walls (150), and the
-sheet's Pikemen add 1 defense each, 14 a week. Even the gentle first surge
-(about 410 to 920) breaks through.
+### The decision
 
-The smallest fix is one line in `private.surge_settings()`: drop the Keep draw
-to 0, which is the sheet's own surge model (its **Mist and Bosses**
-calculator has no Keep draw). Then routine players hold, balanced
-detour-takers mostly hold, detour-takers who stay at Keep and Walls level 1
-start breaking through in week 3 or 4, and explorers break through as their
-frontier grows. Scaling the draw to 10% (80 at Keep level 1) instead keeps "a bigger
-Keep draws more Mist" with a similar mix.
+The first version used the design document's Keep draw: 800 at Keep level 1,
+up to 30,750 at level 10. Next to the sheet's Walls (150 at level 1) and
+Pikemen (1 defense each, 14 a week), no simulated player ever held a surge,
+not even the gentle first one. In week 2 a balanced detour-taker faced a
+strength of 1,455 with a defense of 248.
 
-The design document's own numbers (Walls 600, Pikeman Defense 6, 20 per km)
-also break through from week 2 in this simulation, because Keep draw grows
-×1.5 per Keep level while Pikemen grow by 14 a week. Its constants are marked
-as starting values to calibrate.
+The user chose to drop the Keep draw, which is the sheet's own surge model:
+its **Mist and Bosses** calculator has no Keep draw. Strength per frontier km
+stays at the sheet's 10. `supabase/migrations/*_surge_keep_draw.sql` sets
+every level's Keep draw to 0 in `private.surge_settings()`. The column stays,
+so a Keep draw can come back by changing that one array.
+
+With no Keep draw:
+
+- Routine players hold every surge: their frontier stays small, because their
+  usual routes become roads in week 3.
+- Balanced detour-takers hold. Detour-takers who stay at Keep and Walls
+  level 1 start breaking through in week 3 or 4.
+- Explorers break through from week 2 to 4 onward, as their frontier grows
+  faster than their Walls and garrison.
+
+The design document's own numbers (Walls 600, Pikeman Defense 6, 20 per km,
+with the Keep draw) also break through from week 2 in this simulation,
+because the Keep draw grows ×1.5 per Keep level while Pikemen grow by 14 a
+week. Its constants are marked as starting values to calibrate.
 
 ## Values the sheet doesn't give
 
-The design document's values and the placeholders are all in
-`private.surge_settings()`:
+The design document's values, the user's decisions, and the placeholders are
+all in `private.surge_settings()`, last replaced in
+`supabase/migrations/*_surge_keep_draw.sql`:
 
 | Value | Source | Value |
 | ----- | ------ | ----- |
-| Keep draw by Keep level | Design document 7 | 800, 1,200, 1,800, 2,700, 4,050, 6,080, 9,110, 13,670, 20,500, 30,750 |
+| Keep draw by Keep level | The user's decision (was design document 7) | 0 at every level |
 | First-surge factor | Design document 7, 16 | 0.5 |
 | Days before Sunday to have a first surge that week | Design document 16 | 5 |
 | Partly held threshold | Design document 7 | Defense ≥ 0.5 × strength |

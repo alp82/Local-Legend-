@@ -1,9 +1,10 @@
 // Simulates typical players over their first 6 weeks of Mist surges and
 // compares strength with defense under several balance variants. It reads the
 // generated rules, so walking pay, costs, Walls, and Pikemen match the server.
-// The Keep draw table is copied from private.surge_settings()
-// (supabase/migrations/*_mist_surge.sql); keep the two in step. docs/mist.md
-// explains the assumptions and the results.
+// The game has no Keep draw (private.surge_settings() in
+// supabase/migrations/*_surge_keep_draw.sql sets it to 0, the sheet's own
+// surge model). KEEP_DRAW is the design document's table, used only by the
+// comparison variants. docs/mist.md explains the assumptions and the results.
 //
 // Usage, from the repository root: node scripts/simulate-surge.mjs
 import fs from 'node:fs';
@@ -15,6 +16,7 @@ const rulesPath = process.argv[2]
 const src = fs.readFileSync(rulesPath, 'utf8');
 const R = JSON.parse(src.slice(src.indexOf('export const rules: Rules = ') + 28).replace(/;\s*$/, ''));
 
+// Design document, section 7. Not used by the game; for the comparisons only.
 const KEEP_DRAW = [800, 1200, 1800, 2700, 4050, 6080, 9110, 13670, 20500, 30750];
 const TERRAIN = { builtUp: 0.5, park: 0.3, waterside: 0.2 }; // assumed share of km by terrain
 
@@ -26,10 +28,10 @@ const TYPES = {
 };
 
 const VARIANTS = {
-  'as built (Keep draw 800+, 10/km)': { draw: (k) => KEEP_DRAW[k - 1], perKm: R.mist.strengthPerFrontierKm },
-  'Keep draw x 0.25 (200+)': { draw: (k) => KEEP_DRAW[k - 1] * 0.25, perKm: R.mist.strengthPerFrontierKm },
-  'no Keep draw (sheet model)': { draw: () => 0, perKm: R.mist.strengthPerFrontierKm },
-  'Keep draw 800+, 20/km (design doc per km)': { draw: (k) => KEEP_DRAW[k - 1], perKm: 20 },
+  'as built: no Keep draw, 10/km (the sheet model)': { draw: () => 0, perKm: R.mist.strengthPerFrontierKm },
+  'before the fix: design Keep draw 800+, 10/km': { draw: (k) => KEEP_DRAW[k - 1], perKm: R.mist.strengthPerFrontierKm },
+  'design Keep draw x 0.1 (80+), 10/km': { draw: (k) => KEEP_DRAW[k - 1] * 0.1, perKm: R.mist.strengthPerFrontierKm },
+  'design Keep draw 800+, 20/km (design doc per km)': { draw: (k) => KEEP_DRAW[k - 1], perKm: 20 },
 };
 
 function rulerLevel(xp) {
@@ -166,7 +168,7 @@ for (const variant of Object.keys(VARIANTS)) {
 // Pikemen Defense 6, 20 per frontier km, pressure 1.0 to 1.5.
 console.log('\n=== design document model (Walls 600, Pikeman Defense 6, 20/km, pressure 1.0 to 1.5) ===');
 for (const type of Object.keys(TYPES)) {
-  const r = simulate(type, 'balanced', 1, 'Keep draw 800+, 20/km (design doc per km)');
+  const r = simulate(type, 'balanced', 1, 'design Keep draw 800+, 20/km (design doc per km)');
   const line = r.map((w) => {
     const walls = w.walls > 0 ? 600 * 1.5 ** (w.walls - 1) : 0;
     const def = walls + 6 * w.pikemen;

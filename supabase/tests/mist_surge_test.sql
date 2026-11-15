@@ -227,6 +227,9 @@ select pg_temp.zone('a0000000-0000-0000-0000-000000000001', 'Europe/Warsaw');
 select pg_temp.walked('a0000000-0000-0000-0000-000000000001', '2026-11-01', '2026-12-06', 2);
 select pg_temp.kingdom('a0000000-0000-0000-0000-000000000001', 5, 200);
 select pg_temp.had_surge('a0000000-0000-0000-0000-000000000001', '2026-11-16');
+-- Home is a single cell in Krakow; 2,000 fresh frontier cells in Warsaw.
+select pg_temp.claim('a0000000-0000-0000-0000-000000000001', pg_temp.base(50.06, 19.94), 0, 0, 0, 0, '2026-10-01 08:00 UTC');
+select pg_temp.claim('a0000000-0000-0000-0000-000000000001', pg_temp.base(52.23, 21.01), 0, 99, 0, 19, '2026-11-20 08:00 UTC');
 select private.settle_keep_tax('a0000000-0000-0000-0000-000000000001', '2026-11-29 12:00 Europe/Warsaw');
 
 select is(private.settle_surge('a0000000-0000-0000-0000-000000000001', '2026-11-30 03:59 Europe/Warsaw'), null,
@@ -234,11 +237,15 @@ select is(private.settle_surge('a0000000-0000-0000-0000-000000000001', '2026-11-
 select is((private.settle_surge('a0000000-0000-0000-0000-000000000001', '2026-11-30 04:00 Europe/Warsaw') ->> 'outcome'),
   'held', 'At 04:00 on Monday the surge resolves: it holds');
 select is(
-  (select array[(numbers ->> 'seasonPressure')::numeric, (numbers ->> 'keepDraw')::numeric, (numbers ->> 'strength')::numeric,
+  (select array[(numbers ->> 'seasonPressure')::numeric, (numbers ->> 'keepDraw')::numeric,
+                (numbers ->> 'strength')::numeric
+                  - (select round(1.125 * 10 * sum(l.km), 2)
+                     from private.surge_land('a0000000-0000-0000-0000-000000000001', '2026-11-23', '2026-11-30 04:00 Europe/Warsaw') l
+                     where l.kind = 'frontier'),
                 (numbers ->> 'wallsDefense')::numeric, (numbers ->> 'garrisonPower')::numeric, (numbers ->> 'defense')::numeric]
    from pg_temp.result('a0000000-0000-0000-0000-000000000001', '2026-11-23')),
-  array[1.125, 800, 900, 760, 200, 960]::numeric[],
-  'Strength 1.125 x 800 = 900 (season week 2, Keep draw 800, no frontier); defense 760 + 200 = 960');
+  array[1.125, 0, 0, 760, 200, 960]::numeric[],
+  'Strength = 1.125 x 10 per frontier km, with no Keep draw; defense 760 + 200 = 960');
 select is(
   (select array[gold, tickets, xp] from public.economy_ledger
    where user_id = 'a0000000-0000-0000-0000-000000000001' and reason = 'surge'),
@@ -262,7 +269,8 @@ select is(
   array[1, 1]::bigint[], 'The reward and the analytics event happen once');
 select is(
   (select props - 'week' from public.analytics_events where user_id = 'a0000000-0000-0000-0000-000000000001' and event = 'surge_result'),
-  '{"held": true, "gentle": false, "reward": {"xp": 150, "gold": 500, "tickets": 1}, "defense": 960.00, "pressure": 900.00, "cellsLost": 0, "unitsLost": 10}'::jsonb,
+  '{"held": true, "gentle": false, "reward": {"xp": 150, "gold": 500, "tickets": 1}, "defense": 960.00, "cellsLost": 0, "unitsLost": 10}'::jsonb
+    || jsonb_build_object('pressure', (select numbers -> 'strength' from pg_temp.result('a0000000-0000-0000-0000-000000000001', '2026-11-23'))),
   'The analytics event has the result, strength as pressure, and counts only');
 
 -- The Monday result as the app sees it.
@@ -285,7 +293,7 @@ select is(
 -- road. Tile row 1, columns 12 to 13, walked in only 2 weeks, isn't road.
 select pg_temp.zone('b0000000-0000-0000-0000-000000000001', 'Europe/Warsaw');
 select pg_temp.walked('b0000000-0000-0000-0000-000000000001', '2026-11-01', '2026-12-06', 2);
-select pg_temp.kingdom('b0000000-0000-0000-0000-000000000001', 1, 20);
+select pg_temp.kingdom('b0000000-0000-0000-0000-000000000001', 0, 20);
 select pg_temp.had_surge('b0000000-0000-0000-0000-000000000001', '2026-11-16');
 select pg_temp.claim('b0000000-0000-0000-0000-000000000001', pg_temp.base(52.23, 21.01), 0, 0, 0, 0, '2026-09-30 08:00 UTC');
 select pg_temp.claim('b0000000-0000-0000-0000-000000000001', pg_temp.base(52.23, 21.01), 60, 99, 0, 39, '2026-10-01 08:00 UTC');
@@ -318,7 +326,7 @@ select is(
   'Only the cells claimed on October 1 and never visited have faded');
 
 select is((private.settle_surge('b0000000-0000-0000-0000-000000000001', '2026-11-30 04:00 Europe/Warsaw') ->> 'outcome'),
-  'broke_through', 'Walls level 1 and 20 Pikemen can''t hold');
+  'broke_through', 'No Walls and 20 Pikemen can''t hold');
 select is(
   (select array[(numbers ->> 'frontierCells')::numeric + (numbers ->> 'homeCells')::numeric + (numbers ->> 'roadCells')::numeric,
                 (numbers ->> 'landLossShare')::numeric,
@@ -331,8 +339,8 @@ select is(
   'A big gap takes 5% of the frontier, never more');
 select is(
   (select round((numbers ->> 'strength')::numeric, 2) from pg_temp.result('b0000000-0000-0000-0000-000000000001', '2026-11-23')),
-  (select round(1.125 * (800 + 10 * (sum(km) + sum(km) filter (where faded))), 2) from b_land where kind = 'frontier'),
-  'Strength = pressure x (Keep draw + 10 per frontier km), faded km counted twice');
+  (select round(1.125 * 10 * (sum(km) + sum(km) filter (where faded)), 2) from b_land where kind = 'frontier'),
+  'Strength = pressure x 10 per frontier km, faded km counted twice');
 select is(
   (select count(*) from public.surge_lost_cells s join b_land l on l.cell = s.cell
    where s.user_id = 'b0000000-0000-0000-0000-000000000001' and (l.kind <> 'frontier' or not l.faded)),
@@ -380,7 +388,7 @@ select is(
 -- Home is a single cell far away; the 1,000-cell block is all fresh frontier.
 select pg_temp.zone('c0000000-0000-0000-0000-0000000000c1', 'Europe/Warsaw');
 select pg_temp.walked('c0000000-0000-0000-0000-0000000000c1', '2026-11-01', '2026-12-06', 2);
-select pg_temp.kingdom('c0000000-0000-0000-0000-0000000000c1', 4, 231);
+select pg_temp.kingdom('c0000000-0000-0000-0000-0000000000c1', 0, 21);
 select pg_temp.had_surge('c0000000-0000-0000-0000-0000000000c1', '2026-11-16');
 select pg_temp.claim('c0000000-0000-0000-0000-0000000000c1', pg_temp.base(50.06, 19.94), 0, 0, 0, 0, '2026-10-01 08:00 UTC');
 select pg_temp.claim('c0000000-0000-0000-0000-0000000000c1', pg_temp.base(52.23, 21.01), 0, 49, 0, 19, '2026-11-20 08:00 UTC');
@@ -388,7 +396,7 @@ select private.settle_surge('c0000000-0000-0000-0000-0000000000c1', '2026-11-30 
 select is(
   (select array[outcome, numbers ->> 'frontierCells', (numbers ->> 'partlyHeld')]
    from pg_temp.result('c0000000-0000-0000-0000-0000000000c1', '2026-11-23')),
-  array['broke_through', '1000', 'true'], 'Defense 741 against strength about 926: broke through, but partly held');
+  array['broke_through', '1000', 'true'], 'Defense 21 against strength about 25.7: broke through, but partly held');
 select is(
   (select array[(numbers ->> 'landLossShare')::numeric,
                 cells_lost::numeric]
@@ -403,7 +411,7 @@ select is(
   (select array[gold, xp] from public.economy_ledger where user_id = 'c0000000-0000-0000-0000-0000000000c1' and reason = 'surge'),
   array[0, 75]::numeric[], 'Partly held pays 75 XP and no gold');
 select is((select count from public.player_garrison where user_id = 'c0000000-0000-0000-0000-0000000000c1'),
-  208, 'Breakthrough: Pikemen lose 10% (23 of 231)');
+  19, 'Breakthrough: Pikemen lose 10% (2 of 21)');
 
 -- ---------------------------------------------------------------------------
 -- The gentle first surge (d01, e01)
@@ -413,25 +421,34 @@ select is((select count from public.player_garrison where user_id = 'c0000000-00
 -- closes that week, at half pressure.
 select pg_temp.zone('d0000000-0000-0000-0000-000000000001', 'Europe/Warsaw');
 select pg_temp.walked('d0000000-0000-0000-0000-000000000001', '2026-11-17', '2026-12-06', 2);
-select pg_temp.kingdom('d0000000-0000-0000-0000-000000000001', 2, 200);
+select pg_temp.kingdom('d0000000-0000-0000-0000-000000000001', 0, 25);
+-- Home is a single cell in Krakow; 2,000 fresh frontier cells in Warsaw.
+select pg_temp.claim('d0000000-0000-0000-0000-000000000001', pg_temp.base(50.06, 19.94), 0, 0, 0, 0, '2026-11-18 08:00 UTC');
+select pg_temp.claim('d0000000-0000-0000-0000-000000000001', pg_temp.base(52.23, 21.01), 0, 99, 0, 19, '2026-11-18 09:00 UTC');
 select private.settle_surge('d0000000-0000-0000-0000-000000000001', '2026-11-23 04:30 Europe/Warsaw');
 select is(
-  (select array[outcome, numbers ->> 'gentle', numbers ->> 'pressure', numbers ->> 'strength', numbers ->> 'defense']
+  (select array[outcome, numbers ->> 'gentle', numbers ->> 'pressure', numbers ->> 'defense',
+                ((numbers ->> 'strength')::numeric
+                  = (select round(0.5 * 10 * sum(l.km), 2)
+                     from private.surge_land('d0000000-0000-0000-0000-000000000001', '2026-11-16', '2026-11-23 04:00 Europe/Warsaw') l
+                     where l.kind = 'frontier'))::text]
    from pg_temp.result('d0000000-0000-0000-0000-000000000001', '2026-11-16')),
-  array['held', 'true', '0.5000', '400.00', '430.00'], 'First surge: half of pressure 1.0, strength 400; 430 holds it');
+  array['held', 'true', '0.5000', '25.00', 'true'], 'First surge: half of pressure 1.0, strength about 22.8; 25 holds it');
 select is(
   (select (props ->> 'gentle')::boolean from public.analytics_events where user_id = 'd0000000-0000-0000-0000-000000000001' and event = 'surge_result'),
   true, 'The analytics event marks the gentle surge');
 select private.settle_surge('d0000000-0000-0000-0000-000000000001', '2026-11-30 04:30 Europe/Warsaw');
 select is(
-  (select array[outcome, numbers ->> 'gentle', numbers ->> 'pressure', numbers ->> 'strength']
-   from pg_temp.result('d0000000-0000-0000-0000-000000000001', '2026-11-23')),
-  array['broke_through', 'false', '1.1250', '900.00'], 'The second surge is at full pressure (1.125)');
+  (select array[w2.outcome, w2.numbers ->> 'gentle', w2.numbers ->> 'pressure',
+                round((w2.numbers ->> 'strength')::numeric / (w1.numbers ->> 'strength')::numeric, 2)::text]
+   from pg_temp.result('d0000000-0000-0000-0000-000000000001', '2026-11-16') w1, pg_temp.result('d0000000-0000-0000-0000-000000000001', '2026-11-23') w2),
+  array['broke_through', 'false', '1.1250', '2.25'], 'The second surge is at full pressure (1.125): 2.25 times the first on the same land');
 
 -- e01 joined on Wednesday, November 18 (4 days before Sunday): no surge that
 -- week; the first one closes the next week.
 select pg_temp.zone('e0000000-0000-0000-0000-0000000000e1', 'Europe/Warsaw');
 select pg_temp.walked('e0000000-0000-0000-0000-0000000000e1', '2026-11-18', '2026-12-06', 2);
+select pg_temp.claim('e0000000-0000-0000-0000-0000000000e1', pg_temp.base(52.23, 21.01), 0, 49, 0, 1, '2026-11-19 08:00 UTC');
 select private.settle_surge('e0000000-0000-0000-0000-0000000000e1', '2026-11-23 04:30 Europe/Warsaw');
 select private.settle_surge('e0000000-0000-0000-0000-0000000000e1', '2026-11-30 04:30 Europe/Warsaw');
 select is(
@@ -447,7 +464,7 @@ select is(pg_temp.events('e0000000-0000-0000-0000-0000000000e1'), 1::bigint, 'A 
 
 select pg_temp.zone(('90000000-0000-0000-0000-00000000000' || i)::uuid, 'Europe/Warsaw') from generate_series(1, 4) i;
 select pg_temp.had_surge(('90000000-0000-0000-0000-00000000000' || i)::uuid, '2026-11-16') from generate_series(1, 3) i;
-select pg_temp.kingdom(('90000000-0000-0000-0000-00000000000' || i)::uuid, 1, 20) from generate_series(1, 4) i;
+select pg_temp.kingdom(('90000000-0000-0000-0000-00000000000' || i)::uuid, 0, 20) from generate_series(1, 4) i;
 select pg_temp.claim(('90000000-0000-0000-0000-00000000000' || i)::uuid, pg_temp.base(52.23, 21.01), 0, 79, 0, 39, '2026-10-01 08:00 UTC')
 from generate_series(1, 4) i;
 
