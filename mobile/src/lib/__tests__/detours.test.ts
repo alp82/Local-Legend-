@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { detoursJson, offerLabel, offerPlace, offerTitle, REWARD_COLORS, rewardText } from '../detours';
+import { detoursJson, offerDistance, offerLabel, offerPlace, offerTitle, REWARD_COLORS, rewardText } from '../detours';
 import type { DetourOffer } from '../detoursApi';
 import { rules } from '../rules.generated';
 
@@ -68,5 +68,16 @@ describe('detoursJson', () => {
 
   it('is an empty collection without offers', () => {
     expect(JSON.parse(detoursJson([]))).toEqual({ type: 'FeatureCollection', features: [] });
+  });
+});
+
+describe('offerDistance', () => {
+  it('names what the server measured the offer from', () => {
+    const o = offer({ offRouteM: 80.6 });
+    expect(offerDistance(o, 'routes')).toBe('81 m off your usual route');
+    expect(offerDistance(o, 'recent')).toBe('81 m from a recent walk');
+    expect(offerDistance(o, 'land')).toBe('81 m from your land');
+    expect(offerDistance(o, 'position')).toBe('81 m from where you were');
+    expect(offerDistance(o, null)).toBe('81 m away');
   });
 });

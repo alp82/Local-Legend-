@@ -9,7 +9,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ResourceBar } from '@/components/resource-bar';
 import { useKingdom } from '@/hooks/use-kingdom';
-import { affordablePikemen, artTier, formatResources, nextLevel, pikemenCost, type Blocker } from '@/lib/kingdom';
+import { affordablePikemen, artTier, formatResources, nextLevel, pikemenCost, shortfall, type Blocker } from '@/lib/kingdom';
 import {
   buildBuilding,
   PLOTS,
@@ -19,7 +19,7 @@ import {
   type PlotId,
   type RecruitResult,
 } from '@/lib/kingdomApi';
-import { rules } from '@/lib/rules.generated';
+import { rules, type Resources } from '@/lib/rules.generated';
 import { isThisWeeksResult, surgeSummary, type Surge } from '@/lib/surge';
 
 const ART: Partial<Record<PlotId, Record<1 | 2 | 3, ImageSourcePropType>>> = {
@@ -93,13 +93,21 @@ function recruitOutcome(r: RecruitResult) {
   }
 }
 
+/** Why no Pikeman can be recruited now, or null when at least one can. */
+function recruitBlocker(available: number, missing: Partial<Resources> | null, nextRecruitsAt: string | null) {
+  if (available < 1) return `No recruits left this week. New recruits arrive ${timeOf(nextRecruitsAt)}.`;
+  if (missing) return `Missing ${formatResources(missing)} to recruit a Pikeman.`;
+  return null;
+}
+
 function SurgeCard({ surge, gameDay, busy, onRest }: { surge: Surge; gameDay: string; busy: boolean; onRest: (on: boolean) => void }) {
-  const last = isThisWeeksResult(surge.last, gameDay) ? surge.last : null;
+  // A not_yet result only says the first surge is still to come, which the forecast already says.
+  const last = isThisWeeksResult(surge.last, gameDay) && surge.last?.outcome !== 'not_yet' ? surge.last : null;
   const summary = last ? surgeSummary(last) : null;
   const next = surge.next;
   const rest = surge.rest;
   let forecast: string;
-  if (next.notYet) forecast = 'No surge this Sunday: your first one comes the Sunday after, at half strength.';
+  if (next.notYet) forecast = 'No surge this Sunday. Your first surge comes the Sunday after, at half strength.';
   else if (rest.on || next.rested) forecast = 'You\'re resting: this Sunday\'s surge will pass you by.';
   else {
     forecast = `This Sunday night: strength ${Math.round(next.strength)} against your defense ${Math.round(next.defense)}`
@@ -169,6 +177,7 @@ export default function KingdomScreen() {
   const pool = k.recruits.pikeman;
   const canRecruit = affordablePikemen(k, balances);
   const count = Math.max(1, Math.min(recruitCount, Math.max(1, canRecruit)));
+  const cantRecruit = canRecruit < 1 ? recruitBlocker(pool.available, shortfall(balances, pikemenCost(1)), k.nextRecruitsAt) : null;
 
   return (
     <SafeAreaView style={styles.screen} edges={['bottom']}>
@@ -278,6 +287,7 @@ export default function KingdomScreen() {
                 style={({ pressed }) => [styles.button, (busy || canRecruit < 1) && styles.buttonOff, pressed && styles.pressed]}>
                 <Text style={styles.buttonText}>{`Recruit ${count} for ${formatResources(pikemenCost(count))}`}</Text>
               </Pressable>
+              {cantRecruit && <Text style={styles.hint}>{cantRecruit}</Text>}
             </>
           )}
         </View>

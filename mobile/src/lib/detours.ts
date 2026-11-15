@@ -1,7 +1,7 @@
 // What the map shows for detour offers: titles, labels, and map features. The
 // server decides every offer and collection; this only formats them.
 
-import type { DetourOffer, RewardKind } from './detoursApi';
+import type { DetourOffer, Detours, RewardKind } from './detoursApi';
 import { formatResources } from './kingdom';
 
 const TITLES: Record<RewardKind, string> = {
@@ -55,6 +55,23 @@ export function offerPlace(offer: Pick<DetourOffer, 'name' | 'spotKind' | 'spotS
     default:
       return 'nearby';
   }
+}
+
+const MEASURED_FROM: Record<NonNullable<Detours['source']>, string> = {
+  routes: 'off your usual route',
+  recent: 'from a recent walk',
+  land: 'from your land',
+  position: 'from where you were',
+};
+
+/**
+ * How far the offer is from what the server placed it around, for the card:
+ * "81 m off your usual route", or "81 m from a recent walk" for a player
+ * without usual routes yet (docs/detours.md lists the fallbacks).
+ */
+export function offerDistance(offer: Pick<DetourOffer, 'offRouteM'>, source: Detours['source']): string {
+  const meters = `${Math.round(offer.offRouteM)} m`;
+  return source ? `${meters} ${MEASURED_FROM[source]}` : `${meters} away`;
 }
 
 /**

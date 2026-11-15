@@ -21,7 +21,7 @@ import { useEconomy } from '@/hooks/use-economy';
 import { useFollowCamera } from '@/hooks/use-follow-camera';
 import { useSites } from '@/hooks/use-sites';
 import { onQueueEvent } from '@/lib/db';
-import { detoursJson, offerPlace, offerTitle, rewardText } from '@/lib/detours';
+import { detoursJson, offerDistance, offerPlace, offerTitle, rewardText } from '@/lib/detours';
 import type { DetourOffer } from '@/lib/detoursApi';
 import { useDebugSettings } from '@/lib/debugSettings';
 import { fakeWorld, type FakeWorld } from '@/lib/fakeTerritory';
@@ -426,7 +426,7 @@ export default function MapScreen() {
               <View style={styles.siteCardRow}>
                 <View style={styles.flex}>
                   <Text style={styles.siteName}>{`${offerTitle(offer)} · +${offer.addedMin} min`}</Text>
-                  <Text style={styles.siteType}>{`${offerPlace(offer)}, ${Math.round(offer.offRouteM)} m off your usual route`}</Text>
+                  <Text style={styles.siteType}>{`${offerPlace(offer)}, ${offerDistance(offer, detoursState.detours?.source ?? null)}`}</Text>
                   <Text style={styles.siteType}>{rewardText(offer)}</Text>
                   <Text style={styles.siteType}>
                     {offer.collectedAt

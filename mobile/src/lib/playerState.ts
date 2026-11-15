@@ -10,17 +10,31 @@ function client() {
   return supabase;
 }
 
-/** Returns the signed-in user, signing in anonymously on first launch. The session persists across restarts. */
-export async function ensureSession(): Promise<User> {
+let pendingSignIn: Promise<User> | null = null;
+
+/**
+ * Returns the signed-in user, signing in anonymously on first launch. The
+ * session persists across restarts. Callers that arrive while a sign-in is in
+ * flight share it, so parallel API calls on a fresh install create one user,
+ * not one each.
+ */
+export function ensureSession(): Promise<User> {
+  pendingSignIn ??= signIn().finally(() => {
+    pendingSignIn = null;
+  });
+  return pendingSignIn;
+}
+
+async function signIn(): Promise<User> {
   const db = client();
   const { data, error } = await db.auth.getSession();
   if (error) throw error;
   if (data.session) return data.session.user;
 
-  const signIn = await db.auth.signInAnonymously();
-  if (signIn.error) throw signIn.error;
-  if (!signIn.data.user) throw new Error('Anonymous sign-in returned no user.');
-  return signIn.data.user;
+  const result = await db.auth.signInAnonymously();
+  if (result.error) throw result.error;
+  if (!result.data.user) throw new Error('Anonymous sign-in returned no user.');
+  return result.data.user;
 }
 
 /** Loads the current player's row, or null if they have never saved. */
