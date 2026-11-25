@@ -1,0 +1,12706 @@
+{
+ "barn": {
+  "ow": 1159,
+  "oh": 895,
+  "w": 480,
+  "h": 371,
+  "ax": 0.494,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects/barn.png",
+  "atlas": [
+   936,
+   3082,
+   224,
+   173
+  ]
+ },
+ "chapel": {
+  "ow": 892,
+  "oh": 1154,
+  "w": 371,
+  "h": 480,
+  "ax": 0.515,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects/chapel.png",
+  "atlas": [
+   216,
+   1151,
+   173,
+   224
+  ]
+ },
+ "crop-field-patch": {
+  "ow": 1286,
+  "oh": 748,
+  "w": 480,
+  "h": 279,
+  "ax": 0.554,
+  "ay": 0.94,
+  "foot": 0.924,
+  "src": "concept/objects/crop-field-patch.png",
+  "atlas": [
+   774,
+   3583,
+   224,
+   130
+  ]
+ },
+ "deciduous-autumn-maple": {
+  "ow": 1067,
+  "oh": 1049,
+  "w": 480,
+  "h": 472,
+  "ax": 0.448,
+  "ay": 0.94,
+  "foot": 0.645,
+  "src": "concept/objects/deciduous-autumn-maple.png",
+  "atlas": [
+   1484,
+   1829,
+   224,
+   220
+  ]
+ },
+ "deciduous-birch": {
+  "ow": 788,
+  "oh": 1328,
+  "w": 285,
+  "h": 480,
+  "ax": 0.49,
+  "ay": 0.94,
+  "foot": 0.536,
+  "src": "concept/objects/deciduous-birch.png",
+  "atlas": [
+   448,
+   1151,
+   133,
+   224
+  ]
+ },
+ "deciduous-oak": {
+  "ow": 1108,
+  "oh": 1033,
+  "w": 480,
+  "h": 448,
+  "ax": 0.481,
+  "ay": 0.94,
+  "foot": 0.642,
+  "src": "concept/objects/deciduous-oak.png",
+  "atlas": [
+   1162,
+   2276,
+   224,
+   209
+  ]
+ },
+ "forest-clump": {
+  "ow": 1180,
+  "oh": 1090,
+  "w": 480,
+  "h": 443,
+  "ax": 0.473,
+  "ay": 0.94,
+  "foot": 0.972,
+  "src": "concept/objects/forest-clump.png",
+  "atlas": [
+   1614,
+   2276,
+   224,
+   207
+  ]
+ },
+ "haystack": {
+  "ow": 819,
+  "oh": 766,
+  "w": 480,
+  "h": 449,
+  "ax": 0.481,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects/haystack.png",
+  "atlas": [
+   1614,
+   2054,
+   224,
+   210
+  ]
+ },
+ "jetty-and-boat": {
+  "ow": 1103,
+  "oh": 923,
+  "w": 480,
+  "h": 402,
+  "ax": 0.612,
+  "ay": 0.94,
+  "foot": 0.814,
+  "src": "concept/objects/jetty-and-boat.png",
+  "atlas": [
+   226,
+   2892,
+   224,
+   188
+  ]
+ },
+ "long-house": {
+  "ow": 1223,
+  "oh": 847,
+  "w": 480,
+  "h": 332,
+  "ax": 0.529,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects/long-house.png",
+  "atlas": [
+   1130,
+   3262,
+   224,
+   155
+  ]
+ },
+ "market-stalls": {
+  "ow": 1148,
+  "oh": 822,
+  "w": 480,
+  "h": 344,
+  "ax": 0.483,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects/market-stalls.png",
+  "atlas": [
+   226,
+   3262,
+   224,
+   161
+  ]
+ },
+ "mountain-peak": {
+  "ow": 1110,
+  "oh": 1088,
+  "w": 480,
+  "h": 470,
+  "ax": 0.463,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects/mountain-peak.png",
+  "atlas": [
+   226,
+   2054,
+   224,
+   219
+  ]
+ },
+ "orchard-patch": {
+  "ow": 1041,
+  "oh": 978,
+  "w": 480,
+  "h": 451,
+  "ax": 0.477,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects/orchard-patch.png",
+  "atlas": [
+   0,
+   2276,
+   224,
+   210
+  ]
+ },
+ "pine-spreading": {
+  "ow": 1216,
+  "oh": 1044,
+  "w": 480,
+  "h": 412,
+  "ax": 0.445,
+  "ay": 0.94,
+  "foot": 0.59,
+  "src": "concept/objects/pine-spreading.png",
+  "atlas": [
+   322,
+   2696,
+   224,
+   192
+  ]
+ },
+ "pine-tall": {
+  "ow": 607,
+  "oh": 1174,
+  "w": 248,
+  "h": 480,
+  "ax": 0.497,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects/pine-tall.png",
+  "atlas": [
+   123,
+   1377,
+   116,
+   224
+  ]
+ },
+ "rock-angular": {
+  "ow": 728,
+  "oh": 871,
+  "w": 401,
+  "h": 480,
+  "ax": 0.478,
+  "ay": 0.94,
+  "foot": 0.997,
+  "src": "concept/objects/rock-angular.png",
+  "atlas": [
+   457,
+   1377,
+   187,
+   224
+  ]
+ },
+ "rock-flat": {
+  "ow": 1088,
+  "oh": 501,
+  "w": 480,
+  "h": 221,
+  "ax": 0.255,
+  "ay": 0.94,
+  "foot": 0.749,
+  "src": "concept/objects/rock-flat.png",
+  "atlas": [
+   356,
+   3724,
+   224,
+   103
+  ]
+ },
+ "rock-mossy": {
+  "ow": 953,
+  "oh": 737,
+  "w": 480,
+  "h": 371,
+  "ax": 0.488,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects/rock-mossy.png",
+  "atlas": [
+   1162,
+   3082,
+   224,
+   173
+  ]
+ },
+ "rocky-cliff": {
+  "ow": 1087,
+  "oh": 1016,
+  "w": 480,
+  "h": 449,
+  "ax": 0.371,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects/rocky-cliff.png",
+  "atlas": [
+   226,
+   2276,
+   224,
+   210
+  ]
+ },
+ "stone-bridge": {
+  "ow": 1292,
+  "oh": 832,
+  "w": 480,
+  "h": 309,
+  "ax": 0.282,
+  "ay": 0.94,
+  "foot": 0.926,
+  "src": "concept/objects/stone-bridge.png",
+  "atlas": [
+   226,
+   2488,
+   320,
+   206
+  ]
+ },
+ "stone-house": {
+  "ow": 1137,
+  "oh": 1084,
+  "w": 480,
+  "h": 458,
+  "ax": 0.505,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects/stone-house.png",
+  "atlas": [
+   1388,
+   2054,
+   224,
+   214
+  ]
+ },
+ "thatched-cottage": {
+  "ow": 983,
+  "oh": 1047,
+  "w": 451,
+  "h": 480,
+  "ax": 0.478,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects/thatched-cottage.png",
+  "atlas": [
+   1221,
+   1377,
+   210,
+   224
+  ]
+ },
+ "timber-frame-house": {
+  "ow": 923,
+  "oh": 1057,
+  "w": 419,
+  "h": 480,
+  "ax": 0.501,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects/timber-frame-house.png",
+  "atlas": [
+   1433,
+   1377,
+   196,
+   224
+  ]
+ },
+ "tower-house": {
+  "ow": 828,
+  "oh": 1250,
+  "w": 318,
+  "h": 480,
+  "ax": 0.483,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects/tower-house.png",
+  "atlas": [
+   409,
+   1603,
+   148,
+   224
+  ]
+ },
+ "vegetable-garden": {
+  "ow": 1226,
+  "oh": 788,
+  "w": 480,
+  "h": 309,
+  "ax": 0.52,
+  "ay": 0.94,
+  "foot": 0.878,
+  "src": "concept/objects/vegetable-garden.png",
+  "atlas": [
+   1130,
+   3431,
+   224,
+   144
+  ]
+ },
+ "well": {
+  "ow": 783,
+  "oh": 1090,
+  "w": 345,
+  "h": 480,
+  "ax": 0.492,
+  "ay": 0.94,
+  "foot": 0.989,
+  "src": "concept/objects/well.png",
+  "atlas": [
+   1531,
+   1603,
+   161,
+   224
+  ]
+ },
+ "windmill": {
+  "ow": 817,
+  "oh": 1081,
+  "w": 363,
+  "h": 480,
+  "ax": 0.511,
+  "ay": 0.94,
+  "foot": 0.955,
+  "src": "concept/objects/windmill.png",
+  "atlas": [
+   1694,
+   1603,
+   169,
+   224
+  ]
+ },
+ "wooden-bridge": {
+  "ow": 1287,
+  "oh": 779,
+  "w": 480,
+  "h": 291,
+  "ax": 0.228,
+  "ay": 0.94,
+  "foot": 0.475,
+  "src": "concept/objects/wooden-bridge.png",
+  "atlas": [
+   0,
+   2696,
+   320,
+   194
+  ]
+ },
+ "bush-hawthorn": {
+  "ow": 852,
+  "oh": 688,
+  "w": 480,
+  "h": 388,
+  "ax": 0.472,
+  "ay": 0.94,
+  "foot": 0.967,
+  "src": "concept/objects2/bush-hawthorn.png",
+  "atlas": [
+   452,
+   2892,
+   224,
+   181
+  ]
+ },
+ "bush-juniper": {
+  "ow": 1312,
+  "oh": 596,
+  "w": 480,
+  "h": 218,
+  "ax": 0.557,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects2/bush-juniper.png",
+  "atlas": [
+   582,
+   3724,
+   224,
+   102
+  ]
+ },
+ "cathedral": {
+  "ow": 1252,
+  "oh": 1151,
+  "w": 480,
+  "h": 441,
+  "ax": 0.436,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects2/cathedral.png",
+  "atlas": [
+   0,
+   2488,
+   224,
+   206
+  ]
+ },
+ "cliff-band": {
+  "ow": 1636,
+  "oh": 659,
+  "w": 480,
+  "h": 193,
+  "ax": 0.24,
+  "ay": 0.94,
+  "foot": 0.925,
+  "src": "concept/objects2/cliff-band.png",
+  "atlas": [
+   1130,
+   3724,
+   224,
+   90
+  ]
+ },
+ "cow-group": {
+  "ow": 1135,
+  "oh": 789,
+  "w": 480,
+  "h": 334,
+  "ax": 0.549,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects2/cow-group.png",
+  "atlas": [
+   904,
+   3262,
+   224,
+   156
+  ]
+ },
+ "farmstead-yard": {
+  "ow": 1209,
+  "oh": 964,
+  "w": 480,
+  "h": 383,
+  "ax": 0.543,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects2/farmstead-yard.png",
+  "atlas": [
+   904,
+   2892,
+   224,
+   179
+  ]
+ },
+ "fence-corner": {
+  "ow": 1298,
+  "oh": 644,
+  "w": 480,
+  "h": 238,
+  "ax": 0.493,
+  "ay": 0.94,
+  "foot": 0.622,
+  "src": "concept/objects2/fence-corner.png",
+  "atlas": [
+   1000,
+   3583,
+   256,
+   127
+  ]
+ },
+ "fence-straight": {
+  "ow": 1292,
+  "oh": 779,
+  "w": 480,
+  "h": 289,
+  "ax": 0.099,
+  "ay": 0.94,
+  "foot": 0.672,
+  "src": "concept/objects2/fence-straight.png",
+  "atlas": [
+   1582,
+   3262,
+   256,
+   154
+  ]
+ },
+ "flower-garden": {
+  "ow": 1166,
+  "oh": 753,
+  "w": 480,
+  "h": 310,
+  "ax": 0.511,
+  "ay": 0.94,
+  "foot": 0.923,
+  "src": "concept/objects2/flower-garden.png",
+  "atlas": [
+   904,
+   3431,
+   224,
+   145
+  ]
+ },
+ "forest-deciduous-belt": {
+  "ow": 1456,
+  "oh": 822,
+  "w": 480,
+  "h": 271,
+  "ax": 0.287,
+  "ay": 0.94,
+  "foot": 0.838,
+  "src": "concept/objects2/forest-deciduous-belt.png",
+  "atlas": [
+   1484,
+   3583,
+   224,
+   126
+  ]
+ },
+ "forest-deciduous-hook": {
+  "ow": 1315,
+  "oh": 1204,
+  "w": 198,
+  "h": 181,
+  "foot_m": [
+   84.0,
+   68.0
+  ],
+  "src": "concept/scenery/forest-deciduous-hook.png",
+  "set": false,
+  "ax": 0.409,
+  "ay": 0.452,
+  "foot": 1.0,
+  "atlas": [
+   2607,
+   1992,
+   198,
+   181
+  ],
+  "sheet": 1
+ },
+ "forest-deciduous-round": {
+  "ow": 1174,
+  "oh": 1059,
+  "w": 480,
+  "h": 433,
+  "ax": 0.493,
+  "ay": 0.94,
+  "foot": 0.939,
+  "src": "concept/objects2/forest-deciduous-round.png",
+  "atlas": [
+   774,
+   2488,
+   224,
+   202
+  ]
+ },
+ "forest-pine-large": {
+  "ow": 1240,
+  "oh": 970,
+  "w": 480,
+  "h": 375,
+  "ax": 0.448,
+  "ay": 0.94,
+  "foot": 0.998,
+  "src": "concept/objects2/forest-pine-large.png",
+  "atlas": [
+   710,
+   3082,
+   224,
+   175
+  ]
+ },
+ "forest-pine-small": {
+  "ow": 926,
+  "oh": 1108,
+  "w": 401,
+  "h": 480,
+  "ax": 0.478,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects2/forest-pine-small.png",
+  "atlas": [
+   583,
+   1151,
+   187,
+   224
+  ]
+ },
+ "fountain": {
+  "ow": 874,
+  "oh": 697,
+  "w": 480,
+  "h": 383,
+  "ax": 0.507,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects2/fountain.png",
+  "atlas": [
+   1130,
+   2892,
+   224,
+   179
+  ]
+ },
+ "graveyard-patch": {
+  "ow": 1321,
+  "oh": 745,
+  "w": 480,
+  "h": 271,
+  "ax": 0.492,
+  "ay": 0.94,
+  "foot": 0.943,
+  "src": "concept/objects2/graveyard-patch.png",
+  "atlas": [
+   1710,
+   3583,
+   224,
+   126
+  ]
+ },
+ "hedge-segment": {
+  "ow": 1022,
+  "oh": 683,
+  "w": 480,
+  "h": 321,
+  "ax": 0.183,
+  "ay": 0.94,
+  "foot": 0.705,
+  "src": "concept/objects2/hedge-segment.png",
+  "atlas": [
+   1388,
+   3082,
+   256,
+   171
+  ]
+ },
+ "horse-paddock": {
+  "ow": 1146,
+  "oh": 763,
+  "w": 480,
+  "h": 320,
+  "ax": 0.458,
+  "ay": 0.94,
+  "foot": 0.927,
+  "src": "concept/objects2/horse-paddock.png",
+  "atlas": [
+   226,
+   3431,
+   224,
+   149
+  ]
+ },
+ "house-cross-gable": {
+  "ow": 1081,
+  "oh": 1126,
+  "w": 461,
+  "h": 480,
+  "ax": 0.494,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects2/house-cross-gable.png",
+  "atlas": [
+   772,
+   1151,
+   215,
+   224
+  ]
+ },
+ "house-hipped-cottage": {
+  "ow": 1124,
+  "oh": 1094,
+  "w": 480,
+  "h": 467,
+  "ax": 0.489,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects2/house-hipped-cottage.png",
+  "atlas": [
+   678,
+   2054,
+   224,
+   218
+  ]
+ },
+ "house-limewash": {
+  "ow": 828,
+  "oh": 1127,
+  "w": 353,
+  "h": 480,
+  "ax": 0.519,
+  "ay": 0.94,
+  "foot": 0.961,
+  "src": "concept/objects2/house-limewash.png",
+  "atlas": [
+   989,
+   1151,
+   165,
+   224
+  ]
+ },
+ "house-stepped-gable": {
+  "ow": 694,
+  "oh": 1178,
+  "w": 283,
+  "h": 480,
+  "ax": 0.499,
+  "ay": 0.94,
+  "foot": 0.997,
+  "src": "concept/objects2/house-stepped-gable.png",
+  "atlas": [
+   1156,
+   1151,
+   132,
+   224
+  ]
+ },
+ "inn": {
+  "ow": 1118,
+  "oh": 939,
+  "w": 480,
+  "h": 403,
+  "ax": 0.453,
+  "ay": 0.94,
+  "foot": 0.987,
+  "src": "concept/objects2/inn.png",
+  "atlas": [
+   0,
+   2892,
+   224,
+   188
+  ]
+ },
+ "low-stone-wall": {
+  "ow": 1028,
+  "oh": 610,
+  "w": 480,
+  "h": 285,
+  "ax": 0.221,
+  "ay": 0.94,
+  "foot": 0.806,
+  "src": "concept/objects2/low-stone-wall.png",
+  "atlas": [
+   548,
+   3583,
+   224,
+   133
+  ]
+ },
+ "massif-double-peak": {
+  "ow": 1495,
+  "oh": 991,
+  "w": 480,
+  "h": 318,
+  "ax": 0.427,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects2/massif-double-peak.png",
+  "atlas": [
+   452,
+   3431,
+   224,
+   148
+  ]
+ },
+ "massif-plateau": {
+  "ow": 1926,
+  "oh": 634,
+  "w": 480,
+  "h": 158,
+  "ax": 0.381,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects2/massif-plateau.png",
+  "atlas": [
+   1746,
+   3724,
+   224,
+   74
+  ]
+ },
+ "massif-ridge": {
+  "ow": 1571,
+  "oh": 891,
+  "w": 480,
+  "h": 272,
+  "ax": 0.285,
+  "ay": 0.94,
+  "foot": 0.896,
+  "src": "concept/objects2/massif-ridge.png",
+  "atlas": [
+   1258,
+   3583,
+   224,
+   127
+  ]
+ },
+ "monastery": {
+  "ow": 1293,
+  "oh": 923,
+  "w": 480,
+  "h": 343,
+  "ax": 0.488,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects2/monastery.png",
+  "atlas": [
+   452,
+   3262,
+   224,
+   160
+  ]
+ },
+ "monument-statue": {
+  "ow": 643,
+  "oh": 1185,
+  "w": 260,
+  "h": 480,
+  "ax": 0.493,
+  "ay": 0.94,
+  "foot": 0.998,
+  "src": "concept/objects2/monument-statue.png",
+  "atlas": [
+   0,
+   1377,
+   121,
+   224
+  ]
+ },
+ "quay-boats": {
+  "ow": 1255,
+  "oh": 876,
+  "w": 480,
+  "h": 335,
+  "ax": 0.293,
+  "ay": 0.94,
+  "foot": 0.942,
+  "src": "concept/objects2/quay-boats.png",
+  "atlas": [
+   1356,
+   2892,
+   256,
+   179
+  ]
+ },
+ "reeds": {
+  "ow": 986,
+  "oh": 1033,
+  "w": 458,
+  "h": 480,
+  "ax": 0.478,
+  "ay": 0.94,
+  "foot": 0.794,
+  "src": "concept/objects2/reeds.png",
+  "atlas": [
+   241,
+   1377,
+   214,
+   224
+  ]
+ },
+ "rowhouses-canal": {
+  "ow": 1186,
+  "oh": 943,
+  "w": 480,
+  "h": 382,
+  "ax": 0.469,
+  "ay": 0.94,
+  "foot": 0.944,
+  "src": "concept/objects2/rowhouses-canal.png",
+  "atlas": [
+   1614,
+   2892,
+   224,
+   178
+  ]
+ },
+ "rowhouses-street": {
+  "ow": 1225,
+  "oh": 821,
+  "w": 480,
+  "h": 322,
+  "ax": 0.576,
+  "ay": 0.94,
+  "foot": 0.972,
+  "src": "concept/objects2/rowhouses-street.png",
+  "atlas": [
+   0,
+   3431,
+   224,
+   150
+  ]
+ },
+ "sheep-group": {
+  "ow": 1149,
+  "oh": 821,
+  "w": 480,
+  "h": 343,
+  "ax": 0.46,
+  "ay": 0.94,
+  "foot": 0.719,
+  "src": "concept/objects2/sheep-group.png",
+  "atlas": [
+   678,
+   3262,
+   224,
+   160
+  ]
+ },
+ "snowy-summit": {
+  "ow": 1109,
+  "oh": 1042,
+  "w": 480,
+  "h": 451,
+  "ax": 0.448,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects2/snowy-summit.png",
+  "atlas": [
+   452,
+   2276,
+   224,
+   210
+  ]
+ },
+ "standing-stones": {
+  "ow": 1148,
+  "oh": 712,
+  "w": 480,
+  "h": 298,
+  "ax": 0.5,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects2/standing-stones.png",
+  "atlas": [
+   1582,
+   3431,
+   224,
+   139
+  ]
+ },
+ "town-corner-tower": {
+  "ow": 943,
+  "oh": 1034,
+  "w": 438,
+  "h": 480,
+  "ax": 0.487,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects2/town-corner-tower.png",
+  "atlas": [
+   559,
+   1603,
+   204,
+   224
+  ]
+ },
+ "town-gate": {
+  "ow": 1022,
+  "oh": 950,
+  "w": 480,
+  "h": 446,
+  "ax": 0.508,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects2/town-gate.png",
+  "atlas": [
+   1388,
+   2276,
+   224,
+   208
+  ]
+ },
+ "town-hall": {
+  "ow": 928,
+  "oh": 1108,
+  "w": 402,
+  "h": 480,
+  "ax": 0.492,
+  "ay": 0.94,
+  "foot": 0.98,
+  "src": "concept/objects2/town-hall.png",
+  "atlas": [
+   765,
+   1603,
+   188,
+   224
+  ]
+ },
+ "town-wall-segment": {
+  "ow": 1149,
+  "oh": 797,
+  "w": 480,
+  "h": 333,
+  "ax": 0.184,
+  "ay": 0.94,
+  "foot": 0.779,
+  "src": "concept/objects2/town-wall-segment.png",
+  "atlas": [
+   226,
+   3082,
+   256,
+   178
+  ]
+ },
+ "watermill": {
+  "ow": 875,
+  "oh": 1085,
+  "w": 387,
+  "h": 480,
+  "ax": 0.507,
+  "ay": 0.94,
+  "foot": 0.985,
+  "src": "concept/objects2/watermill.png",
+  "atlas": [
+   1348,
+   1603,
+   181,
+   224
+  ]
+ },
+ "alpine-hut": {
+  "ow": 921,
+  "oh": 1078,
+  "w": 410,
+  "h": 480,
+  "ax": 0.492,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/alpine-hut.png",
+  "atlas": [
+   1085,
+   893,
+   191,
+   224
+  ]
+ },
+ "banner-pole-blue": {
+  "ow": 495,
+  "oh": 1259,
+  "w": 189,
+  "h": 480,
+  "ax": 0.462,
+  "ay": 0.94,
+  "foot": 0.804,
+  "src": "concept/objects3/banner-pole-blue.png",
+  "atlas": [
+   1278,
+   893,
+   88,
+   224
+  ]
+ },
+ "banner-pole-ochre": {
+  "ow": 675,
+  "oh": 1092,
+  "w": 297,
+  "h": 480,
+  "ax": 0.228,
+  "ay": 0.94,
+  "foot": 0.458,
+  "src": "concept/objects3/banner-pole-ochre.png",
+  "atlas": [
+   1368,
+   893,
+   139,
+   224
+  ]
+ },
+ "blossom-tree-pink": {
+  "ow": 1034,
+  "oh": 1064,
+  "w": 466,
+  "h": 480,
+  "ax": 0.466,
+  "ay": 0.94,
+  "foot": 0.559,
+  "src": "concept/objects3/blossom-tree-pink.png",
+  "atlas": [
+   1509,
+   893,
+   217,
+   224
+  ]
+ },
+ "blossom-tree-white": {
+  "ow": 1224,
+  "oh": 1033,
+  "w": 480,
+  "h": 405,
+  "ax": 0.465,
+  "ay": 0.94,
+  "foot": 0.426,
+  "src": "concept/objects3/blossom-tree-white.png",
+  "atlas": [
+   1678,
+   2696,
+   224,
+   189
+  ]
+ },
+ "canal-bridge-arch-ew": {
+  "ow": 1819,
+  "oh": 535,
+  "w": 480,
+  "h": 141,
+  "ax": 0.5,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/canal-bridge-arch-ew.png",
+  "atlas": [
+   808,
+   3724,
+   320,
+   94
+  ]
+ },
+ "canal-bridge-arch-ne-sw": {
+  "ow": 1016,
+  "oh": 966,
+  "w": 480,
+  "h": 456,
+  "ax": 0.141,
+  "ay": 0.94,
+  "foot": 0.417,
+  "src": "concept/objects3/canal-bridge-arch-ne-sw.png",
+  "atlas": [
+   644,
+   322,
+   320,
+   304
+  ]
+ },
+ "canal-bridge-arch-ns": {
+  "ow": 301,
+  "oh": 1234,
+  "w": 117,
+  "h": 480,
+  "ax": 0.488,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/canal-bridge-arch-ns.png",
+  "atlas": [
+   0,
+   0,
+   78,
+   320
+  ]
+ },
+ "canal-bridge-arch-nw-se": {
+  "ow": 933,
+  "oh": 876,
+  "w": 480,
+  "h": 451,
+  "ax": 0.838,
+  "ay": 0.94,
+  "foot": 0.482,
+  "src": "concept/objects3/canal-bridge-arch-nw-se.png",
+  "atlas": [
+   966,
+   322,
+   320,
+   301
+  ]
+ },
+ "canal-quay-ew": {
+  "ow": 1876,
+  "oh": 325,
+  "w": 480,
+  "h": 83,
+  "ax": 0.5,
+  "ay": 0.94,
+  "foot": 0.998,
+  "src": "concept/objects3/canal-quay-ew.png",
+  "atlas": [
+   0,
+   3923,
+   256,
+   44
+  ]
+ },
+ "canal-quay-ne-sw": {
+  "ow": 922,
+  "oh": 996,
+  "w": 444,
+  "h": 480,
+  "ax": 0.117,
+  "ay": 0.94,
+  "foot": 0.472,
+  "src": "concept/objects3/canal-quay-ne-sw.png",
+  "atlas": [
+   0,
+   635,
+   237,
+   256
+  ]
+ },
+ "canal-quay-ns": {
+  "ow": 154,
+  "oh": 1364,
+  "w": 54,
+  "h": 480,
+  "ax": 0.49,
+  "ay": 0.94,
+  "foot": 0.994,
+  "src": "concept/objects3/canal-quay-ns.png",
+  "atlas": [
+   239,
+   635,
+   29,
+   256
+  ]
+ },
+ "canal-quay-nw-se": {
+  "ow": 1024,
+  "oh": 1028,
+  "w": 478,
+  "h": 480,
+  "ax": 0.878,
+  "ay": 0.94,
+  "foot": 0.491,
+  "src": "concept/objects3/canal-quay-nw-se.png",
+  "atlas": [
+   270,
+   635,
+   255,
+   256
+  ]
+ },
+ "canal-stepped-row-ew": {
+  "ow": 1157,
+  "oh": 805,
+  "w": 480,
+  "h": 334,
+  "ax": 0.499,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects3/canal-stepped-row-ew.png",
+  "atlas": [
+   0,
+   1829,
+   320,
+   223
+  ]
+ },
+ "canal-stepped-row-ne-sw": {
+  "ow": 974,
+  "oh": 1142,
+  "w": 409,
+  "h": 480,
+  "ax": 0.194,
+  "ay": 0.94,
+  "foot": 0.758,
+  "src": "concept/objects3/canal-stepped-row-ne-sw.png",
+  "atlas": [
+   80,
+   0,
+   273,
+   320
+  ]
+ },
+ "canal-stepped-row-ns": {
+  "ow": 766,
+  "oh": 1374,
+  "w": 268,
+  "h": 480,
+  "ax": 0.433,
+  "ay": 0.94,
+  "foot": 0.867,
+  "src": "concept/objects3/canal-stepped-row-ns.png",
+  "atlas": [
+   355,
+   0,
+   179,
+   320
+  ]
+ },
+ "canal-stepped-row-nw-se": {
+  "ow": 1034,
+  "oh": 1152,
+  "w": 431,
+  "h": 480,
+  "ax": 0.786,
+  "ay": 0.94,
+  "foot": 0.779,
+  "src": "concept/objects3/canal-stepped-row-nw-se.png",
+  "atlas": [
+   536,
+   0,
+   287,
+   320
+  ]
+ },
+ "church-baroque-onion": {
+  "ow": 958,
+  "oh": 1223,
+  "w": 376,
+  "h": 480,
+  "ax": 0.5,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/church-baroque-onion.png",
+  "atlas": [
+   825,
+   0,
+   251,
+   320
+  ]
+ },
+ "church-parish": {
+  "ow": 972,
+  "oh": 946,
+  "w": 480,
+  "h": 467,
+  "ax": 0.535,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects3/church-parish.png",
+  "atlas": [
+   0,
+   322,
+   320,
+   311
+  ]
+ },
+ "church-tall-spire": {
+  "ow": 960,
+  "oh": 1340,
+  "w": 344,
+  "h": 480,
+  "ax": 0.475,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/church-tall-spire.png",
+  "atlas": [
+   1078,
+   0,
+   229,
+   320
+  ]
+ },
+ "columnar-cypress": {
+  "ow": 375,
+  "oh": 1520,
+  "w": 118,
+  "h": 480,
+  "ax": 0.512,
+  "ay": 0.94,
+  "foot": 0.987,
+  "src": "concept/objects3/columnar-cypress.png",
+  "atlas": [
+   391,
+   1151,
+   55,
+   224
+  ]
+ },
+ "decals-bare-earth": {
+  "ow": 991,
+  "oh": 430,
+  "w": 480,
+  "h": 208,
+  "ax": 0.504,
+  "ay": 0.94,
+  "foot": 0.806,
+  "src": "concept/objects3/decals-bare-earth.png",
+  "atlas": [
+   1810,
+   3848,
+   128,
+   55
+  ]
+ },
+ "decals-clover": {
+  "ow": 920,
+  "oh": 638,
+  "w": 480,
+  "h": 333,
+  "ax": 0.404,
+  "ay": 0.94,
+  "foot": 0.835,
+  "src": "concept/objects3/decals-clover.png",
+  "atlas": [
+   1356,
+   3724,
+   128,
+   89
+  ]
+ },
+ "decals-flower-ivory": {
+  "ow": 459,
+  "oh": 408,
+  "w": 459,
+  "h": 408,
+  "ax": 0.336,
+  "ay": 0.94,
+  "foot": 0.712,
+  "src": "concept/objects3/decals-flower-ivory.png",
+  "atlas": [
+   226,
+   3724,
+   128,
+   114
+  ]
+ },
+ "decals-flower-lavender": {
+  "ow": 674,
+  "oh": 464,
+  "w": 480,
+  "h": 330,
+  "ax": 0.551,
+  "ay": 0.94,
+  "foot": 0.997,
+  "src": "concept/objects3/decals-flower-lavender.png",
+  "atlas": [
+   1486,
+   3724,
+   128,
+   88
+  ]
+ },
+ "decals-flower-pink": {
+  "ow": 736,
+  "oh": 446,
+  "w": 480,
+  "h": 291,
+  "ax": 0.312,
+  "ay": 0.94,
+  "foot": 0.796,
+  "src": "concept/objects3/decals-flower-pink.png",
+  "atlas": [
+   1616,
+   3724,
+   128,
+   78
+  ]
+ },
+ "decals-grass-tufts-dark": {
+  "ow": 1086,
+  "oh": 572,
+  "w": 480,
+  "h": 253,
+  "ax": 0.629,
+  "ay": 0.94,
+  "foot": 0.848,
+  "src": "concept/objects3/decals-grass-tufts-dark.png",
+  "atlas": [
+   582,
+   3848,
+   128,
+   67
+  ]
+ },
+ "decals-grass-tufts-light": {
+  "ow": 560,
+  "oh": 306,
+  "w": 480,
+  "h": 262,
+  "ax": 0.713,
+  "ay": 0.94,
+  "foot": 0.889,
+  "src": "concept/objects3/decals-grass-tufts-light.png",
+  "atlas": [
+   452,
+   3848,
+   128,
+   70
+  ]
+ },
+ "decals-leaf-litter": {
+  "ow": 908,
+  "oh": 518,
+  "w": 480,
+  "h": 274,
+  "ax": 0.601,
+  "ay": 0.94,
+  "foot": 0.89,
+  "src": "concept/objects3/decals-leaf-litter.png",
+  "atlas": [
+   0,
+   3848,
+   128,
+   73
+  ]
+ },
+ "decals-pebbles": {
+  "ow": 663,
+  "oh": 320,
+  "w": 480,
+  "h": 232,
+  "ax": 0.33,
+  "ay": 0.94,
+  "foot": 0.783,
+  "src": "concept/objects3/decals-pebbles.png",
+  "atlas": [
+   1454,
+   3848,
+   128,
+   62
+  ]
+ },
+ "fence-ew": {
+  "ow": 1748,
+  "oh": 436,
+  "w": 480,
+  "h": 120,
+  "ax": 0.498,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects3/fence-ew.png",
+  "atlas": [
+   712,
+   3848,
+   256,
+   64
+  ]
+ },
+ "fence-ne-sw": {
+  "ow": 950,
+  "oh": 839,
+  "w": 480,
+  "h": 424,
+  "ax": 0.095,
+  "ay": 0.94,
+  "foot": 0.463,
+  "src": "concept/objects3/fence-ne-sw.png",
+  "atlas": [
+   827,
+   893,
+   256,
+   226
+  ]
+ },
+ "fence-ns": {
+  "ow": 177,
+  "oh": 1368,
+  "w": 62,
+  "h": 480,
+  "ax": 0.497,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/fence-ns.png",
+  "atlas": [
+   527,
+   635,
+   33,
+   256
+  ]
+ },
+ "fence-nw-se": {
+  "ow": 939,
+  "oh": 836,
+  "w": 480,
+  "h": 427,
+  "ax": 0.903,
+  "ay": 0.94,
+  "foot": 0.478,
+  "src": "concept/objects3/fence-nw-se.png",
+  "atlas": [
+   569,
+   893,
+   256,
+   228
+  ]
+ },
+ "hedge-ew": {
+  "ow": 1897,
+  "oh": 257,
+  "w": 480,
+  "h": 65,
+  "ax": 0.499,
+  "ay": 0.94,
+  "foot": 0.998,
+  "src": "concept/objects3/hedge-ew.png",
+  "atlas": [
+   258,
+   3923,
+   256,
+   35
+  ]
+ },
+ "hedge-ne-sw": {
+  "ow": 970,
+  "oh": 915,
+  "w": 480,
+  "h": 453,
+  "ax": 0.14,
+  "ay": 0.94,
+  "foot": 0.511,
+  "src": "concept/objects3/hedge-ne-sw.png",
+  "atlas": [
+   53,
+   893,
+   256,
+   242
+  ]
+ },
+ "hedge-ns": {
+  "ow": 180,
+  "oh": 1370,
+  "w": 63,
+  "h": 480,
+  "ax": 0.5,
+  "ay": 0.94,
+  "foot": 0.994,
+  "src": "concept/objects3/hedge-ns.png",
+  "atlas": [
+   562,
+   635,
+   34,
+   256
+  ]
+ },
+ "hedge-nw-se": {
+  "ow": 925,
+  "oh": 961,
+  "w": 462,
+  "h": 480,
+  "ax": 0.875,
+  "ay": 0.94,
+  "foot": 0.491,
+  "src": "concept/objects3/hedge-nw-se.png",
+  "atlas": [
+   598,
+   635,
+   246,
+   256
+  ]
+ },
+ "hedged-planter-knot": {
+  "ow": 1060,
+  "oh": 854,
+  "w": 480,
+  "h": 387,
+  "ax": 0.491,
+  "ay": 0.94,
+  "foot": 0.9,
+  "src": "concept/objects3/hedged-planter-knot.png",
+  "atlas": [
+   678,
+   2892,
+   224,
+   181
+  ]
+ },
+ "hedged-planter-long": {
+  "ow": 1386,
+  "oh": 389,
+  "w": 480,
+  "h": 135,
+  "ax": 0.505,
+  "ay": 0.94,
+  "foot": 0.991,
+  "src": "concept/objects3/hedged-planter-long.png",
+  "atlas": [
+   970,
+   3848,
+   224,
+   63
+  ]
+ },
+ "lantern-post-stone": {
+  "ow": 497,
+  "oh": 1069,
+  "w": 223,
+  "h": 480,
+  "ax": 0.419,
+  "ay": 0.94,
+  "foot": 0.839,
+  "src": "concept/objects3/lantern-post-stone.png",
+  "atlas": [
+   1290,
+   1151,
+   104,
+   224
+  ]
+ },
+ "lantern-post-wood": {
+  "ow": 586,
+  "oh": 1160,
+  "w": 242,
+  "h": 480,
+  "ax": 0.326,
+  "ay": 0.94,
+  "foot": 0.65,
+  "src": "concept/objects3/lantern-post-wood.png",
+  "atlas": [
+   1396,
+   1151,
+   113,
+   224
+  ]
+ },
+ "lily-pads-large": {
+  "ow": 958,
+  "oh": 727,
+  "w": 480,
+  "h": 364,
+  "ax": 0.543,
+  "ay": 0.94,
+  "foot": 0.957,
+  "src": "concept/objects3/lily-pads-large.png",
+  "atlas": [
+   1646,
+   3082,
+   224,
+   170
+  ]
+ },
+ "lily-pads-small": {
+  "ow": 1034,
+  "oh": 637,
+  "w": 480,
+  "h": 296,
+  "ax": 0.644,
+  "ay": 0.94,
+  "foot": 0.996,
+  "src": "concept/objects3/lily-pads-small.png",
+  "atlas": [
+   322,
+   3583,
+   224,
+   138
+  ]
+ },
+ "market-stall-fish": {
+  "ow": 741,
+  "oh": 913,
+  "w": 390,
+  "h": 480,
+  "ax": 0.525,
+  "ay": 0.94,
+  "foot": 0.86,
+  "src": "concept/objects3/market-stall-fish.png",
+  "atlas": [
+   1511,
+   1151,
+   182,
+   224
+  ]
+ },
+ "market-stall-produce": {
+  "ow": 689,
+  "oh": 932,
+  "w": 355,
+  "h": 480,
+  "ax": 0.495,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects3/market-stall-produce.png",
+  "atlas": [
+   1695,
+   1151,
+   166,
+   224
+  ]
+ },
+ "market-stall-textile": {
+  "ow": 754,
+  "oh": 964,
+  "w": 375,
+  "h": 480,
+  "ax": 0.495,
+  "ay": 0.94,
+  "foot": 0.922,
+  "src": "concept/objects3/market-stall-textile.png",
+  "atlas": [
+   1863,
+   1151,
+   175,
+   224
+  ]
+ },
+ "paving-kerb-ew": {
+  "ow": 1805,
+  "oh": 129,
+  "w": 480,
+  "h": 34,
+  "ax": 0.499,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects3/paving-kerb-ew.png",
+  "atlas": [
+   1258,
+   3923,
+   256,
+   18
+  ]
+ },
+ "paving-kerb-ne-sw": {
+  "ow": 916,
+  "oh": 916,
+  "w": 480,
+  "h": 480,
+  "ax": 0.098,
+  "ay": 0.94,
+  "foot": 0.416,
+  "src": "concept/objects3/paving-kerb-ne-sw.png",
+  "atlas": [
+   846,
+   635,
+   256,
+   256
+  ]
+ },
+ "paving-kerb-ns": {
+  "ow": 85,
+  "oh": 988,
+  "w": 41,
+  "h": 480,
+  "ax": 0.494,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/paving-kerb-ns.png",
+  "atlas": [
+   1104,
+   635,
+   22,
+   256
+  ]
+ },
+ "paving-kerb-nw-se": {
+  "ow": 857,
+  "oh": 862,
+  "w": 477,
+  "h": 480,
+  "ax": 0.898,
+  "ay": 0.94,
+  "foot": 0.425,
+  "src": "concept/objects3/paving-kerb-nw-se.png",
+  "atlas": [
+   1128,
+   635,
+   254,
+   256
+  ]
+ },
+ "river-bridge-multiarch-ew": {
+  "ow": 2084,
+  "oh": 460,
+  "w": 480,
+  "h": 106,
+  "ax": 0.5,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects3/river-bridge-multiarch-ew.png",
+  "atlas": [
+   130,
+   3848,
+   320,
+   71
+  ]
+ },
+ "river-bridge-multiarch-ne-sw": {
+  "ow": 1104,
+  "oh": 1051,
+  "w": 480,
+  "h": 457,
+  "ax": 0.117,
+  "ay": 0.94,
+  "foot": 0.547,
+  "src": "concept/objects3/river-bridge-multiarch-ne-sw.png",
+  "atlas": [
+   322,
+   322,
+   320,
+   305
+  ]
+ },
+ "river-bridge-multiarch-ns": {
+  "ow": 343,
+  "oh": 1658,
+  "w": 99,
+  "h": 480,
+  "ax": 0.351,
+  "ay": 0.94,
+  "foot": 0.997,
+  "src": "concept/objects3/river-bridge-multiarch-ns.png",
+  "atlas": [
+   1309,
+   0,
+   66,
+   320
+  ]
+ },
+ "river-bridge-multiarch-nw-se": {
+  "ow": 1056,
+  "oh": 956,
+  "w": 480,
+  "h": 435,
+  "ax": 0.871,
+  "ay": 0.94,
+  "foot": 0.542,
+  "src": "concept/objects3/river-bridge-multiarch-nw-se.png",
+  "atlas": [
+   1288,
+   322,
+   320,
+   290
+  ]
+ },
+ "river-foam": {
+  "ow": 1158,
+  "oh": 311,
+  "w": 480,
+  "h": 129,
+  "ax": 0.543,
+  "ay": 0.94,
+  "foot": 0.405,
+  "src": "concept/objects3/river-foam.png",
+  "atlas": [
+   1584,
+   3848,
+   224,
+   60
+  ]
+ },
+ "river-ripple": {
+  "ow": 1339,
+  "oh": 177,
+  "w": 480,
+  "h": 63,
+  "ax": 0.497,
+  "ay": 0.94,
+  "foot": 0.772,
+  "src": "concept/objects3/river-ripple.png",
+  "atlas": [
+   774,
+   3923,
+   224,
+   29
+  ]
+ },
+ "riverbank-rocky-ew": {
+  "ow": 1987,
+  "oh": 201,
+  "w": 480,
+  "h": 49,
+  "ax": 0.497,
+  "ay": 0.94,
+  "foot": 0.998,
+  "src": "concept/objects3/riverbank-rocky-ew.png",
+  "atlas": [
+   1000,
+   3923,
+   256,
+   26
+  ]
+ },
+ "riverbank-rocky-ne-sw": {
+  "ow": 1062,
+  "oh": 988,
+  "w": 480,
+  "h": 447,
+  "ax": 0.106,
+  "ay": 0.94,
+  "foot": 0.467,
+  "src": "concept/objects3/riverbank-rocky-ne-sw.png",
+  "atlas": [
+   311,
+   893,
+   256,
+   238
+  ]
+ },
+ "riverbank-rocky-ns": {
+  "ow": 246,
+  "oh": 1363,
+  "w": 87,
+  "h": 480,
+  "ax": 0.494,
+  "ay": 0.94,
+  "foot": 0.772,
+  "src": "concept/objects3/riverbank-rocky-ns.png",
+  "atlas": [
+   1384,
+   635,
+   46,
+   256
+  ]
+ },
+ "riverbank-rocky-nw-se": {
+  "ow": 1069,
+  "oh": 924,
+  "w": 480,
+  "h": 415,
+  "ax": 0.902,
+  "ay": 0.94,
+  "foot": 0.49,
+  "src": "concept/objects3/riverbank-rocky-nw-se.png",
+  "atlas": [
+   774,
+   1829,
+   256,
+   221
+  ]
+ },
+ "round-tree-beech": {
+  "ow": 1210,
+  "oh": 1098,
+  "w": 480,
+  "h": 436,
+  "ax": 0.469,
+  "ay": 0.94,
+  "foot": 0.788,
+  "src": "concept/objects3/round-tree-beech.png",
+  "atlas": [
+   548,
+   2488,
+   224,
+   203
+  ]
+ },
+ "round-tree-elm": {
+  "ow": 1318,
+  "oh": 874,
+  "w": 480,
+  "h": 318,
+  "ax": 0.417,
+  "ay": 0.94,
+  "foot": 0.757,
+  "src": "concept/objects3/round-tree-elm.png",
+  "atlas": [
+   678,
+   3431,
+   224,
+   148
+  ]
+ },
+ "round-tree-linden": {
+  "ow": 968,
+  "oh": 985,
+  "w": 472,
+  "h": 480,
+  "ax": 0.475,
+  "ay": 0.94,
+  "foot": 0.558,
+  "src": "concept/objects3/round-tree-linden.png",
+  "atlas": [
+   646,
+   1377,
+   220,
+   224
+  ]
+ },
+ "round-tree-young-oak": {
+  "ow": 871,
+  "oh": 924,
+  "w": 452,
+  "h": 480,
+  "ax": 0.472,
+  "ay": 0.94,
+  "foot": 0.741,
+  "src": "concept/objects3/round-tree-young-oak.png",
+  "atlas": [
+   868,
+   1377,
+   211,
+   224
+  ]
+ },
+ "rowing-boat-ne": {
+  "ow": 1038,
+  "oh": 719,
+  "w": 480,
+  "h": 332,
+  "ax": 0.327,
+  "ay": 0.94,
+  "foot": 0.832,
+  "src": "concept/objects3/rowing-boat-ne.png",
+  "atlas": [
+   1356,
+   3262,
+   224,
+   155
+  ]
+ },
+ "rowing-boat-s": {
+  "ow": 523,
+  "oh": 852,
+  "w": 295,
+  "h": 480,
+  "ax": 0.497,
+  "ay": 0.94,
+  "foot": 0.87,
+  "src": "concept/objects3/rowing-boat-s.png",
+  "atlas": [
+   1081,
+   1377,
+   138,
+   224
+  ]
+ },
+ "rowing-boat-se": {
+  "ow": 972,
+  "oh": 772,
+  "w": 480,
+  "h": 381,
+  "ax": 0.727,
+  "ay": 0.94,
+  "foot": 0.806,
+  "src": "concept/objects3/rowing-boat-se.png",
+  "atlas": [
+   0,
+   3082,
+   224,
+   178
+  ]
+ },
+ "rutted-road-ew": {
+  "ow": 800,
+  "oh": 199,
+  "w": 480,
+  "h": 119,
+  "ax": 0.499,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/rutted-road-ew.png",
+  "atlas": [
+   1196,
+   3848,
+   256,
+   63
+  ]
+ },
+ "rutted-road-ne-sw": {
+  "ow": 699,
+  "oh": 699,
+  "w": 480,
+  "h": 480,
+  "ax": 0.192,
+  "ay": 0.94,
+  "foot": 0.524,
+  "src": "concept/objects3/rutted-road-ne-sw.png",
+  "atlas": [
+   1432,
+   635,
+   256,
+   256
+  ]
+ },
+ "rutted-road-ns": {
+  "ow": 199,
+  "oh": 800,
+  "w": 119,
+  "h": 480,
+  "ax": 0.497,
+  "ay": 0.94,
+  "foot": 0.99,
+  "src": "concept/objects3/rutted-road-ns.png",
+  "atlas": [
+   1690,
+   635,
+   63,
+   256
+  ]
+ },
+ "rutted-road-nw-se": {
+  "ow": 693,
+  "oh": 695,
+  "w": 479,
+  "h": 480,
+  "ax": 0.817,
+  "ay": 0.94,
+  "foot": 0.524,
+  "src": "concept/objects3/rutted-road-nw-se.png",
+  "atlas": [
+   1755,
+   635,
+   255,
+   256
+  ]
+ },
+ "slope-boulder-pair": {
+  "ow": 1181,
+  "oh": 735,
+  "w": 480,
+  "h": 299,
+  "ax": 0.509,
+  "ay": 0.94,
+  "foot": 0.99,
+  "src": "concept/objects3/slope-boulder-pair.png",
+  "atlas": [
+   1356,
+   3431,
+   224,
+   140
+  ]
+ },
+ "slope-outcrop-shelf": {
+  "ow": 1411,
+  "oh": 770,
+  "w": 480,
+  "h": 262,
+  "ax": 0.295,
+  "ay": 0.94,
+  "foot": 0.938,
+  "src": "concept/objects3/slope-outcrop-shelf.png",
+  "atlas": [
+   0,
+   3724,
+   224,
+   122
+  ]
+ },
+ "slope-outcrop-spur": {
+  "ow": 883,
+  "oh": 872,
+  "w": 480,
+  "h": 474,
+  "ax": 0.32,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/slope-outcrop-spur.png",
+  "atlas": [
+   1032,
+   1829,
+   224,
+   221
+  ]
+ },
+ "stone-house-roof-grey-slate-clear": {
+  "ow": 1177,
+  "oh": 1003,
+  "w": 480,
+  "h": 409,
+  "ax": 0.484,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/stone-house-roof-grey-slate-clear.png",
+  "atlas": [
+   548,
+   2696,
+   224,
+   191
+  ]
+ },
+ "stone-house-roof-grey-slate-smoke": {
+  "ow": 1175,
+  "oh": 1001,
+  "w": 480,
+  "h": 409,
+  "ax": 0.485,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/stone-house-roof-grey-slate-smoke.png",
+  "atlas": [
+   774,
+   2696,
+   224,
+   191
+  ]
+ },
+ "stone-house-roof-mossy-clear": {
+  "ow": 1183,
+  "oh": 1002,
+  "w": 480,
+  "h": 407,
+  "ax": 0.485,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/stone-house-roof-mossy-clear.png",
+  "atlas": [
+   1226,
+   2696,
+   224,
+   190
+  ]
+ },
+ "stone-house-roof-mossy-smoke": {
+  "ow": 1175,
+  "oh": 1102,
+  "w": 480,
+  "h": 450,
+  "ax": 0.503,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects3/stone-house-roof-mossy-smoke.png",
+  "atlas": [
+   678,
+   2276,
+   224,
+   210
+  ]
+ },
+ "stone-house-roof-red-tile-clear": {
+  "ow": 1181,
+  "oh": 1002,
+  "w": 480,
+  "h": 407,
+  "ax": 0.484,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/stone-house-roof-red-tile-clear.png",
+  "atlas": [
+   1452,
+   2696,
+   224,
+   190
+  ]
+ },
+ "stone-house-roof-red-tile-smoke": {
+  "ow": 1180,
+  "oh": 1031,
+  "w": 480,
+  "h": 419,
+  "ax": 0.495,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/stone-house-roof-red-tile-smoke.png",
+  "atlas": [
+   1678,
+   2488,
+   224,
+   196
+  ]
+ },
+ "stone-house-roof-thatch-clear": {
+  "ow": 1179,
+  "oh": 1006,
+  "w": 480,
+  "h": 410,
+  "ax": 0.484,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects3/stone-house-roof-thatch-clear.png",
+  "atlas": [
+   1000,
+   2696,
+   224,
+   191
+  ]
+ },
+ "stone-house-roof-thatch-smoke": {
+  "ow": 1177,
+  "oh": 1035,
+  "w": 480,
+  "h": 422,
+  "ax": 0.495,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/stone-house-roof-thatch-smoke.png",
+  "atlas": [
+   1226,
+   2488,
+   224,
+   197
+  ]
+ },
+ "stone-wall-ew": {
+  "ow": 1632,
+  "oh": 221,
+  "w": 480,
+  "h": 65,
+  "ax": 0.5,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects3/stone-wall-ew.png",
+  "atlas": [
+   516,
+   3923,
+   256,
+   35
+  ]
+ },
+ "stone-wall-ne-sw": {
+  "ow": 983,
+  "oh": 805,
+  "w": 480,
+  "h": 393,
+  "ax": 0.14,
+  "ay": 0.94,
+  "foot": 0.546,
+  "src": "concept/objects3/stone-wall-ne-sw.png",
+  "atlas": [
+   904,
+   2276,
+   256,
+   210
+  ]
+ },
+ "stone-wall-ns": {
+  "ow": 185,
+  "oh": 937,
+  "w": 95,
+  "h": 480,
+  "ax": 0.47,
+  "ay": 0.94,
+  "foot": 0.908,
+  "src": "concept/objects3/stone-wall-ns.png",
+  "atlas": [
+   0,
+   893,
+   51,
+   256
+  ]
+ },
+ "stone-wall-nw-se": {
+  "ow": 891,
+  "oh": 759,
+  "w": 480,
+  "h": 409,
+  "ax": 0.884,
+  "ay": 0.94,
+  "foot": 0.495,
+  "src": "concept/objects3/stone-wall-nw-se.png",
+  "atlas": [
+   904,
+   2054,
+   256,
+   218
+  ]
+ },
+ "tavern-hanging-sign": {
+  "ow": 1128,
+  "oh": 1122,
+  "w": 480,
+  "h": 477,
+  "ax": 0.441,
+  "ay": 0.94,
+  "foot": 0.91,
+  "src": "concept/objects3/tavern-hanging-sign.png",
+  "atlas": [
+   322,
+   1829,
+   224,
+   223
+  ]
+ },
+ "terraced-row-ew": {
+  "ow": 1577,
+  "oh": 687,
+  "w": 480,
+  "h": 209,
+  "ax": 0.502,
+  "ay": 0.94,
+  "foot": 0.995,
+  "src": "concept/objects3/terraced-row-ew.png",
+  "atlas": [
+   0,
+   3583,
+   320,
+   139
+  ]
+ },
+ "terraced-row-ne-sw": {
+  "ow": 1121,
+  "oh": 1115,
+  "w": 480,
+  "h": 477,
+  "ax": 0.199,
+  "ay": 0.94,
+  "foot": 0.71,
+  "src": "concept/objects3/terraced-row-ne-sw.png",
+  "atlas": [
+   1541,
+   0,
+   320,
+   318
+  ]
+ },
+ "terraced-row-ns": {
+  "ow": 764,
+  "oh": 1512,
+  "w": 243,
+  "h": 480,
+  "ax": 0.408,
+  "ay": 0.94,
+  "foot": 0.902,
+  "src": "concept/objects3/terraced-row-ns.png",
+  "atlas": [
+   1377,
+   0,
+   162,
+   320
+  ]
+ },
+ "terraced-row-nw-se": {
+  "ow": 1103,
+  "oh": 971,
+  "w": 480,
+  "h": 423,
+  "ax": 0.782,
+  "ay": 0.94,
+  "foot": 0.797,
+  "src": "concept/objects3/terraced-row-nw-se.png",
+  "atlas": [
+   1610,
+   322,
+   320,
+   282
+  ]
+ },
+ "timber-frame-roof-grey-slate-clear": {
+  "ow": 1006,
+  "oh": 988,
+  "w": 480,
+  "h": 471,
+  "ax": 0.495,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/timber-frame-roof-grey-slate-clear.png",
+  "atlas": [
+   1710,
+   1829,
+   224,
+   220
+  ]
+ },
+ "timber-frame-roof-grey-slate-smoke": {
+  "ow": 951,
+  "oh": 1082,
+  "w": 422,
+  "h": 480,
+  "ax": 0.5,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects3/timber-frame-roof-grey-slate-smoke.png",
+  "atlas": [
+   1631,
+   1377,
+   197,
+   224
+  ]
+ },
+ "timber-frame-roof-mossy-clear": {
+  "ow": 1098,
+  "oh": 1062,
+  "w": 480,
+  "h": 464,
+  "ax": 0.491,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/timber-frame-roof-mossy-clear.png",
+  "atlas": [
+   1162,
+   2054,
+   224,
+   217
+  ]
+ },
+ "timber-frame-roof-mossy-smoke": {
+  "ow": 939,
+  "oh": 1076,
+  "w": 419,
+  "h": 480,
+  "ax": 0.497,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/timber-frame-roof-mossy-smoke.png",
+  "atlas": [
+   1830,
+   1377,
+   196,
+   224
+  ]
+ },
+ "timber-frame-roof-red-tile-clear": {
+  "ow": 991,
+  "oh": 976,
+  "w": 480,
+  "h": 473,
+  "ax": 0.49,
+  "ay": 0.94,
+  "foot": 0.999,
+  "src": "concept/objects3/timber-frame-roof-red-tile-clear.png",
+  "atlas": [
+   1258,
+   1829,
+   224,
+   221
+  ]
+ },
+ "timber-frame-roof-red-tile-smoke": {
+  "ow": 981,
+  "oh": 1049,
+  "w": 449,
+  "h": 480,
+  "ax": 0.497,
+  "ay": 0.94,
+  "foot": 0.998,
+  "src": "concept/objects3/timber-frame-roof-red-tile-smoke.png",
+  "atlas": [
+   0,
+   1603,
+   210,
+   224
+  ]
+ },
+ "timber-frame-roof-thatch-clear": {
+  "ow": 981,
+  "oh": 975,
+  "w": 480,
+  "h": 477,
+  "ax": 0.495,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/timber-frame-roof-thatch-clear.png",
+  "atlas": [
+   548,
+   1829,
+   224,
+   223
+  ]
+ },
+ "timber-frame-roof-thatch-smoke": {
+  "ow": 926,
+  "oh": 1065,
+  "w": 417,
+  "h": 480,
+  "ax": 0.502,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "concept/objects3/timber-frame-roof-thatch-smoke.png",
+  "atlas": [
+   212,
+   1603,
+   195,
+   224
+  ]
+ },
+ "castle_1": {
+  "ow": 418,
+  "oh": 418,
+  "w": 418,
+  "h": 418,
+  "ax": 0.483,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "assets/castle_1.png",
+  "atlas": [
+   1728,
+   893,
+   224,
+   224
+  ]
+ },
+ "castle_2": {
+  "ow": 420,
+  "oh": 409,
+  "w": 420,
+  "h": 409,
+  "ax": 0.513,
+  "ay": 0.94,
+  "foot": 0.995,
+  "src": "assets/castle_2.png",
+  "atlas": [
+   452,
+   2054,
+   224,
+   218
+  ]
+ },
+ "castle_3": {
+  "ow": 401,
+  "oh": 420,
+  "w": 401,
+  "h": 420,
+  "ax": 0.491,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "assets/castle_3.png",
+  "atlas": [
+   0,
+   1151,
+   214,
+   224
+  ]
+ },
+ "sawmill_1": {
+  "ow": 418,
+  "oh": 365,
+  "w": 418,
+  "h": 365,
+  "ax": 0.514,
+  "ay": 0.94,
+  "foot": 1.0,
+  "src": "assets/sawmill_1.png",
+  "atlas": [
+   1452,
+   2488,
+   224,
+   196
+  ]
+ },
+ "sawmill_2": {
+  "ow": 420,
+  "oh": 313,
+  "w": 420,
+  "h": 313,
+  "ax": 0.464,
+  "ay": 0.94,
+  "foot": 0.998,
+  "src": "assets/sawmill_2.png",
+  "atlas": [
+   0,
+   3262,
+   224,
+   167
+  ]
+ },
+ "sawmill_3": {
+  "ow": 420,
+  "oh": 371,
+  "w": 420,
+  "h": 371,
+  "ax": 0.512,
+  "ay": 0.94,
+  "foot": 0.998,
+  "src": "assets/sawmill_3.png",
+  "atlas": [
+   1000,
+   2488,
+   224,
+   198
+  ]
+ },
+ "watchtower_1": {
+  "ow": 344,
+  "oh": 420,
+  "w": 344,
+  "h": 420,
+  "ax": 0.494,
+  "ay": 0.94,
+  "foot": 0.997,
+  "src": "assets/watchtower_1.png",
+  "atlas": [
+   955,
+   1603,
+   183,
+   224
+  ]
+ },
+ "watchtower_2": {
+  "ow": 384,
+  "oh": 418,
+  "w": 384,
+  "h": 418,
+  "ax": 0.486,
+  "ay": 0.94,
+  "foot": 0.997,
+  "src": "assets/watchtower_2.png",
+  "atlas": [
+   1140,
+   1603,
+   206,
+   224
+  ]
+ },
+ "watchtower_3": {
+  "ow": 420,
+  "oh": 412,
+  "w": 420,
+  "h": 412,
+  "ax": 0.505,
+  "ay": 0.94,
+  "foot": 0.995,
+  "src": "assets/watchtower_3.png",
+  "atlas": [
+   0,
+   2054,
+   224,
+   220
+  ]
+ },
+ "alpine-chapel-common": {
+  "ow": 1419,
+  "oh": 1214,
+  "w": 330,
+  "h": 282,
+  "foot_m": [
+   118.0,
+   91.0
+  ],
+  "src": "concept/setpieces/alpine-chapel-common.png",
+  "set": true,
+  "ax": 0.485,
+  "ay": 0.5,
+  "ports": [
+   {
+    "dir": "S",
+    "role": "main",
+    "uv": [
+     0.4,
+     0.945
+    ]
+   },
+   {
+    "dir": "E",
+    "role": "secondary",
+    "uv": [
+     0.95,
+     0.52
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   2379,
+   592,
+   330,
+   282
+  ],
+  "sheet": 1
+ },
+ "alpine-red-roof-inn": {
+  "ow": 1410,
+  "oh": 1197,
+  "w": 350,
+  "h": 297,
+  "foot_m": [
+   125.0,
+   96.0
+  ],
+  "src": "concept/setpieces/alpine-red-roof-inn.png",
+  "set": true,
+  "ax": 0.545,
+  "ay": 0.545,
+  "ports": [
+   {
+    "dir": "SW",
+    "role": "main",
+    "uv": [
+     0.075,
+     0.935
+    ]
+   },
+   {
+    "dir": "NE",
+    "role": "secondary",
+    "uv": [
+     0.929,
+     0.24
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   1700,
+   592,
+   350,
+   297
+  ],
+  "sheet": 1
+ },
+ "alpine-stone-terrace": {
+  "ow": 1434,
+  "oh": 1219,
+  "w": 367,
+  "h": 312,
+  "foot_m": [
+   131.0,
+   101.0
+  ],
+  "src": "concept/setpieces/alpine-stone-terrace.png",
+  "set": true,
+  "ax": 0.5,
+  "ay": 0.665,
+  "ports": [
+   {
+    "dir": "SE",
+    "role": "main",
+    "uv": [
+     0.77,
+     0.94
+    ]
+   },
+   {
+    "dir": "W",
+    "role": "secondary",
+    "uv": [
+     0.06,
+     0.6
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   816,
+   592,
+   367,
+   312
+  ],
+  "sheet": 1
+ },
+ "canal-chapel-court-water-south": {
+  "ow": 1567,
+  "oh": 1048,
+  "w": 350,
+  "h": 234,
+  "foot_m": [
+   125.0,
+   109.0
+  ],
+  "src": "concept/setpieces/canal-chapel-court-water-south.png",
+  "set": true,
+  "ax": 0.51,
+  "ay": 0.53,
+  "ports": [
+   {
+    "dir": "N",
+    "role": "main",
+    "uv": [
+     0.46,
+     0.075
+    ]
+   },
+   {
+    "dir": "E",
+    "role": "secondary",
+    "uv": [
+     0.947,
+     0.43
+    ]
+   }
+  ],
+  "water": "south",
+  "quay": [
+   [
+    0.058,
+    0.895
+   ],
+   [
+    0.908,
+    0.895
+   ]
+  ],
+  "foot": 1.0,
+  "atlas": [
+   3077,
+   1730,
+   350,
+   234
+  ],
+  "sheet": 1
+ },
+ "canal-chapel-court-water-west": {
+  "ow": 1299,
+  "oh": 1247,
+  "w": 350,
+  "h": 336,
+  "foot_m": [
+   125.0,
+   109.0
+  ],
+  "src": "concept/setpieces/canal-chapel-court-water-west.png",
+  "set": true,
+  "ax": 0.405,
+  "ay": 0.5,
+  "ports": [
+   {
+    "dir": "E",
+    "role": "main",
+    "uv": [
+     0.94,
+     0.5
+    ]
+   },
+   {
+    "dir": "S",
+    "role": "secondary",
+    "uv": [
+     0.33,
+     0.91
+    ]
+   }
+  ],
+  "water": "west",
+  "quay": [
+   [
+    0.083,
+    0.1
+   ],
+   [
+    0.082,
+    0.891
+   ]
+  ],
+  "foot": 1.0,
+  "atlas": [
+   3648,
+   0,
+   350,
+   336
+  ],
+  "sheet": 1
+ },
+ "farmstead-blue-yard": {
+  "ow": 1417,
+  "oh": 1182,
+  "w": 202,
+  "h": 168,
+  "foot_m": [
+   72.0,
+   56.0
+  ],
+  "src": "concept/setpieces/farmstead-blue-yard.png",
+  "set": true,
+  "ax": 0.55,
+  "ay": 0.53,
+  "ports": [
+   {
+    "dir": "S",
+    "role": "main",
+    "uv": [
+     0.42,
+     0.94
+    ]
+   },
+   {
+    "dir": "W",
+    "role": "secondary",
+    "uv": [
+     0.055,
+     0.54
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   3255,
+   1992,
+   202,
+   168
+  ],
+  "sheet": 1
+ },
+ "farmstead-brick-strip": {
+  "ow": 1546,
+  "oh": 1103,
+  "w": 213,
+  "h": 152,
+  "foot_m": [
+   76.0,
+   60.0
+  ],
+  "src": "concept/setpieces/farmstead-brick-strip.png",
+  "set": true,
+  "ax": 0.49,
+  "ay": 0.51,
+  "ports": [
+   {
+    "dir": "S",
+    "role": "main",
+    "uv": [
+     0.42,
+     0.93
+    ]
+   },
+   {
+    "dir": "NE",
+    "role": "secondary",
+    "uv": [
+     0.9,
+     0.33
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   3297,
+   2371,
+   213,
+   152
+  ],
+  "sheet": 1
+ },
+ "farmstead-longhouse": {
+  "ow": 1602,
+  "oh": 1096,
+  "w": 218,
+  "h": 149,
+  "foot_m": [
+   78.0,
+   55.0
+  ],
+  "src": "concept/setpieces/farmstead-longhouse.png",
+  "set": true,
+  "ax": 0.51,
+  "ay": 0.57,
+  "ports": [
+   {
+    "dir": "W",
+    "role": "main",
+    "uv": [
+     0.054,
+     0.704
+    ]
+   },
+   {
+    "dir": "SE",
+    "role": "secondary",
+    "uv": [
+     0.865,
+     0.825
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   0,
+   2528,
+   218,
+   149
+  ],
+  "sheet": 1
+ },
+ "farmstead-orchard-gate": {
+  "ow": 1482,
+  "oh": 1078,
+  "w": 193,
+  "h": 140,
+  "foot_m": [
+   69.0,
+   59.0
+  ],
+  "src": "concept/setpieces/farmstead-orchard-gate.png",
+  "set": true,
+  "ax": 0.52,
+  "ay": 0.54,
+  "ports": [
+   {
+    "dir": "SE",
+    "role": "main",
+    "uv": [
+     0.86,
+     0.93
+    ]
+   },
+   {
+    "dir": "N",
+    "role": "secondary",
+    "uv": [
+     0.4,
+     0.1
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   2075,
+   2528,
+   193,
+   140
+  ],
+  "sheet": 1
+ },
+ "farmstead-thatch-paddock": {
+  "ow": 1580,
+  "oh": 1083,
+  "w": 196,
+  "h": 134,
+  "foot_m": [
+   70.0,
+   54.0
+  ],
+  "src": "concept/setpieces/farmstead-thatch-paddock.png",
+  "set": true,
+  "ax": 0.48,
+  "ay": 0.51,
+  "ports": [
+   {
+    "dir": "E",
+    "role": "main",
+    "uv": [
+     0.96,
+     0.56
+    ]
+   },
+   {
+    "dir": "SW",
+    "role": "secondary",
+    "uv": [
+     0.14,
+     0.925
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   2652,
+   2528,
+   196,
+   134
+  ],
+  "sheet": 1
+ },
+ "fishing-hamlet-jetties": {
+  "ow": 1544,
+  "oh": 1069,
+  "w": 308,
+  "h": 213,
+  "foot_m": [
+   110.0,
+   88.0
+  ],
+  "src": "concept/setpieces/fishing-hamlet-jetties.png",
+  "set": true,
+  "ax": 0.435,
+  "ay": 0.565,
+  "ports": [
+   {
+    "dir": "E",
+    "role": "main",
+    "uv": [
+     0.945,
+     0.69
+    ]
+   },
+   {
+    "dir": "NE",
+    "role": "secondary",
+    "uv": [
+     0.83,
+     0.245
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   0,
+   1992,
+   308,
+   213
+  ],
+  "sheet": 1
+ },
+ "graveyard-chapel": {
+  "ow": 1501,
+  "oh": 1129,
+  "w": 216,
+  "h": 162,
+  "foot_m": [
+   77.0,
+   66.0
+  ],
+  "src": "concept/setpieces/graveyard-chapel.png",
+  "set": true,
+  "ax": 0.55,
+  "ay": 0.46,
+  "ports": [
+   {
+    "dir": "S",
+    "role": "main",
+    "uv": [
+     0.48,
+     0.91
+    ]
+   },
+   {
+    "dir": "E",
+    "role": "secondary",
+    "uv": [
+     0.925,
+     0.55
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   0,
+   2207,
+   216,
+   162
+  ],
+  "sheet": 1
+ },
+ "hamlet-limewashed": {
+  "ow": 1552,
+  "oh": 1083,
+  "w": 148,
+  "h": 103,
+  "foot_m": [
+   53.0,
+   47.0
+  ],
+  "src": "concept/setpieces/hamlet-limewashed.png",
+  "set": true,
+  "ax": 0.49,
+  "ay": 0.54,
+  "ports": [
+   {
+    "dir": "SW",
+    "role": "main",
+    "uv": [
+     0.07,
+     0.92
+    ]
+   },
+   {
+    "dir": "NE",
+    "role": "secondary",
+    "uv": [
+     0.93,
+     0.24
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   2019,
+   2679,
+   148,
+   103
+  ],
+  "sheet": 1
+ },
+ "hamlet-orchard-crossing": {
+  "ow": 1617,
+  "oh": 1106,
+  "w": 174,
+  "h": 119,
+  "foot_m": [
+   62.0,
+   52.0
+  ],
+  "src": "concept/setpieces/hamlet-orchard-crossing.png",
+  "set": true,
+  "ax": 0.49,
+  "ay": 0.52,
+  "ports": [
+   {
+    "dir": "S",
+    "role": "main",
+    "uv": [
+     0.415,
+     0.89
+    ]
+   },
+   {
+    "dir": "E",
+    "role": "secondary",
+    "uv": [
+     0.95,
+     0.48
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   178,
+   2679,
+   174,
+   119
+  ],
+  "sheet": 1
+ },
+ "hamlet-red-barn": {
+  "ow": 1576,
+  "oh": 1086,
+  "w": 171,
+  "h": 118,
+  "foot_m": [
+   61.0,
+   48.0
+  ],
+  "src": "concept/setpieces/hamlet-red-barn.png",
+  "set": true,
+  "ax": 0.47,
+  "ay": 0.49,
+  "ports": [
+   {
+    "dir": "SE",
+    "role": "main",
+    "uv": [
+     0.82,
+     0.92
+    ]
+   },
+   {
+    "dir": "N",
+    "role": "secondary",
+    "uv": [
+     0.35,
+     0.08
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   354,
+   2679,
+   171,
+   118
+  ],
+  "sheet": 1
+ },
+ "hamlet-well-yard": {
+  "ow": 1566,
+  "oh": 1104,
+  "w": 160,
+  "h": 113,
+  "foot_m": [
+   57.0,
+   46.0
+  ],
+  "src": "concept/setpieces/hamlet-well-yard.png",
+  "set": true,
+  "ax": 0.53,
+  "ay": 0.54,
+  "ports": [
+   {
+    "dir": "S",
+    "role": "main",
+    "uv": [
+     0.47,
+     0.92
+    ]
+   },
+   {
+    "dir": "W",
+    "role": "secondary",
+    "uv": [
+     0.045,
+     0.515
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   1128,
+   2679,
+   160,
+   113
+  ],
+  "sheet": 1
+ },
+ "market-fairground": {
+  "ow": 1408,
+  "oh": 1137,
+  "w": 300,
+  "h": 242,
+  "foot_m": [
+   107.0,
+   89.0
+  ],
+  "src": "concept/setpieces/market-fairground.png",
+  "set": true,
+  "ax": 0.49,
+  "ay": 0.5,
+  "ports": [
+   {
+    "dir": "S",
+    "role": "main",
+    "uv": [
+     0.46,
+     0.92
+    ]
+   },
+   {
+    "dir": "N",
+    "role": "secondary",
+    "uv": [
+     0.53,
+     0.075
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   1442,
+   1730,
+   300,
+   242
+  ],
+  "sheet": 1
+ },
+ "market-quay-water-south": {
+  "ow": 1597,
+  "oh": 1047,
+  "w": 325,
+  "h": 213,
+  "foot_m": [
+   116.0,
+   107.0
+  ],
+  "src": "concept/setpieces/market-quay-water-south.png",
+  "set": true,
+  "ax": 0.53,
+  "ay": 0.48,
+  "ports": [
+   {
+    "dir": "N",
+    "role": "main",
+    "uv": [
+     0.5,
+     0.07
+    ]
+   },
+   {
+    "dir": "E",
+    "role": "secondary",
+    "uv": [
+     0.95,
+     0.58
+    ]
+   }
+  ],
+  "water": "south",
+  "quay": [
+   [
+    0.13,
+    0.895
+   ],
+   [
+    0.86,
+    0.895
+   ]
+  ],
+  "foot": 1.0,
+  "atlas": [
+   310,
+   1992,
+   325,
+   213
+  ],
+  "sheet": 1
+ },
+ "market-quay-water-west": {
+  "ow": 1390,
+  "oh": 1226,
+  "w": 325,
+  "h": 287,
+  "foot_m": [
+   116.0,
+   107.0
+  ],
+  "src": "concept/setpieces/market-quay-water-west.png",
+  "set": true,
+  "ax": 0.43,
+  "ay": 0.535,
+  "ports": [
+   {
+    "dir": "E",
+    "role": "main",
+    "uv": [
+     0.945,
+     0.47
+    ]
+   },
+   {
+    "dir": "S",
+    "role": "secondary",
+    "uv": [
+     0.32,
+     0.92
+    ]
+   }
+  ],
+  "water": "west",
+  "quay": [
+   [
+    0.079,
+    0.09
+   ],
+   [
+    0.078,
+    0.862
+   ]
+  ],
+  "foot": 1.0,
+  "atlas": [
+   2052,
+   592,
+   325,
+   287
+  ],
+  "sheet": 1
+ },
+ "monastery-cloister-garden": {
+  "ow": 1609,
+  "oh": 1106,
+  "w": 378,
+  "h": 260,
+  "foot_m": [
+   135.0,
+   112.0
+  ],
+  "src": "concept/setpieces/monastery-cloister-garden.png",
+  "set": true,
+  "ax": 0.54,
+  "ay": 0.51,
+  "ports": [
+   {
+    "dir": "S",
+    "role": "main",
+    "uv": [
+     0.46,
+     0.94
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   0,
+   1730,
+   378,
+   260
+  ],
+  "sheet": 1
+ },
+ "quay-workshops-water-south": {
+  "ow": 1458,
+  "oh": 1115,
+  "w": 308,
+  "h": 236,
+  "foot_m": [
+   110.0,
+   93.0
+  ],
+  "src": "concept/setpieces/quay-workshops-water-south.png",
+  "set": true,
+  "ax": 0.555,
+  "ay": 0.54,
+  "ports": [
+   {
+    "dir": "N",
+    "role": "main",
+    "uv": [
+     0.44,
+     0.075
+    ]
+   },
+   {
+    "dir": "E",
+    "role": "secondary",
+    "uv": [
+     0.95,
+     0.52
+    ]
+   }
+  ],
+  "water": "south",
+  "quay": [
+   [
+    0.066,
+    0.889
+   ],
+   [
+    0.885,
+    0.889
+   ]
+  ],
+  "foot": 1.0,
+  "atlas": [
+   2405,
+   1730,
+   308,
+   236
+  ],
+  "sheet": 1
+ },
+ "quay-workshops-water-west": {
+  "ow": 1328,
+  "oh": 1213,
+  "w": 308,
+  "h": 281,
+  "foot_m": [
+   110.0,
+   93.0
+  ],
+  "src": "concept/setpieces/quay-workshops-water-west.png",
+  "set": true,
+  "ax": 0.472,
+  "ay": 0.53,
+  "ports": [
+   {
+    "dir": "E",
+    "role": "main",
+    "uv": [
+     0.94,
+     0.47
+    ]
+   },
+   {
+    "dir": "S",
+    "role": "secondary",
+    "uv": [
+     0.39,
+     0.94
+    ]
+   }
+  ],
+  "water": "west",
+  "quay": [
+   [
+    0.088,
+    0.11
+   ],
+   [
+    0.091,
+    0.88
+   ]
+  ],
+  "foot": 1.0,
+  "atlas": [
+   2711,
+   592,
+   308,
+   281
+  ],
+  "sheet": 1
+ },
+ "red-gable-canal-water-south": {
+  "ow": 1429,
+  "oh": 1160,
+  "w": 333,
+  "h": 270,
+  "foot_m": [
+   119.0,
+   102.0
+  ],
+  "src": "concept/setpieces/red-gable-canal-water-south.png",
+  "set": true,
+  "ax": 0.462,
+  "ay": 0.51,
+  "ports": [
+   {
+    "dir": "N",
+    "role": "main",
+    "uv": [
+     0.455,
+     0.073
+    ]
+   },
+   {
+    "dir": "E",
+    "role": "secondary",
+    "uv": [
+     0.955,
+     0.45
+    ]
+   }
+  ],
+  "water": "south",
+  "quay": [
+   [
+    0.054,
+    0.898
+   ],
+   [
+    0.93,
+    0.898
+   ]
+  ],
+  "foot": 1.0,
+  "atlas": [
+   862,
+   919,
+   333,
+   270
+  ],
+  "sheet": 1
+ },
+ "red-gable-canal-water-west": {
+  "ow": 1316,
+  "oh": 1239,
+  "w": 333,
+  "h": 314,
+  "foot_m": [
+   119.0,
+   102.0
+  ],
+  "src": "concept/setpieces/red-gable-canal-water-west.png",
+  "set": true,
+  "ax": 0.49,
+  "ay": 0.5,
+  "ports": [
+   {
+    "dir": "E",
+    "role": "main",
+    "uv": [
+     0.955,
+     0.45
+    ]
+   },
+   {
+    "dir": "S",
+    "role": "secondary",
+    "uv": [
+     0.357,
+     0.94
+    ]
+   }
+  ],
+  "water": "west",
+  "quay": [
+   [
+    0.103,
+    0.145
+   ],
+   [
+    0.103,
+    0.84
+   ]
+  ],
+  "foot": 1.0,
+  "atlas": [
+   481,
+   592,
+   333,
+   314
+  ],
+  "sheet": 1
+ },
+ "sawmill-wood-edge": {
+  "ow": 1490,
+  "oh": 1162,
+  "w": 302,
+  "h": 236,
+  "foot_m": [
+   108.0,
+   91.0
+  ],
+  "src": "concept/setpieces/sawmill-wood-edge.png",
+  "set": true,
+  "ax": 0.54,
+  "ay": 0.58,
+  "ports": [
+   {
+    "dir": "S",
+    "role": "main",
+    "uv": [
+     0.465,
+     0.93
+    ]
+   },
+   {
+    "dir": "E",
+    "role": "secondary",
+    "uv": [
+     0.96,
+     0.54
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   2715,
+   1730,
+   302,
+   236
+  ],
+  "sheet": 1
+ },
+ "town-cobbled-cross": {
+  "ow": 1618,
+  "oh": 1098,
+  "w": 479,
+  "h": 325,
+  "foot_m": [
+   171.0,
+   132.0
+  ],
+  "src": "concept/setpieces/town-cobbled-cross.png",
+  "set": true,
+  "ax": 0.47,
+  "ay": 0.54,
+  "ports": [
+   {
+    "dir": "S",
+    "role": "main",
+    "uv": [
+     0.49,
+     0.92
+    ]
+   },
+   {
+    "dir": "E",
+    "role": "secondary",
+    "uv": [
+     0.92,
+     0.42
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   0,
+   592,
+   479,
+   325
+  ],
+  "sheet": 1
+ },
+ "town-golden-thatch": {
+  "ow": 1586,
+  "oh": 1070,
+  "w": 445,
+  "h": 300,
+  "foot_m": [
+   159.0,
+   132.0
+  ],
+  "src": "concept/setpieces/town-golden-thatch.png",
+  "set": true,
+  "ax": 0.55,
+  "ay": 0.6,
+  "ports": [
+   {
+    "dir": "SE",
+    "role": "main",
+    "uv": [
+     0.83,
+     0.92
+    ]
+   },
+   {
+    "dir": "W",
+    "role": "secondary",
+    "uv": [
+     0.045,
+     0.58
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   1253,
+   592,
+   445,
+   300
+  ],
+  "sheet": 1
+ },
+ "town-market-limestone": {
+  "ow": 1493,
+  "oh": 1162,
+  "w": 622,
+  "h": 484,
+  "foot_m": [
+   222.0,
+   146.0
+  ],
+  "src": "concept/setpieces/town-market-limestone.png",
+  "set": true,
+  "ax": 0.485,
+  "ay": 0.435,
+  "ports": [
+   {
+    "dir": "W",
+    "role": "main",
+    "uv": [
+     0.052,
+     0.479
+    ]
+   },
+   {
+    "dir": "SW",
+    "role": "secondary",
+    "uv": [
+     0.132,
+     0.938
+    ]
+   },
+   {
+    "dir": "E",
+    "role": "secondary",
+    "uv": [
+     0.947,
+     0.386
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   190,
+   0,
+   622,
+   484
+  ],
+  "sheet": 1
+ },
+ "town-orchard-market": {
+  "ow": 1467,
+  "oh": 1189,
+  "w": 482,
+  "h": 391,
+  "foot_m": [
+   172.0,
+   141.0
+  ],
+  "src": "concept/setpieces/town-orchard-market.png",
+  "set": true,
+  "ax": 0.49,
+  "ay": 0.54,
+  "ports": [
+   {
+    "dir": "S",
+    "role": "main",
+    "uv": [
+     0.53,
+     0.92
+    ]
+   },
+   {
+    "dir": "NW",
+    "role": "secondary",
+    "uv": [
+     0.12,
+     0.165
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   2377,
+   0,
+   482,
+   391
+  ],
+  "sheet": 1
+ },
+ "town-red-gables": {
+  "ow": 1443,
+  "oh": 1202,
+  "w": 459,
+  "h": 382,
+  "foot_m": [
+   164.0,
+   135.0
+  ],
+  "src": "concept/setpieces/town-red-gables.png",
+  "set": true,
+  "ax": 0.47,
+  "ay": 0.52,
+  "ports": [
+   {
+    "dir": "SW",
+    "role": "main",
+    "uv": [
+     0.14,
+     0.93
+    ]
+   },
+   {
+    "dir": "NE",
+    "role": "secondary",
+    "uv": [
+     0.9,
+     0.18
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   2861,
+   0,
+   459,
+   382
+  ],
+  "sheet": 1
+ },
+ "village-chapel-green": {
+  "ow": 1432,
+  "oh": 1135,
+  "w": 288,
+  "h": 228,
+  "foot_m": [
+   103.0,
+   84.0
+  ],
+  "src": "concept/setpieces/village-chapel-green.png",
+  "set": true,
+  "ax": 0.435,
+  "ay": 0.529,
+  "ports": [
+   {
+    "dir": "S",
+    "role": "main",
+    "uv": [
+     0.49,
+     0.94
+    ]
+   },
+   {
+    "dir": "E",
+    "role": "secondary",
+    "uv": [
+     0.955,
+     0.55
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   3429,
+   1730,
+   288,
+   228
+  ],
+  "sheet": 1
+ },
+ "village-crossroads": {
+  "ow": 1822,
+  "oh": 930,
+  "w": 311,
+  "h": 159,
+  "foot_m": [
+   111.0,
+   79.0
+  ],
+  "src": "concept/setpieces/village-crossroads.png",
+  "set": true,
+  "ax": 0.55,
+  "ay": 0.48,
+  "ports": [
+   {
+    "dir": "W",
+    "role": "main",
+    "uv": [
+     0.04,
+     0.575
+    ]
+   },
+   {
+    "dir": "E",
+    "role": "secondary",
+    "uv": [
+     0.95,
+     0.465
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   645,
+   2207,
+   311,
+   159
+  ],
+  "sheet": 1
+ },
+ "village-red-square": {
+  "ow": 1560,
+  "oh": 1086,
+  "w": 291,
+  "h": 203,
+  "foot_m": [
+   104.0,
+   87.0
+  ],
+  "src": "concept/setpieces/village-red-square.png",
+  "set": true,
+  "ax": 0.48,
+  "ay": 0.57,
+  "ports": [
+   {
+    "dir": "SW",
+    "role": "main",
+    "uv": [
+     0.14,
+     0.92
+    ]
+   },
+   {
+    "dir": "NE",
+    "role": "secondary",
+    "uv": [
+     0.88,
+     0.24
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   913,
+   1992,
+   291,
+   203
+  ],
+  "sheet": 1
+ },
+ "village-timber-commons": {
+  "ow": 1474,
+  "oh": 1167,
+  "w": 302,
+  "h": 239,
+  "foot_m": [
+   108.0,
+   94.0
+  ],
+  "src": "concept/setpieces/village-timber-commons.png",
+  "set": true,
+  "ax": 0.49,
+  "ay": 0.54,
+  "ports": [
+   {
+    "dir": "SE",
+    "role": "main",
+    "uv": [
+     0.72,
+     0.935
+    ]
+   },
+   {
+    "dir": "N",
+    "role": "secondary",
+    "uv": [
+     0.41,
+     0.065
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   2101,
+   1730,
+   302,
+   239
+  ],
+  "sheet": 1
+ },
+ "village-willow-well": {
+  "ow": 1537,
+  "oh": 1152,
+  "w": 274,
+  "h": 205,
+  "foot_m": [
+   98.0,
+   83.0
+  ],
+  "src": "concept/setpieces/village-willow-well.png",
+  "set": true,
+  "ax": 0.455,
+  "ay": 0.58,
+  "ports": [
+   {
+    "dir": "S",
+    "role": "main",
+    "uv": [
+     0.48,
+     0.935
+    ]
+   },
+   {
+    "dir": "NW",
+    "role": "secondary",
+    "uv": [
+     0.085,
+     0.225
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   637,
+   1992,
+   274,
+   205
+  ],
+  "sheet": 1
+ },
+ "vineyard-estate": {
+  "ow": 1584,
+  "oh": 1095,
+  "w": 367,
+  "h": 254,
+  "foot_m": [
+   131.0,
+   106.0
+  ],
+  "src": "concept/setpieces/vineyard-estate.png",
+  "set": true,
+  "ax": 0.49,
+  "ay": 0.55,
+  "ports": [
+   {
+    "dir": "SW",
+    "role": "main",
+    "uv": [
+     0.15,
+     0.91
+    ]
+   },
+   {
+    "dir": "NE",
+    "role": "secondary",
+    "uv": [
+     0.925,
+     0.305
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   798,
+   1730,
+   367,
+   254
+  ],
+  "sheet": 1
+ },
+ "walled-town-grey-corner": {
+  "ow": 1515,
+  "oh": 1144,
+  "w": 535,
+  "h": 404,
+  "foot_m": [
+   191.0,
+   150.0
+  ],
+  "src": "concept/setpieces/walled-town-grey-corner.png",
+  "set": true,
+  "ax": 0.5,
+  "ay": 0.52,
+  "ports": [
+   {
+    "dir": "SE",
+    "role": "main",
+    "uv": [
+     0.915,
+     0.935
+    ]
+   },
+   {
+    "dir": "W",
+    "role": "secondary",
+    "uv": [
+     0.047,
+     0.59
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   1840,
+   0,
+   535,
+   404
+  ],
+  "sheet": 1
+ },
+ "walled-town-limestone": {
+  "ow": 1403,
+  "oh": 1216,
+  "w": 515,
+  "h": 446,
+  "foot_m": [
+   184.0,
+   147.0
+  ],
+  "src": "concept/setpieces/walled-town-limestone.png",
+  "set": true,
+  "ax": 0.55,
+  "ay": 0.485,
+  "ports": [
+   {
+    "dir": "S",
+    "role": "main",
+    "uv": [
+     0.435,
+     0.95
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   1323,
+   0,
+   515,
+   446
+  ],
+  "sheet": 1
+ },
+ "walled-town-red-roofs": {
+  "ow": 1381,
+  "oh": 1254,
+  "w": 507,
+  "h": 460,
+  "foot_m": [
+   181.0,
+   146.0
+  ],
+  "src": "concept/setpieces/walled-town-red-roofs.png",
+  "set": true,
+  "ax": 0.48,
+  "ay": 0.54,
+  "ports": [
+   {
+    "dir": "SW",
+    "role": "main",
+    "uv": [
+     0.08,
+     0.915
+    ]
+   },
+   {
+    "dir": "N",
+    "role": "secondary",
+    "uv": [
+     0.525,
+     0.08
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   814,
+   0,
+   507,
+   460
+  ],
+  "sheet": 1
+ },
+ "watermill-pond-race": {
+  "ow": 1534,
+  "oh": 1068,
+  "w": 286,
+  "h": 199,
+  "foot_m": [
+   102.0,
+   88.0
+  ],
+  "src": "concept/setpieces/watermill-pond-race.png",
+  "set": true,
+  "ax": 0.54,
+  "ay": 0.716,
+  "ports": [
+   {
+    "dir": "W",
+    "role": "main",
+    "uv": [
+     0.052,
+     0.59
+    ]
+   },
+   {
+    "dir": "SE",
+    "role": "secondary",
+    "uv": [
+     0.815,
+     0.9
+    ]
+   }
+  ],
+  "foot": 1.0,
+  "atlas": [
+   1206,
+   1992,
+   286,
+   199
+  ],
+  "sheet": 1
+ },
+ "bank-grassy-ew": {
+  "ow": 2213,
+  "oh": 364,
+  "w": 66,
+  "h": 11,
+  "foot_m": [
+   28.0,
+   4.0
+  ],
+  "src": "concept/scenery/bank-grassy-ew.png",
+  "set": false,
+  "ax": 0.486,
+  "ay": 0.57,
+  "foot": 1.0,
+  "atlas": [
+   2852,
+   3071,
+   66,
+   11
+  ],
+  "sheet": 1
+ },
+ "bank-grassy-ne-sw": {
+  "ow": 1135,
+  "oh": 997,
+  "w": 66,
+  "h": 58,
+  "foot_m": [
+   28.0,
+   4.0
+  ],
+  "src": "concept/scenery/bank-grassy-ne-sw.png",
+  "set": false,
+  "ax": 0.481,
+  "ay": 0.497,
+  "foot": 1.0,
+  "atlas": [
+   1176,
+   3071,
+   66,
+   58
+  ],
+  "sheet": 1
+ },
+ "bank-grassy-ns": {
+  "ow": 322,
+  "oh": 1822,
+  "w": 66,
+  "h": 373,
+  "foot_m": [
+   28.0,
+   4.0
+  ],
+  "src": "concept/scenery/bank-grassy-ns.png",
+  "set": false,
+  "ax": 0.486,
+  "ay": 0.494,
+  "foot": 1.0,
+  "atlas": [
+   3512,
+   0,
+   66,
+   373
+  ],
+  "sheet": 1
+ },
+ "bank-grassy-nw-se": {
+  "ow": 1238,
+  "oh": 1174,
+  "w": 66,
+  "h": 63,
+  "foot_m": [
+   28.0,
+   4.0
+  ],
+  "src": "concept/scenery/bank-grassy-nw-se.png",
+  "set": false,
+  "ax": 0.481,
+  "ay": 0.464,
+  "foot": 1.0,
+  "atlas": [
+   3628,
+   2993,
+   66,
+   63
+  ],
+  "sheet": 1
+ },
+ "bank-reeds-ew": {
+  "ow": 2216,
+  "oh": 575,
+  "w": 56,
+  "h": 15,
+  "foot_m": [
+   24.0,
+   3.0
+  ],
+  "src": "concept/scenery/bank-reeds-ew.png",
+  "set": false,
+  "ax": 0.466,
+  "ay": 0.615,
+  "foot": 1.0,
+  "atlas": [
+   2642,
+   3071,
+   56,
+   15
+  ],
+  "sheet": 1
+ },
+ "bank-reeds-ne-sw": {
+  "ow": 1451,
+  "oh": 999,
+  "w": 56,
+  "h": 39,
+  "foot_m": [
+   24.0,
+   3.0
+  ],
+  "src": "concept/scenery/bank-reeds-ne-sw.png",
+  "set": false,
+  "ax": 0.476,
+  "ay": 0.489,
+  "foot": 1.0,
+  "atlas": [
+   1897,
+   3071,
+   56,
+   39
+  ],
+  "sheet": 1
+ },
+ "bank-reeds-ns": {
+  "ow": 374,
+  "oh": 1567,
+  "w": 56,
+  "h": 235,
+  "foot_m": [
+   24.0,
+   3.0
+  ],
+  "src": "concept/scenery/bank-reeds-ns.png",
+  "set": false,
+  "ax": 0.496,
+  "ay": 0.515,
+  "foot": 1.0,
+  "atlas": [
+   3019,
+   1730,
+   56,
+   235
+  ],
+  "sheet": 1
+ },
+ "bank-reeds-nw-se": {
+  "ow": 1270,
+  "oh": 1223,
+  "w": 56,
+  "h": 54,
+  "foot_m": [
+   24.0,
+   3.0
+  ],
+  "src": "concept/scenery/bank-reeds-nw-se.png",
+  "set": false,
+  "ax": 0.505,
+  "ay": 0.485,
+  "foot": 1.0,
+  "atlas": [
+   1492,
+   3071,
+   56,
+   54
+  ],
+  "sheet": 1
+ },
+ "bank-rocky-ew": {
+  "ow": 2146,
+  "oh": 330,
+  "w": 66,
+  "h": 10,
+  "foot_m": [
+   28.0,
+   4.5
+  ],
+  "src": "concept/scenery/bank-rocky-ew.png",
+  "set": false,
+  "ax": 0.486,
+  "ay": 0.518,
+  "foot": 1.0,
+  "atlas": [
+   2920,
+   3071,
+   66,
+   10
+  ],
+  "sheet": 1
+ },
+ "bank-rocky-ne-sw": {
+  "ow": 1283,
+  "oh": 1236,
+  "w": 66,
+  "h": 64,
+  "foot_m": [
+   28.0,
+   4.5
+  ],
+  "src": "concept/scenery/bank-rocky-ne-sw.png",
+  "set": false,
+  "ax": 0.495,
+  "ay": 0.481,
+  "foot": 1.0,
+  "atlas": [
+   3476,
+   2993,
+   66,
+   64
+  ],
+  "sheet": 1
+ },
+ "bank-rocky-ns": {
+  "ow": 460,
+  "oh": 2152,
+  "w": 66,
+  "h": 309,
+  "foot_m": [
+   28.0,
+   4.5
+  ],
+  "src": "concept/scenery/bank-rocky-ns.png",
+  "set": false,
+  "ax": 0.485,
+  "ay": 0.479,
+  "foot": 1.0,
+  "atlas": [
+   1185,
+   592,
+   66,
+   309
+  ],
+  "sheet": 1
+ },
+ "bank-rocky-nw-se": {
+  "ow": 1250,
+  "oh": 1185,
+  "w": 66,
+  "h": 63,
+  "foot_m": [
+   28.0,
+   4.5
+  ],
+  "src": "concept/scenery/bank-rocky-nw-se.png",
+  "set": false,
+  "ax": 0.475,
+  "ay": 0.494,
+  "foot": 1.0,
+  "atlas": [
+   3696,
+   2993,
+   66,
+   63
+  ],
+  "sheet": 1
+ },
+ "field-quilt-hook": {
+  "ow": 1509,
+  "oh": 1072,
+  "w": 195,
+  "h": 139,
+  "foot_m": [
+   83.0,
+   67.0
+  ],
+  "src": "concept/scenery/field-quilt-hook.png",
+  "set": false,
+  "ax": 0.47,
+  "ay": 0.535,
+  "foot": 1.0,
+  "atlas": [
+   2270,
+   2528,
+   195,
+   139
+  ],
+  "sheet": 1
+ },
+ "field-quilt-kite": {
+  "ow": 1566,
+  "oh": 1104,
+  "w": 214,
+  "h": 151,
+  "foot_m": [
+   91.0,
+   80.0
+  ],
+  "src": "concept/scenery/field-quilt-kite.png",
+  "set": false,
+  "ax": 0.473,
+  "ay": 0.442,
+  "foot": 1.0,
+  "atlas": [
+   3679,
+   2371,
+   214,
+   151
+  ],
+  "sheet": 1
+ },
+ "field-quilt-ribbon": {
+  "ow": 1824,
+  "oh": 948,
+  "w": 240,
+  "h": 125,
+  "foot_m": [
+   102.0,
+   64.0
+  ],
+  "src": "concept/scenery/field-quilt-ribbon.png",
+  "set": false,
+  "ax": 0.466,
+  "ay": 0.521,
+  "foot": 1.0,
+  "atlas": [
+   3179,
+   2528,
+   240,
+   125
+  ],
+  "sheet": 1
+ },
+ "field-quilt-step": {
+  "ow": 1505,
+  "oh": 1066,
+  "w": 263,
+  "h": 186,
+  "foot_m": [
+   112.0,
+   81.0
+  ],
+  "src": "concept/scenery/field-quilt-step.png",
+  "set": false,
+  "ax": 0.476,
+  "ay": 0.494,
+  "foot": 1.0,
+  "atlas": [
+   2152,
+   1992,
+   263,
+   186
+  ],
+  "sheet": 1
+ },
+ "forest-deciduous-broad": {
+  "ow": 1477,
+  "oh": 1096,
+  "w": 289,
+  "h": 214,
+  "foot_m": [
+   123.0,
+   86.0
+  ],
+  "src": "concept/scenery/forest-deciduous-broad.png",
+  "set": false,
+  "ax": 0.471,
+  "ay": 0.507,
+  "foot": 1.0,
+  "atlas": [
+   3719,
+   1730,
+   289,
+   214
+  ],
+  "sheet": 1
+ },
+ "forest-deciduous-edge": {
+  "ow": 1788,
+  "oh": 845,
+  "w": 212,
+  "h": 100,
+  "foot_m": [
+   90.0,
+   26.0
+  ],
+  "src": "concept/scenery/forest-deciduous-edge.png",
+  "set": false,
+  "ax": 0.499,
+  "ay": 0.494,
+  "foot": 1.0,
+  "atlas": [
+   2317,
+   2679,
+   212,
+   100
+  ],
+  "sheet": 1
+ },
+ "forest-deciduous-lobed": {
+  "ow": 1360,
+  "oh": 1124,
+  "w": 238,
+  "h": 197,
+  "foot_m": [
+   101.0,
+   89.0
+  ],
+  "src": "concept/scenery/forest-deciduous-lobed.png",
+  "set": false,
+  "ax": 0.513,
+  "ay": 0.482,
+  "foot": 1.0,
+  "atlas": [
+   1494,
+   1992,
+   238,
+   197
+  ],
+  "sheet": 1
+ },
+ "forest-mixed-bent": {
+  "ow": 1564,
+  "oh": 1065,
+  "w": 247,
+  "h": 168,
+  "foot_m": [
+   105.0,
+   77.0
+  ],
+  "src": "concept/scenery/forest-mixed-bent.png",
+  "set": false,
+  "ax": 0.48,
+  "ay": 0.485,
+  "foot": 1.0,
+  "atlas": [
+   3459,
+   1992,
+   247,
+   168
+  ],
+  "sheet": 1
+ },
+ "forest-mixed-broad": {
+  "ow": 1467,
+  "oh": 1160,
+  "w": 325,
+  "h": 257,
+  "foot_m": [
+   138.0,
+   92.0
+  ],
+  "src": "concept/scenery/forest-mixed-broad.png",
+  "set": false,
+  "ax": 0.434,
+  "ay": 0.497,
+  "foot": 1.0,
+  "atlas": [
+   471,
+   1730,
+   325,
+   257
+  ],
+  "sheet": 1
+ },
+ "forest-mixed-edge": {
+  "ow": 1825,
+  "oh": 863,
+  "w": 219,
+  "h": 104,
+  "foot_m": [
+   93.0,
+   29.0
+  ],
+  "src": "concept/scenery/forest-mixed-edge.png",
+  "set": false,
+  "ax": 0.506,
+  "ay": 0.569,
+  "foot": 1.0,
+  "atlas": [
+   1798,
+   2679,
+   219,
+   104
+  ],
+  "sheet": 1
+ },
+ "forest-mixed-pocket": {
+  "ow": 1350,
+  "oh": 1114,
+  "w": 179,
+  "h": 148,
+  "foot_m": [
+   76.0,
+   62.0
+  ],
+  "src": "concept/scenery/forest-mixed-pocket.png",
+  "set": false,
+  "ax": 0.506,
+  "ay": 0.53,
+  "foot": 1.0,
+  "atlas": [
+   220,
+   2528,
+   179,
+   148
+  ],
+  "sheet": 1
+ },
+ "forest-pine-edge": {
+  "ow": 1806,
+  "oh": 868,
+  "w": 226,
+  "h": 109,
+  "foot_m": [
+   96.0,
+   28.0
+  ],
+  "src": "concept/scenery/forest-pine-edge.png",
+  "set": false,
+  "ax": 0.476,
+  "ay": 0.55,
+  "foot": 1.0,
+  "atlas": [
+   1290,
+   2679,
+   226,
+   109
+  ],
+  "sheet": 1
+ },
+ "forest-pine-pocket": {
+  "ow": 1306,
+  "oh": 1201,
+  "w": 165,
+  "h": 152,
+  "foot_m": [
+   70.0,
+   55.0
+  ],
+  "src": "concept/scenery/forest-pine-pocket.png",
+  "set": false,
+  "ax": 0.457,
+  "ay": 0.557,
+  "foot": 1.0,
+  "atlas": [
+   3512,
+   2371,
+   165,
+   152
+  ],
+  "sheet": 1
+ },
+ "forest-pine-ragged": {
+  "ow": 1345,
+  "oh": 1217,
+  "w": 273,
+  "h": 247,
+  "foot_m": [
+   116.0,
+   90.0
+  ],
+  "src": "concept/scenery/forest-pine-ragged.png",
+  "set": false,
+  "ax": 0.492,
+  "ay": 0.535,
+  "foot": 1.0,
+  "atlas": [
+   1167,
+   1730,
+   273,
+   247
+  ],
+  "sheet": 1
+ },
+ "forest-pine-swept": {
+  "ow": 1576,
+  "oh": 1078,
+  "w": 226,
+  "h": 155,
+  "foot_m": [
+   96.0,
+   60.0
+  ],
+  "src": "concept/scenery/forest-pine-swept.png",
+  "set": false,
+  "ax": 0.55,
+  "ay": 0.535,
+  "foot": 1.0,
+  "atlas": [
+   1129,
+   2207,
+   226,
+   155
+  ],
+  "sheet": 1
+ },
+ "mountain-forested-slope-band": {
+  "ow": 1574,
+  "oh": 1073,
+  "w": 355,
+  "h": 242,
+  "foot_m": [
+   151.0,
+   91.0
+  ],
+  "src": "concept/scenery/mountain-forested-slope-band.png",
+  "set": false,
+  "ax": 0.44,
+  "ay": 0.533,
+  "foot": 1.0,
+  "atlas": [
+   1744,
+   1730,
+   355,
+   242
+  ],
+  "sheet": 1
+ },
+ "mountain-limestone-cliff-band": {
+  "ow": 2124,
+  "oh": 837,
+  "w": 327,
+  "h": 129,
+  "foot_m": [
+   139.0,
+   48.0
+  ],
+  "src": "concept/scenery/mountain-limestone-cliff-band.png",
+  "set": false,
+  "ax": 0.496,
+  "ay": 0.501,
+  "foot": 1.0,
+  "atlas": [
+   2850,
+   2528,
+   327,
+   129
+  ],
+  "sheet": 1
+ },
+ "mountain-scree-fan": {
+  "ow": 1567,
+  "oh": 1070,
+  "w": 235,
+  "h": 160,
+  "foot_m": [
+   100.0,
+   81.0
+  ],
+  "src": "concept/scenery/mountain-scree-fan.png",
+  "set": false,
+  "ax": 0.465,
+  "ay": 0.531,
+  "foot": 1.0,
+  "atlas": [
+   218,
+   2207,
+   235,
+   160
+  ],
+  "sheet": 1
+ },
+ "mountain-snow-ridge": {
+  "ow": 1579,
+  "oh": 1083,
+  "w": 400,
+  "h": 274,
+  "foot_m": [
+   170.0,
+   111.0
+  ],
+  "src": "concept/scenery/mountain-snow-ridge.png",
+  "set": false,
+  "ax": 0.47,
+  "ay": 0.573,
+  "foot": 1.0,
+  "atlas": [
+   460,
+   919,
+   400,
+   274
+  ],
+  "sheet": 1
+ },
+ "orchard-block-bloom": {
+  "ow": 1444,
+  "oh": 1055,
+  "w": 165,
+  "h": 121,
+  "foot_m": [
+   70.0,
+   61.0
+  ],
+  "src": "concept/scenery/orchard-block-bloom.png",
+  "set": false,
+  "ax": 0.504,
+  "ay": 0.517,
+  "foot": 1.0,
+  "atlas": [
+   3917,
+   2528,
+   165,
+   121
+  ],
+  "sheet": 1
+ },
+ "orchard-block-rows": {
+  "ow": 1557,
+  "oh": 1072,
+  "w": 176,
+  "h": 121,
+  "foot_m": [
+   75.0,
+   53.0
+  ],
+  "src": "concept/scenery/orchard-block-rows.png",
+  "set": false,
+  "ax": 0.49,
+  "ay": 0.505,
+  "foot": 1.0,
+  "atlas": [
+   0,
+   2679,
+   176,
+   121
+  ],
+  "sheet": 1
+ },
+ "paddock-cattle-shelter": {
+  "ow": 1556,
+  "oh": 1045,
+  "w": 186,
+  "h": 125,
+  "foot_m": [
+   79.0,
+   55.0
+  ],
+  "src": "concept/scenery/paddock-cattle-shelter.png",
+  "set": false,
+  "ax": 0.471,
+  "ay": 0.507,
+  "foot": 1.0,
+  "atlas": [
+   3421,
+   2528,
+   186,
+   125
+  ],
+  "sheet": 1
+ },
+ "paddock-sheep-shelter": {
+  "ow": 1508,
+  "oh": 1075,
+  "w": 160,
+  "h": 114,
+  "foot_m": [
+   68.0,
+   50.0
+  ],
+  "src": "concept/scenery/paddock-sheep-shelter.png",
+  "set": false,
+  "ax": 0.485,
+  "ay": 0.512,
+  "foot": 1.0,
+  "atlas": [
+   828,
+   2679,
+   160,
+   114
+  ],
+  "sheet": 1
+ },
+ "quay-soft-ew": {
+  "ow": 2133,
+  "oh": 454,
+  "w": 66,
+  "h": 14,
+  "foot_m": [
+   28.0,
+   4.0
+  ],
+  "src": "concept/scenery/quay-soft-ew.png",
+  "set": false,
+  "ax": 0.493,
+  "ay": 0.54,
+  "foot": 1.0,
+  "atlas": [
+   2700,
+   3071,
+   66,
+   14
+  ],
+  "sheet": 1
+ },
+ "quay-soft-ne-sw": {
+  "ow": 1201,
+  "oh": 1228,
+  "w": 66,
+  "h": 67,
+  "foot_m": [
+   28.0,
+   4.0
+  ],
+  "src": "concept/scenery/quay-soft-ne-sw.png",
+  "set": false,
+  "ax": 0.495,
+  "ay": 0.498,
+  "foot": 1.0,
+  "atlas": [
+   3408,
+   2993,
+   66,
+   67
+  ],
+  "sheet": 1
+ },
+ "quay-soft-ns": {
+  "ow": 397,
+  "oh": 2141,
+  "w": 66,
+  "h": 356,
+  "foot_m": [
+   28.0,
+   4.0
+  ],
+  "src": "concept/scenery/quay-soft-ns.png",
+  "set": false,
+  "ax": 0.545,
+  "ay": 0.503,
+  "foot": 1.0,
+  "atlas": [
+   3580,
+   0,
+   66,
+   356
+  ],
+  "sheet": 1
+ },
+ "quay-soft-nw-se": {
+  "ow": 1277,
+  "oh": 1186,
+  "w": 66,
+  "h": 61,
+  "foot_m": [
+   28.0,
+   4.0
+  ],
+  "src": "concept/scenery/quay-soft-nw-se.png",
+  "set": false,
+  "ax": 0.496,
+  "ay": 0.488,
+  "foot": 1.0,
+  "atlas": [
+   3764,
+   2993,
+   66,
+   61
+  ],
+  "sheet": 1
+ },
+ "village-green-pond": {
+  "ow": 1557,
+  "oh": 1072,
+  "w": 179,
+  "h": 123,
+  "foot_m": [
+   76.0,
+   67.0
+  ],
+  "src": "concept/scenery/village-green-pond.png",
+  "set": false,
+  "ax": 0.48,
+  "ay": 0.517,
+  "foot": 1.0,
+  "atlas": [
+   3736,
+   2528,
+   179,
+   123
+  ],
+  "sheet": 1
+ },
+ "vineyard-block-long": {
+  "ow": 1533,
+  "oh": 1086,
+  "w": 209,
+  "h": 148,
+  "foot_m": [
+   89.0,
+   49.0
+  ],
+  "src": "concept/scenery/vineyard-block-long.png",
+  "set": false,
+  "ax": 0.496,
+  "ay": 0.489,
+  "foot": 1.0,
+  "atlas": [
+   401,
+   2528,
+   209,
+   148
+  ],
+  "sheet": 1
+ },
+ "vineyard-block-slope": {
+  "ow": 1403,
+  "oh": 1069,
+  "w": 183,
+  "h": 139,
+  "foot_m": [
+   78.0,
+   59.0
+  ],
+  "src": "concept/scenery/vineyard-block-slope.png",
+  "set": false,
+  "ax": 0.473,
+  "ay": 0.51,
+  "foot": 1.0,
+  "atlas": [
+   2467,
+   2528,
+   183,
+   139
+  ],
+  "sheet": 1
+ },
+ "beehive-garden-160-ew": {
+  "ow": 988,
+  "oh": 316,
+  "w": 280,
+  "h": 90,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/beehive-garden-160-ew.png",
+  "set": false,
+  "img_m": 164.67,
+  "ax": 0.4995,
+  "ay": 0.4984,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2746,
+   2802,
+   280,
+   90
+  ],
+  "sheet": 1
+ },
+ "beehive-garden-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/beehive-garden-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1197,
+   919,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "beehive-garden-160-ns": {
+  "ow": 316,
+  "oh": 988,
+  "w": 90,
+  "h": 281,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/beehive-garden-160-ns.png",
+  "set": false,
+  "img_m": 52.67,
+  "ax": 0.4984,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3021,
+   592,
+   90,
+   281
+  ],
+  "sheet": 1
+ },
+ "beehive-garden-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/beehive-garden-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1461,
+   919,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "beehive-garden-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/beehive-garden-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3832,
+   2993,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "beehive-garden-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/beehive-garden-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2721,
+   2679,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "beehive-garden-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/beehive-garden-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3834,
+   2901,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "beehive-garden-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/beehive-garden-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2820,
+   2679,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "beehive-garden-80-ew": {
+  "ow": 508,
+  "oh": 262,
+  "w": 144,
+  "h": 74,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/beehive-garden-80-ew.png",
+  "set": false,
+  "img_m": 84.67,
+  "ax": 0.499,
+  "ay": 0.4981,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   882,
+   2993,
+   144,
+   74
+  ],
+  "sheet": 1
+ },
+ "beehive-garden-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/beehive-garden-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1357,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "beehive-garden-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/beehive-garden-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   783,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "beehive-garden-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/beehive-garden-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1514,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "bleaching-field-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/bleaching-field-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1725,
+   919,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "bleaching-field-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/bleaching-field-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1989,
+   919,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "bleaching-field-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/bleaching-field-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2919,
+   2679,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "bleaching-field-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/bleaching-field-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3018,
+   2679,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "bleaching-field-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/bleaching-field-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1671,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "bleaching-field-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/bleaching-field-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1828,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "block-corner-ditch": {
+  "ow": 959,
+  "oh": 1000,
+  "w": 40,
+  "h": 42,
+  "foot_m": [
+   10.0,
+   10.0
+  ],
+  "src": "concept/fillers/block-corner-ditch.png",
+  "set": false,
+  "ax": 0.368,
+  "ay": 0.39,
+  "foot": 1.0,
+  "atlas": [
+   1813,
+   3071,
+   40,
+   42
+  ],
+  "sheet": 1
+ },
+ "block-corner-hedge": {
+  "ow": 756,
+  "oh": 768,
+  "w": 40,
+  "h": 41,
+  "foot_m": [
+   10.0,
+   10.0
+  ],
+  "src": "concept/fillers/block-corner-hedge.png",
+  "set": false,
+  "ax": 0.375,
+  "ay": 0.607,
+  "foot": 1.0,
+  "atlas": [
+   1855,
+   3071,
+   40,
+   41
+  ],
+  "sheet": 1
+ },
+ "block-corner-rail": {
+  "ow": 1108,
+  "oh": 952,
+  "w": 40,
+  "h": 34,
+  "foot_m": [
+   10.0,
+   10.0
+  ],
+  "src": "concept/fillers/block-corner-rail.png",
+  "set": false,
+  "ax": 0.38,
+  "ay": 0.37,
+  "foot": 1.0,
+  "atlas": [
+   2208,
+   3071,
+   40,
+   34
+  ],
+  "sheet": 1
+ },
+ "block-corner-wall": {
+  "ow": 1255,
+  "oh": 1126,
+  "w": 40,
+  "h": 36,
+  "foot_m": [
+   10.0,
+   10.0
+  ],
+  "src": "concept/fillers/block-corner-wall.png",
+  "set": false,
+  "ax": 0.459,
+  "ay": 0.498,
+  "foot": 1.0,
+  "atlas": [
+   2166,
+   3071,
+   40,
+   36
+  ],
+  "sheet": 1
+ },
+ "block-end-ditch": {
+  "ow": 1443,
+  "oh": 781,
+  "w": 40,
+  "h": 22,
+  "foot_m": [
+   12.0,
+   10.0
+  ],
+  "src": "concept/fillers/block-end-ditch.png",
+  "set": false,
+  "ax": 0.512,
+  "ay": 0.503,
+  "foot": 1.0,
+  "atlas": [
+   2513,
+   3071,
+   40,
+   22
+  ],
+  "sheet": 1
+ },
+ "block-end-hedge": {
+  "ow": 2154,
+  "oh": 704,
+  "w": 40,
+  "h": 13,
+  "foot_m": [
+   12.0,
+   10.0
+  ],
+  "src": "concept/fillers/block-end-hedge.png",
+  "set": false,
+  "ax": 0.487,
+  "ay": 0.359,
+  "foot": 1.0,
+  "atlas": [
+   2768,
+   3071,
+   40,
+   13
+  ],
+  "sheet": 1
+ },
+ "block-end-rail": {
+  "ow": 1760,
+  "oh": 574,
+  "w": 40,
+  "h": 13,
+  "foot_m": [
+   12.0,
+   10.0
+  ],
+  "src": "concept/fillers/block-end-rail.png",
+  "set": false,
+  "ax": 0.47,
+  "ay": 0.499,
+  "foot": 1.0,
+  "atlas": [
+   2810,
+   3071,
+   40,
+   13
+  ],
+  "sheet": 1
+ },
+ "block-end-wall": {
+  "ow": 1369,
+  "oh": 956,
+  "w": 40,
+  "h": 28,
+  "foot_m": [
+   12.0,
+   10.0
+  ],
+  "src": "concept/fillers/block-end-wall.png",
+  "set": false,
+  "ax": 0.481,
+  "ay": 0.476,
+  "foot": 1.0,
+  "atlas": [
+   2380,
+   3071,
+   40,
+   28
+  ],
+  "sheet": 1
+ },
+ "bowling-green-160-ew": {
+  "ow": 988,
+  "oh": 316,
+  "w": 280,
+  "h": 90,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/bowling-green-160-ew.png",
+  "set": false,
+  "img_m": 164.67,
+  "ax": 0.4995,
+  "ay": 0.4984,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3028,
+   2802,
+   280,
+   90
+  ],
+  "sheet": 1
+ },
+ "bowling-green-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/bowling-green-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2253,
+   919,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "bowling-green-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/bowling-green-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2517,
+   919,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "bowling-green-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/bowling-green-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3910,
+   2993,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "bowling-green-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/bowling-green-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3117,
+   2679,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "bowling-green-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/bowling-green-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3897,
+   2901,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "bowling-green-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/bowling-green-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3216,
+   2679,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "bowling-green-80-ew": {
+  "ow": 508,
+  "oh": 262,
+  "w": 144,
+  "h": 74,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/bowling-green-80-ew.png",
+  "set": false,
+  "img_m": 84.67,
+  "ax": 0.499,
+  "ay": 0.4981,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1028,
+   2993,
+   144,
+   74
+  ],
+  "sheet": 1
+ },
+ "bowling-green-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/bowling-green-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1985,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "bowling-green-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/bowling-green-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   859,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "bowling-green-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/bowling-green-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2142,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "clearing-coppice-160-ew": {
+  "ow": 988,
+  "oh": 316,
+  "w": 280,
+  "h": 90,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/clearing-coppice-160-ew.png",
+  "set": false,
+  "img_m": 164.67,
+  "ax": 0.4995,
+  "ay": 0.4984,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3310,
+   2802,
+   280,
+   90
+  ],
+  "sheet": 1
+ },
+ "clearing-coppice-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/clearing-coppice-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2781,
+   919,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "clearing-coppice-160-ns": {
+  "ow": 316,
+  "oh": 988,
+  "w": 90,
+  "h": 281,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/clearing-coppice-160-ns.png",
+  "set": false,
+  "img_m": 52.67,
+  "ax": 0.4984,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3113,
+   592,
+   90,
+   281
+  ],
+  "sheet": 1
+ },
+ "clearing-coppice-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/clearing-coppice-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3045,
+   919,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "clearing-coppice-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/clearing-coppice-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3988,
+   2993,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "clearing-coppice-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/clearing-coppice-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3315,
+   2679,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "clearing-coppice-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/clearing-coppice-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3960,
+   2901,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "clearing-coppice-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/clearing-coppice-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3414,
+   2679,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "clearing-coppice-80-ew": {
+  "ow": 508,
+  "oh": 262,
+  "w": 144,
+  "h": 74,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/clearing-coppice-80-ew.png",
+  "set": false,
+  "img_m": 84.67,
+  "ax": 0.499,
+  "ay": 0.4981,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1174,
+   2993,
+   144,
+   74
+  ],
+  "sheet": 1
+ },
+ "clearing-coppice-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/clearing-coppice-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2299,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "clearing-coppice-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/clearing-coppice-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   935,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "clearing-coppice-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/clearing-coppice-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2456,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "cow-pasture-160-ew": {
+  "ow": 988,
+  "oh": 316,
+  "w": 280,
+  "h": 90,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/cow-pasture-160-ew.png",
+  "set": false,
+  "img_m": 164.67,
+  "ax": 0.4995,
+  "ay": 0.4984,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3592,
+   2802,
+   280,
+   90
+  ],
+  "sheet": 1
+ },
+ "cow-pasture-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/cow-pasture-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3309,
+   919,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "cow-pasture-160-ns": {
+  "ow": 316,
+  "oh": 988,
+  "w": 90,
+  "h": 281,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/cow-pasture-160-ns.png",
+  "set": false,
+  "img_m": 52.67,
+  "ax": 0.4984,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3205,
+   592,
+   90,
+   281
+  ],
+  "sheet": 1
+ },
+ "cow-pasture-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/cow-pasture-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3573,
+   919,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "cow-pasture-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/cow-pasture-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   0,
+   3071,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "cow-pasture-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/cow-pasture-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3513,
+   2679,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "cow-pasture-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/cow-pasture-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   4023,
+   2901,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "cow-pasture-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/cow-pasture-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3612,
+   2679,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "cow-pasture-80-ew": {
+  "ow": 508,
+  "oh": 262,
+  "w": 144,
+  "h": 74,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/cow-pasture-80-ew.png",
+  "set": false,
+  "img_m": 84.67,
+  "ax": 0.499,
+  "ay": 0.4981,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1320,
+   2993,
+   144,
+   74
+  ],
+  "sheet": 1
+ },
+ "cow-pasture-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/cow-pasture-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2613,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "cow-pasture-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/cow-pasture-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1011,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "cow-pasture-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/cow-pasture-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2770,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "flax-strip-160-ew": {
+  "ow": 988,
+  "oh": 316,
+  "w": 280,
+  "h": 90,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/flax-strip-160-ew.png",
+  "set": false,
+  "img_m": 164.67,
+  "ax": 0.4995,
+  "ay": 0.4984,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   0,
+   2901,
+   280,
+   90
+  ],
+  "sheet": 1
+ },
+ "flax-strip-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/flax-strip-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   0,
+   1202,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "flax-strip-160-ns": {
+  "ow": 316,
+  "oh": 988,
+  "w": 90,
+  "h": 281,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/flax-strip-160-ns.png",
+  "set": false,
+  "img_m": 52.67,
+  "ax": 0.4984,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3297,
+   592,
+   90,
+   281
+  ],
+  "sheet": 1
+ },
+ "flax-strip-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/flax-strip-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   264,
+   1202,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "flax-strip-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/flax-strip-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   78,
+   3071,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "flax-strip-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/flax-strip-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3711,
+   2679,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "flax-strip-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/flax-strip-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   0,
+   2993,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "flax-strip-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/flax-strip-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3810,
+   2679,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "flax-strip-80-ew": {
+  "ow": 508,
+  "oh": 262,
+  "w": 144,
+  "h": 74,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/flax-strip-80-ew.png",
+  "set": false,
+  "img_m": 84.67,
+  "ax": 0.499,
+  "ay": 0.4981,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1466,
+   2993,
+   144,
+   74
+  ],
+  "sheet": 1
+ },
+ "flax-strip-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/flax-strip-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2927,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "flax-strip-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/flax-strip-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1087,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "flax-strip-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/flax-strip-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3084,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "hay-meadow-160-ew": {
+  "ow": 988,
+  "oh": 316,
+  "w": 280,
+  "h": 90,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/hay-meadow-160-ew.png",
+  "set": false,
+  "img_m": 164.67,
+  "ax": 0.4995,
+  "ay": 0.4984,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   282,
+   2901,
+   280,
+   90
+  ],
+  "sheet": 1
+ },
+ "hay-meadow-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/hay-meadow-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   528,
+   1202,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "hay-meadow-160-ns": {
+  "ow": 316,
+  "oh": 988,
+  "w": 90,
+  "h": 281,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/hay-meadow-160-ns.png",
+  "set": false,
+  "img_m": 52.67,
+  "ax": 0.4984,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3389,
+   592,
+   90,
+   281
+  ],
+  "sheet": 1
+ },
+ "hay-meadow-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/hay-meadow-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   792,
+   1202,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "hay-meadow-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/hay-meadow-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   156,
+   3071,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "hay-meadow-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/hay-meadow-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3909,
+   2679,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "hay-meadow-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/hay-meadow-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   63,
+   2993,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "hay-meadow-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/hay-meadow-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   0,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "hay-meadow-80-ew": {
+  "ow": 508,
+  "oh": 262,
+  "w": 144,
+  "h": 74,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/hay-meadow-80-ew.png",
+  "set": false,
+  "img_m": 84.67,
+  "ax": 0.499,
+  "ay": 0.4981,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1612,
+   2993,
+   144,
+   74
+  ],
+  "sheet": 1
+ },
+ "hay-meadow-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/hay-meadow-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3241,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "hay-meadow-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/hay-meadow-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1163,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "hay-meadow-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/hay-meadow-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3398,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "hedged-wheat-160-ew": {
+  "ow": 988,
+  "oh": 316,
+  "w": 280,
+  "h": 90,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/hedged-wheat-160-ew.png",
+  "set": false,
+  "img_m": 164.67,
+  "ax": 0.4995,
+  "ay": 0.4984,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   564,
+   2901,
+   280,
+   90
+  ],
+  "sheet": 1
+ },
+ "hedged-wheat-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/hedged-wheat-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1056,
+   1202,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "hedged-wheat-160-ns": {
+  "ow": 316,
+  "oh": 988,
+  "w": 90,
+  "h": 281,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/hedged-wheat-160-ns.png",
+  "set": false,
+  "img_m": 52.67,
+  "ax": 0.4984,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3481,
+   592,
+   90,
+   281
+  ],
+  "sheet": 1
+ },
+ "hedged-wheat-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/hedged-wheat-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1320,
+   1202,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "hedged-wheat-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/hedged-wheat-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   234,
+   3071,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "hedged-wheat-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/hedged-wheat-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   99,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "hedged-wheat-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/hedged-wheat-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   126,
+   2993,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "hedged-wheat-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/hedged-wheat-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   198,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "hedged-wheat-80-ew": {
+  "ow": 508,
+  "oh": 262,
+  "w": 144,
+  "h": 74,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/hedged-wheat-80-ew.png",
+  "set": false,
+  "img_m": 84.67,
+  "ax": 0.499,
+  "ay": 0.4981,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1758,
+   2993,
+   144,
+   74
+  ],
+  "sheet": 1
+ },
+ "hedged-wheat-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/hedged-wheat-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3555,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "hedged-wheat-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/hedged-wheat-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1239,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "hedged-wheat-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/hedged-wheat-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3712,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "horse-paddock-160-ew": {
+  "ow": 988,
+  "oh": 316,
+  "w": 280,
+  "h": 90,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/horse-paddock-160-ew.png",
+  "set": false,
+  "img_m": 164.67,
+  "ax": 0.4995,
+  "ay": 0.4984,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   846,
+   2901,
+   280,
+   90
+  ],
+  "sheet": 1
+ },
+ "horse-paddock-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/horse-paddock-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1584,
+   1202,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "horse-paddock-160-ns": {
+  "ow": 316,
+  "oh": 988,
+  "w": 90,
+  "h": 281,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/horse-paddock-160-ns.png",
+  "set": false,
+  "img_m": 52.67,
+  "ax": 0.4984,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3573,
+   592,
+   90,
+   281
+  ],
+  "sheet": 1
+ },
+ "horse-paddock-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/horse-paddock-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1848,
+   1202,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "horse-paddock-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/horse-paddock-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   312,
+   3071,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "horse-paddock-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/horse-paddock-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   297,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "horse-paddock-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/horse-paddock-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   189,
+   2993,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "horse-paddock-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/horse-paddock-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   396,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "horse-paddock-80-ew": {
+  "ow": 508,
+  "oh": 262,
+  "w": 144,
+  "h": 74,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/horse-paddock-80-ew.png",
+  "set": false,
+  "img_m": 84.67,
+  "ax": 0.499,
+  "ay": 0.4981,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1904,
+   2993,
+   144,
+   74
+  ],
+  "sheet": 1
+ },
+ "horse-paddock-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/horse-paddock-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3869,
+   2207,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "horse-paddock-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/horse-paddock-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1315,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "horse-paddock-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/horse-paddock-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   0,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "kitchen-garden-160-ew": {
+  "ow": 988,
+  "oh": 316,
+  "w": 280,
+  "h": 90,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/kitchen-garden-160-ew.png",
+  "set": false,
+  "img_m": 164.67,
+  "ax": 0.4995,
+  "ay": 0.4984,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1128,
+   2901,
+   280,
+   90
+  ],
+  "sheet": 1
+ },
+ "kitchen-garden-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/kitchen-garden-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2112,
+   1202,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "kitchen-garden-160-ns": {
+  "ow": 316,
+  "oh": 988,
+  "w": 90,
+  "h": 281,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/kitchen-garden-160-ns.png",
+  "set": false,
+  "img_m": 52.67,
+  "ax": 0.4984,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3665,
+   592,
+   90,
+   281
+  ],
+  "sheet": 1
+ },
+ "kitchen-garden-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/kitchen-garden-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2376,
+   1202,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "kitchen-garden-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/kitchen-garden-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   390,
+   3071,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "kitchen-garden-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/kitchen-garden-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   495,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "kitchen-garden-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/kitchen-garden-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   252,
+   2993,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "kitchen-garden-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/kitchen-garden-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   594,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "kitchen-garden-80-ew": {
+  "ow": 508,
+  "oh": 262,
+  "w": 144,
+  "h": 74,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/kitchen-garden-80-ew.png",
+  "set": false,
+  "img_m": 84.67,
+  "ax": 0.499,
+  "ay": 0.4981,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2050,
+   2993,
+   144,
+   74
+  ],
+  "sheet": 1
+ },
+ "kitchen-garden-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/kitchen-garden-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   157,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "kitchen-garden-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/kitchen-garden-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1391,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "kitchen-garden-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/kitchen-garden-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   314,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "orchard-rows-160-ew": {
+  "ow": 988,
+  "oh": 316,
+  "w": 280,
+  "h": 90,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/orchard-rows-160-ew.png",
+  "set": false,
+  "img_m": 164.67,
+  "ax": 0.4995,
+  "ay": 0.4984,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1410,
+   2901,
+   280,
+   90
+  ],
+  "sheet": 1
+ },
+ "orchard-rows-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/orchard-rows-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2640,
+   1202,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "orchard-rows-160-ns": {
+  "ow": 316,
+  "oh": 988,
+  "w": 90,
+  "h": 281,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/orchard-rows-160-ns.png",
+  "set": false,
+  "img_m": 52.67,
+  "ax": 0.4984,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3757,
+   592,
+   90,
+   281
+  ],
+  "sheet": 1
+ },
+ "orchard-rows-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/orchard-rows-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2904,
+   1202,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "orchard-rows-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/orchard-rows-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   468,
+   3071,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "orchard-rows-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/orchard-rows-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   693,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "orchard-rows-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/orchard-rows-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   315,
+   2993,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "orchard-rows-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/orchard-rows-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   792,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "orchard-rows-80-ew": {
+  "ow": 508,
+  "oh": 262,
+  "w": 144,
+  "h": 74,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/orchard-rows-80-ew.png",
+  "set": false,
+  "img_m": 84.67,
+  "ax": 0.499,
+  "ay": 0.4981,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2196,
+   2993,
+   144,
+   74
+  ],
+  "sheet": 1
+ },
+ "orchard-rows-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/orchard-rows-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   471,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "orchard-rows-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/orchard-rows-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1467,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "orchard-rows-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/orchard-rows-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   628,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "ploughed-strip-160-ew": {
+  "ow": 988,
+  "oh": 316,
+  "w": 280,
+  "h": 90,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/ploughed-strip-160-ew.png",
+  "set": false,
+  "img_m": 164.67,
+  "ax": 0.4995,
+  "ay": 0.4984,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1692,
+   2901,
+   280,
+   90
+  ],
+  "sheet": 1
+ },
+ "ploughed-strip-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/ploughed-strip-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3168,
+   1202,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "ploughed-strip-160-ns": {
+  "ow": 316,
+  "oh": 988,
+  "w": 90,
+  "h": 281,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/ploughed-strip-160-ns.png",
+  "set": false,
+  "img_m": 52.67,
+  "ax": 0.4984,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3849,
+   592,
+   90,
+   281
+  ],
+  "sheet": 1
+ },
+ "ploughed-strip-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/ploughed-strip-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3432,
+   1202,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "ploughed-strip-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/ploughed-strip-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   546,
+   3071,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "ploughed-strip-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/ploughed-strip-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   891,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "ploughed-strip-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/ploughed-strip-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   378,
+   2993,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "ploughed-strip-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/ploughed-strip-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   990,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "ploughed-strip-80-ew": {
+  "ow": 508,
+  "oh": 262,
+  "w": 144,
+  "h": 74,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/ploughed-strip-80-ew.png",
+  "set": false,
+  "img_m": 84.67,
+  "ax": 0.499,
+  "ay": 0.4981,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2342,
+   2993,
+   144,
+   74
+  ],
+  "sheet": 1
+ },
+ "ploughed-strip-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/ploughed-strip-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   785,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "ploughed-strip-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/ploughed-strip-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1543,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "ploughed-strip-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/ploughed-strip-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   942,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "pond-common-160-ew": {
+  "ow": 988,
+  "oh": 316,
+  "w": 280,
+  "h": 90,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/pond-common-160-ew.png",
+  "set": false,
+  "img_m": 164.67,
+  "ax": 0.4995,
+  "ay": 0.4984,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1974,
+   2901,
+   280,
+   90
+  ],
+  "sheet": 1
+ },
+ "pond-common-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/pond-common-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3696,
+   1202,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "pond-common-160-ns": {
+  "ow": 316,
+  "oh": 988,
+  "w": 90,
+  "h": 281,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/pond-common-160-ns.png",
+  "set": false,
+  "img_m": 52.67,
+  "ax": 0.4984,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3941,
+   592,
+   90,
+   281
+  ],
+  "sheet": 1
+ },
+ "pond-common-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/pond-common-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   0,
+   1466,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "pond-common-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/pond-common-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   624,
+   3071,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "pond-common-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/pond-common-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1089,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "pond-common-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/pond-common-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   441,
+   2993,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "pond-common-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/pond-common-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1188,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "pond-common-80-ew": {
+  "ow": 508,
+  "oh": 262,
+  "w": 144,
+  "h": 74,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/pond-common-80-ew.png",
+  "set": false,
+  "img_m": 84.67,
+  "ax": 0.499,
+  "ay": 0.4981,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2488,
+   2993,
+   144,
+   74
+  ],
+  "sheet": 1
+ },
+ "pond-common-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/pond-common-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1099,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "pond-common-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/pond-common-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1619,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "pond-common-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/pond-common-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1256,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "reed-osiers-160-ew": {
+  "ow": 988,
+  "oh": 316,
+  "w": 280,
+  "h": 90,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/reed-osiers-160-ew.png",
+  "set": false,
+  "img_m": 164.67,
+  "ax": 0.4995,
+  "ay": 0.4984,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2256,
+   2901,
+   280,
+   90
+  ],
+  "sheet": 1
+ },
+ "reed-osiers-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/reed-osiers-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   264,
+   1466,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "reed-osiers-160-ns": {
+  "ow": 316,
+  "oh": 988,
+  "w": 90,
+  "h": 281,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/reed-osiers-160-ns.png",
+  "set": false,
+  "img_m": 52.67,
+  "ax": 0.4984,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   0,
+   919,
+   90,
+   281
+  ],
+  "sheet": 1
+ },
+ "reed-osiers-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/reed-osiers-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   528,
+   1466,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "reed-osiers-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/reed-osiers-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   702,
+   3071,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "reed-osiers-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/reed-osiers-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1287,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "reed-osiers-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/reed-osiers-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   504,
+   2993,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "reed-osiers-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/reed-osiers-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1386,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "reed-osiers-80-ew": {
+  "ow": 508,
+  "oh": 262,
+  "w": 144,
+  "h": 74,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/reed-osiers-80-ew.png",
+  "set": false,
+  "img_m": 84.67,
+  "ax": 0.499,
+  "ay": 0.4981,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2634,
+   2993,
+   144,
+   74
+  ],
+  "sheet": 1
+ },
+ "reed-osiers-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/reed-osiers-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1413,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "reed-osiers-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/reed-osiers-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1695,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "reed-osiers-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/reed-osiers-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1570,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "sheep-pasture-160-ew": {
+  "ow": 988,
+  "oh": 316,
+  "w": 280,
+  "h": 90,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/sheep-pasture-160-ew.png",
+  "set": false,
+  "img_m": 164.67,
+  "ax": 0.4995,
+  "ay": 0.4984,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2538,
+   2901,
+   280,
+   90
+  ],
+  "sheet": 1
+ },
+ "sheep-pasture-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/sheep-pasture-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   792,
+   1466,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "sheep-pasture-160-ns": {
+  "ow": 316,
+  "oh": 988,
+  "w": 90,
+  "h": 281,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/sheep-pasture-160-ns.png",
+  "set": false,
+  "img_m": 52.67,
+  "ax": 0.4984,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   92,
+   919,
+   90,
+   281
+  ],
+  "sheet": 1
+ },
+ "sheep-pasture-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/sheep-pasture-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1056,
+   1466,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "sheep-pasture-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/sheep-pasture-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   780,
+   3071,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "sheep-pasture-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/sheep-pasture-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1485,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "sheep-pasture-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/sheep-pasture-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   567,
+   2993,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "sheep-pasture-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/sheep-pasture-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1584,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "sheep-pasture-80-ew": {
+  "ow": 508,
+  "oh": 262,
+  "w": 144,
+  "h": 74,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/sheep-pasture-80-ew.png",
+  "set": false,
+  "img_m": 84.67,
+  "ax": 0.499,
+  "ay": 0.4981,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2780,
+   2993,
+   144,
+   74
+  ],
+  "sheet": 1
+ },
+ "sheep-pasture-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/sheep-pasture-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1727,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "sheep-pasture-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/sheep-pasture-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1771,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "sheep-pasture-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/sheep-pasture-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1884,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "timber-yard-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/timber-yard-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1320,
+   1466,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "timber-yard-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/timber-yard-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1584,
+   1466,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "timber-yard-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/timber-yard-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1683,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "timber-yard-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   60,
+   40
+  ],
+  "src": "concept/fillers/timber-yard-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   630,
+   2993,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "timber-yard-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/timber-yard-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1782,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "timber-yard-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/timber-yard-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2041,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "timber-yard-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/timber-yard-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2198,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "vegetable-allotments-160-ew": {
+  "ow": 988,
+  "oh": 316,
+  "w": 280,
+  "h": 90,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/vegetable-allotments-160-ew.png",
+  "set": false,
+  "img_m": 164.67,
+  "ax": 0.4995,
+  "ay": 0.4984,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2820,
+   2901,
+   280,
+   90
+  ],
+  "sheet": 1
+ },
+ "vegetable-allotments-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/vegetable-allotments-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1848,
+   1466,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "vegetable-allotments-160-ns": {
+  "ow": 316,
+  "oh": 988,
+  "w": 90,
+  "h": 281,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/vegetable-allotments-160-ns.png",
+  "set": false,
+  "img_m": 52.67,
+  "ax": 0.4984,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   184,
+   919,
+   90,
+   281
+  ],
+  "sheet": 1
+ },
+ "vegetable-allotments-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/vegetable-allotments-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2112,
+   1466,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "vegetable-allotments-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/vegetable-allotments-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   858,
+   3071,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "vegetable-allotments-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/vegetable-allotments-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1881,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "vegetable-allotments-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/vegetable-allotments-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   693,
+   2993,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "vegetable-allotments-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/vegetable-allotments-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1980,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "vegetable-allotments-80-ew": {
+  "ow": 508,
+  "oh": 262,
+  "w": 144,
+  "h": 74,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/vegetable-allotments-80-ew.png",
+  "set": false,
+  "img_m": 84.67,
+  "ax": 0.499,
+  "ay": 0.4981,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2926,
+   2993,
+   144,
+   74
+  ],
+  "sheet": 1
+ },
+ "vegetable-allotments-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/vegetable-allotments-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2355,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "vegetable-allotments-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/vegetable-allotments-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1847,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "vegetable-allotments-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/vegetable-allotments-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2512,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "vineyard-rows-160-ew": {
+  "ow": 988,
+  "oh": 316,
+  "w": 280,
+  "h": 90,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/vineyard-rows-160-ew.png",
+  "set": false,
+  "img_m": 164.67,
+  "ax": 0.4995,
+  "ay": 0.4984,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3102,
+   2901,
+   280,
+   90
+  ],
+  "sheet": 1
+ },
+ "vineyard-rows-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/vineyard-rows-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2376,
+   1466,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "vineyard-rows-160-ns": {
+  "ow": 316,
+  "oh": 988,
+  "w": 90,
+  "h": 281,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/vineyard-rows-160-ns.png",
+  "set": false,
+  "img_m": 52.67,
+  "ax": 0.4984,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   276,
+   919,
+   90,
+   281
+  ],
+  "sheet": 1
+ },
+ "vineyard-rows-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/vineyard-rows-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2640,
+   1466,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "vineyard-rows-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/vineyard-rows-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   936,
+   3071,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "vineyard-rows-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/vineyard-rows-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2079,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "vineyard-rows-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/vineyard-rows-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   756,
+   2993,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "vineyard-rows-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/vineyard-rows-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2178,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "vineyard-rows-80-ew": {
+  "ow": 508,
+  "oh": 262,
+  "w": 144,
+  "h": 74,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/vineyard-rows-80-ew.png",
+  "set": false,
+  "img_m": 84.67,
+  "ax": 0.499,
+  "ay": 0.4981,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3072,
+   2993,
+   144,
+   74
+  ],
+  "sheet": 1
+ },
+ "vineyard-rows-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/vineyard-rows-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2669,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "vineyard-rows-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/vineyard-rows-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1923,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "vineyard-rows-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/vineyard-rows-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2826,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "yew-graveyard-160-ne-sw": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/yew-graveyard-160-ne-sw.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2904,
+   1466,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "yew-graveyard-160-ns": {
+  "ow": 316,
+  "oh": 988,
+  "w": 90,
+  "h": 281,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/yew-graveyard-160-ns.png",
+  "set": false,
+  "img_m": 52.67,
+  "ax": 0.4984,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   368,
+   919,
+   90,
+   281
+  ],
+  "sheet": 1
+ },
+ "yew-graveyard-160-nw-se": {
+  "ow": 924,
+  "oh": 924,
+  "w": 262,
+  "h": 262,
+  "foot_m": [
+   160.0,
+   48.0
+  ],
+  "src": "concept/fillers/yew-graveyard-160-nw-se.png",
+  "set": false,
+  "img_m": 154.0,
+  "ax": 0.4995,
+  "ay": 0.4995,
+  "fill": {
+   "L": 160,
+   "W": 48,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3168,
+   1466,
+   262,
+   262
+  ],
+  "sheet": 1
+ },
+ "yew-graveyard-40-ew": {
+  "ow": 268,
+  "oh": 214,
+  "w": 76,
+  "h": 61,
+  "foot_m": [
+   60,
+   40
+  ],
+  "src": "concept/fillers/yew-graveyard-40-ew.png",
+  "set": false,
+  "img_m": 44.67,
+  "ax": 0.4981,
+  "ay": 0.4977,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ew"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1014,
+   3071,
+   76,
+   61
+  ],
+  "sheet": 1
+ },
+ "yew-graveyard-40-ne-sw": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/yew-graveyard-40-ne-sw.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2277,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "yew-graveyard-40-ns": {
+  "ow": 214,
+  "oh": 268,
+  "w": 61,
+  "h": 76,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/yew-graveyard-40-ns.png",
+  "set": false,
+  "img_m": 35.67,
+  "ax": 0.4977,
+  "ay": 0.4981,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   819,
+   2993,
+   61,
+   76
+  ],
+  "sheet": 1
+ },
+ "yew-graveyard-40-nw-se": {
+  "ow": 342,
+  "oh": 342,
+  "w": 97,
+  "h": 97,
+  "foot_m": [
+   40.0,
+   31.0
+  ],
+  "src": "concept/fillers/yew-graveyard-40-nw-se.png",
+  "set": false,
+  "img_m": 57.0,
+  "ax": 0.4985,
+  "ay": 0.4985,
+  "fill": {
+   "L": 40,
+   "W": 31,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2376,
+   2802,
+   97,
+   97
+  ],
+  "sheet": 1
+ },
+ "yew-graveyard-80-ne-sw": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/yew-graveyard-80-ne-sw.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ne-sw"
+  },
+  "foot": 1.0,
+  "atlas": [
+   2983,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "yew-graveyard-80-ns": {
+  "ow": 262,
+  "oh": 508,
+  "w": 74,
+  "h": 143,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/yew-graveyard-80-ns.png",
+  "set": false,
+  "img_m": 43.67,
+  "ax": 0.4981,
+  "ay": 0.499,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "ns"
+  },
+  "foot": 1.0,
+  "atlas": [
+   1999,
+   2528,
+   74,
+   143
+  ],
+  "sheet": 1
+ },
+ "yew-graveyard-80-nw-se": {
+  "ow": 546,
+  "oh": 546,
+  "w": 155,
+  "h": 155,
+  "foot_m": [
+   80.0,
+   39.0
+  ],
+  "src": "concept/fillers/yew-graveyard-80-nw-se.png",
+  "set": false,
+  "img_m": 91.0,
+  "ax": 0.4991,
+  "ay": 0.4991,
+  "fill": {
+   "L": 80,
+   "W": 39,
+   "ori": "nw-se"
+  },
+  "foot": 1.0,
+  "atlas": [
+   3140,
+   2371,
+   155,
+   155
+  ],
+  "sheet": 1
+ },
+ "boulder-field-large": {
+  "ow": 1443,
+  "oh": 972,
+  "w": 146,
+  "h": 98,
+  "foot_m": [
+   62.0,
+   45.0
+  ],
+  "src": "concept/scenery5/boulder-field-large.png",
+  "set": false,
+  "ax": 0.447,
+  "ay": 0.505,
+  "foot": 1.0,
+  "atlas": [
+   2573,
+   2679,
+   146,
+   98
+  ],
+  "sheet": 1
+ },
+ "boulder-field-medium": {
+  "ow": 1293,
+  "oh": 962,
+  "w": 82,
+  "h": 61,
+  "foot_m": [
+   35.0,
+   27.0
+  ],
+  "src": "concept/scenery5/boulder-field-medium.png",
+  "set": false,
+  "ax": 0.478,
+  "ay": 0.504,
+  "foot": 1.0,
+  "atlas": [
+   1092,
+   3071,
+   82,
+   61
+  ],
+  "sheet": 1
+ },
+ "boulder-field-small": {
+  "ow": 1315,
+  "oh": 907,
+  "w": 42,
+  "h": 29,
+  "foot_m": [
+   18.0,
+   13.0
+  ],
+  "src": "concept/scenery5/boulder-field-small.png",
+  "set": false,
+  "ax": 0.471,
+  "ay": 0.466,
+  "foot": 1.0,
+  "atlas": [
+   2336,
+   3071,
+   42,
+   29
+  ],
+  "sheet": 1
+ },
+ "churchyard-abbey": {
+  "ow": 1433,
+  "oh": 1245,
+  "w": 191,
+  "h": 166,
+  "foot_m": [
+   81.0,
+   65.0
+  ],
+  "src": "concept/scenery5/churchyard-abbey.png",
+  "set": false,
+  "ax": 0.531,
+  "ay": 0.468,
+  "foot": 1.0,
+  "atlas": [
+   3708,
+   1992,
+   191,
+   166
+  ],
+  "sheet": 1
+ },
+ "churchyard-small": {
+  "ow": 1447,
+  "oh": 1212,
+  "w": 136,
+  "h": 114,
+  "foot_m": [
+   58.0,
+   46.0
+  ],
+  "src": "concept/scenery5/churchyard-small.png",
+  "set": false,
+  "ax": 0.483,
+  "ay": 0.498,
+  "foot": 1.0,
+  "atlas": [
+   990,
+   2679,
+   136,
+   114
+  ],
+  "sheet": 1
+ },
+ "crag-large": {
+  "ow": 1316,
+  "oh": 1063,
+  "w": 146,
+  "h": 118,
+  "foot_m": [
+   62.0,
+   45.0
+  ],
+  "src": "concept/scenery5/crag-large.png",
+  "set": false,
+  "ax": 0.494,
+  "ay": 0.511,
+  "foot": 1.0,
+  "atlas": [
+   527,
+   2679,
+   146,
+   118
+  ],
+  "sheet": 1
+ },
+ "crag-medium": {
+  "ow": 1117,
+  "oh": 1126,
+  "w": 82,
+  "h": 83,
+  "foot_m": [
+   35.0,
+   27.0
+  ],
+  "src": "concept/scenery5/crag-medium.png",
+  "set": false,
+  "ax": 0.513,
+  "ay": 0.504,
+  "foot": 1.0,
+  "atlas": [
+   3384,
+   2901,
+   82,
+   83
+  ],
+  "sheet": 1
+ },
+ "crag-small": {
+  "ow": 1004,
+  "oh": 1065,
+  "w": 42,
+  "h": 45,
+  "foot_m": [
+   18.0,
+   13.0
+  ],
+  "src": "concept/scenery5/crag-small.png",
+  "set": false,
+  "ax": 0.464,
+  "ay": 0.487,
+  "foot": 1.0,
+  "atlas": [
+   1769,
+   3071,
+   42,
+   45
+  ],
+  "sheet": 1
+ },
+ "deciduous-dozen-hook": {
+  "ow": 1209,
+  "oh": 1136,
+  "w": 169,
+  "h": 159,
+  "foot_m": [
+   72.0,
+   44.0
+  ],
+  "src": "concept/scenery5/deciduous-dozen-hook.png",
+  "set": false,
+  "ax": 0.522,
+  "ay": 0.445,
+  "foot": 1.0,
+  "atlas": [
+   958,
+   2207,
+   169,
+   159
+  ],
+  "sheet": 1
+ },
+ "deciduous-dozen-round": {
+  "ow": 1367,
+  "oh": 1166,
+  "w": 169,
+  "h": 144,
+  "foot_m": [
+   72.0,
+   57.0
+  ],
+  "src": "concept/scenery5/deciduous-dozen-round.png",
+  "set": false,
+  "ax": 0.458,
+  "ay": 0.512,
+  "foot": 1.0,
+  "atlas": [
+   612,
+   2528,
+   169,
+   144
+  ],
+  "sheet": 1
+ },
+ "deciduous-eight-hook": {
+  "ow": 1186,
+  "oh": 1188,
+  "w": 125,
+  "h": 125,
+  "foot_m": [
+   53.0,
+   32.0
+  ],
+  "src": "concept/scenery5/deciduous-eight-hook.png",
+  "set": false,
+  "ax": 0.518,
+  "ay": 0.453,
+  "foot": 1.0,
+  "atlas": [
+   3609,
+   2528,
+   125,
+   125
+  ],
+  "sheet": 1
+ },
+ "deciduous-eight-round": {
+  "ow": 1274,
+  "oh": 1097,
+  "w": 125,
+  "h": 108,
+  "foot_m": [
+   53.0,
+   42.0
+  ],
+  "src": "concept/scenery5/deciduous-eight-round.png",
+  "set": false,
+  "ax": 0.489,
+  "ay": 0.505,
+  "foot": 1.0,
+  "atlas": [
+   1671,
+   2679,
+   125,
+   108
+  ],
+  "sheet": 1
+ },
+ "deciduous-five-hook": {
+  "ow": 1028,
+  "oh": 1088,
+  "w": 87,
+  "h": 92,
+  "foot_m": [
+   37.0,
+   23.0
+  ],
+  "src": "concept/scenery5/deciduous-five-hook.png",
+  "set": false,
+  "ax": 0.433,
+  "ay": 0.444,
+  "foot": 1.0,
+  "atlas": [
+   2566,
+   2802,
+   87,
+   92
+  ],
+  "sheet": 1
+ },
+ "deciduous-five-round": {
+  "ow": 1292,
+  "oh": 1160,
+  "w": 87,
+  "h": 78,
+  "foot_m": [
+   37.0,
+   29.0
+  ],
+  "src": "concept/scenery5/deciduous-five-round.png",
+  "set": false,
+  "ax": 0.446,
+  "ay": 0.519,
+  "foot": 1.0,
+  "atlas": [
+   3665,
+   2901,
+   87,
+   78
+  ],
+  "sheet": 1
+ },
+ "deciduous-trio-hook": {
+  "ow": 1204,
+  "oh": 1218,
+  "w": 56,
+  "h": 57,
+  "foot_m": [
+   24.0,
+   15.0
+  ],
+  "src": "concept/scenery5/deciduous-trio-hook.png",
+  "set": false,
+  "ax": 0.483,
+  "ay": 0.458,
+  "foot": 1.0,
+  "atlas": [
+   1434,
+   3071,
+   56,
+   57
+  ],
+  "sheet": 1
+ },
+ "deciduous-trio-round": {
+  "ow": 1186,
+  "oh": 1076,
+  "w": 56,
+  "h": 51,
+  "foot_m": [
+   24.0,
+   19.0
+  ],
+  "src": "concept/scenery5/deciduous-trio-round.png",
+  "set": false,
+  "ax": 0.478,
+  "ay": 0.498,
+  "foot": 1.0,
+  "atlas": [
+   1592,
+   3071,
+   56,
+   51
+  ],
+  "sheet": 1
+ },
+ "gravel-bar-fan": {
+  "ow": 1350,
+  "oh": 949,
+  "w": 115,
+  "h": 81,
+  "foot_m": [
+   49.0,
+   21.0
+  ],
+  "src": "concept/scenery5/gravel-bar-fan.png",
+  "set": false,
+  "ax": 0.484,
+  "ay": 0.52,
+  "foot": 1.0,
+  "atlas": [
+   3468,
+   2901,
+   115,
+   81
+  ],
+  "sheet": 1
+ },
+ "gravel-bar-point": {
+  "ow": 1956,
+  "oh": 501,
+  "w": 85,
+  "h": 22,
+  "foot_m": [
+   36.0,
+   13.0
+  ],
+  "src": "concept/scenery5/gravel-bar-point.png",
+  "set": false,
+  "ax": 0.404,
+  "ay": 0.514,
+  "foot": 1.0,
+  "atlas": [
+   2555,
+   3071,
+   85,
+   22
+  ],
+  "sheet": 1
+ },
+ "hedge-standard-trees-ew": {
+  "ow": 2164,
+  "oh": 668,
+  "w": 188,
+  "h": 58,
+  "foot_m": [
+   80.0,
+   11.0
+  ],
+  "src": "concept/scenery5/hedge-standard-trees-ew.png",
+  "set": false,
+  "ax": 0.511,
+  "ay": 0.58,
+  "foot": 1.0,
+  "atlas": [
+   1244,
+   3071,
+   188,
+   58
+  ],
+  "sheet": 1
+ },
+ "hedge-standard-trees-ne-sw": {
+  "ow": 1150,
+  "oh": 1182,
+  "w": 188,
+  "h": 193,
+  "foot_m": [
+   80.0,
+   11.0
+  ],
+  "src": "concept/scenery5/hedge-standard-trees-ne-sw.png",
+  "set": false,
+  "ax": 0.473,
+  "ay": 0.477,
+  "foot": 1.0,
+  "atlas": [
+   1962,
+   1992,
+   188,
+   193
+  ],
+  "sheet": 1
+ },
+ "hedge-standard-trees-ns": {
+  "ow": 503,
+  "oh": 1579,
+  "w": 188,
+  "h": 590,
+  "foot_m": [
+   80.0,
+   11.0
+  ],
+  "src": "concept/scenery5/hedge-standard-trees-ns.png",
+  "set": false,
+  "ax": 0.485,
+  "ay": 0.494,
+  "foot": 1.0,
+  "atlas": [
+   0,
+   0,
+   188,
+   590
+  ],
+  "sheet": 1
+ },
+ "hedge-standard-trees-nw-se": {
+  "ow": 1173,
+  "oh": 1131,
+  "w": 188,
+  "h": 181,
+  "foot_m": [
+   80.0,
+   11.0
+  ],
+  "src": "concept/scenery5/hedge-standard-trees-nw-se.png",
+  "set": false,
+  "ax": 0.519,
+  "ay": 0.472,
+  "foot": 1.0,
+  "atlas": [
+   2807,
+   1992,
+   188,
+   181
+  ],
+  "sheet": 1
+ },
+ "landmark-black-alder": {
+  "ow": 949,
+  "oh": 1211,
+  "w": 40,
+  "h": 51,
+  "foot_m": [
+   10.0,
+   9.0
+  ],
+  "src": "concept/scenery5/landmark-black-alder.png",
+  "set": false,
+  "ax": 0.477,
+  "ay": 0.529,
+  "foot": 1.0,
+  "atlas": [
+   1650,
+   3071,
+   40,
+   51
+  ],
+  "sheet": 1
+ },
+ "landmark-lombardy-poplar": {
+  "ow": 608,
+  "oh": 1515,
+  "w": 40,
+  "h": 100,
+  "foot_m": [
+   6.0,
+   6.0
+  ],
+  "src": "concept/scenery5/landmark-lombardy-poplar.png",
+  "set": false,
+  "ax": 0.361,
+  "ay": 0.526,
+  "foot": 1.0,
+  "atlas": [
+   2531,
+   2679,
+   40,
+   100
+  ],
+  "sheet": 1
+ },
+ "landmark-mountain-rowan": {
+  "ow": 1066,
+  "oh": 1034,
+  "w": 40,
+  "h": 39,
+  "foot_m": [
+   8.0,
+   7.0
+  ],
+  "src": "concept/scenery5/landmark-mountain-rowan.png",
+  "set": false,
+  "ax": 0.478,
+  "ay": 0.463,
+  "foot": 1.0,
+  "atlas": [
+   1955,
+   3071,
+   40,
+   39
+  ],
+  "sheet": 1
+ },
+ "landmark-silver-birch": {
+  "ow": 916,
+  "oh": 1242,
+  "w": 40,
+  "h": 54,
+  "foot_m": [
+   9.0,
+   8.0
+  ],
+  "src": "concept/scenery5/landmark-silver-birch.png",
+  "set": false,
+  "ax": 0.445,
+  "ay": 0.491,
+  "foot": 1.0,
+  "atlas": [
+   1550,
+   3071,
+   40,
+   54
+  ],
+  "sheet": 1
+ },
+ "landmark-sweet-chestnut": {
+  "ow": 1290,
+  "oh": 1095,
+  "w": 40,
+  "h": 34,
+  "foot_m": [
+   13.0,
+   11.0
+  ],
+  "src": "concept/scenery5/landmark-sweet-chestnut.png",
+  "set": false,
+  "ax": 0.452,
+  "ay": 0.51,
+  "foot": 1.0,
+  "atlas": [
+   2250,
+   3071,
+   40,
+   34
+  ],
+  "sheet": 1
+ },
+ "landmark-weeping-willow": {
+  "ow": 1193,
+  "oh": 1124,
+  "w": 40,
+  "h": 38,
+  "foot_m": [
+   11.0,
+   10.0
+  ],
+  "src": "concept/scenery5/landmark-weeping-willow.png",
+  "set": false,
+  "ax": 0.484,
+  "ay": 0.494,
+  "foot": 1.0,
+  "atlas": [
+   2124,
+   3071,
+   40,
+   38
+  ],
+  "sheet": 1
+ },
+ "larch-group-large": {
+  "ow": 1498,
+  "oh": 1077,
+  "w": 151,
+  "h": 109,
+  "foot_m": [
+   64.0,
+   49.0
+  ],
+  "src": "concept/scenery5/larch-group-large.png",
+  "set": false,
+  "ax": 0.477,
+  "ay": 0.543,
+  "foot": 1.0,
+  "atlas": [
+   1518,
+   2679,
+   151,
+   109
+  ],
+  "sheet": 1
+ },
+ "larch-group-small": {
+  "ow": 1141,
+  "oh": 1139,
+  "w": 78,
+  "h": 78,
+  "foot_m": [
+   33.0,
+   26.0
+  ],
+  "src": "concept/scenery5/larch-group-small.png",
+  "set": false,
+  "ax": 0.457,
+  "ay": 0.554,
+  "foot": 1.0,
+  "atlas": [
+   3754,
+   2901,
+   78,
+   78
+  ],
+  "sheet": 1
+ },
+ "outcrop-large": {
+  "ow": 1451,
+  "oh": 1021,
+  "w": 146,
+  "h": 103,
+  "foot_m": [
+   62.0,
+   45.0
+  ],
+  "src": "concept/scenery5/outcrop-large.png",
+  "set": false,
+  "ax": 0.479,
+  "ay": 0.502,
+  "foot": 1.0,
+  "atlas": [
+   2169,
+   2679,
+   146,
+   103
+  ],
+  "sheet": 1
+ },
+ "outcrop-medium": {
+  "ow": 1246,
+  "oh": 967,
+  "w": 82,
+  "h": 64,
+  "foot_m": [
+   35.0,
+   27.0
+  ],
+  "src": "concept/scenery5/outcrop-medium.png",
+  "set": false,
+  "ax": 0.479,
+  "ay": 0.49,
+  "foot": 1.0,
+  "atlas": [
+   3544,
+   2993,
+   82,
+   64
+  ],
+  "sheet": 1
+ },
+ "outcrop-small": {
+  "ow": 1260,
+  "oh": 899,
+  "w": 42,
+  "h": 30,
+  "foot_m": [
+   18.0,
+   13.0
+  ],
+  "src": "concept/scenery5/outcrop-small.png",
+  "set": false,
+  "ax": 0.46,
+  "ay": 0.49,
+  "foot": 1.0,
+  "atlas": [
+   2292,
+   3071,
+   42,
+   30
+  ],
+  "sheet": 1
+ },
+ "overlay-cloud-shadow": {
+  "ow": 1237,
+  "oh": 1095,
+  "w": 296,
+  "h": 262,
+  "foot_m": [
+   126.0,
+   89.0
+  ],
+  "src": "concept/scenery5/overlay-cloud-shadow.png",
+  "set": false,
+  "ax": 0.508,
+  "ay": 0.511,
+  "foot": 1.0,
+  "atlas": [
+   3432,
+   1466,
+   296,
+   262
+  ],
+  "sheet": 1
+ },
+ "overlay-damp-grass": {
+  "ow": 1192,
+  "oh": 1027,
+  "w": 226,
+  "h": 195,
+  "foot_m": [
+   96.0,
+   68.0
+  ],
+  "src": "concept/scenery5/overlay-damp-grass.png",
+  "set": false,
+  "ax": 0.475,
+  "ay": 0.495,
+  "foot": 1.0,
+  "atlas": [
+   1734,
+   1992,
+   226,
+   195
+  ],
+  "sheet": 1
+ },
+ "overlay-flower-drift": {
+  "ow": 1185,
+  "oh": 1080,
+  "w": 179,
+  "h": 163,
+  "foot_m": [
+   76.0,
+   54.0
+  ],
+  "src": "concept/scenery5/overlay-flower-drift.png",
+  "set": false,
+  "ax": 0.413,
+  "ay": 0.475,
+  "foot": 1.0,
+  "atlas": [
+   3901,
+   1992,
+   179,
+   163
+  ],
+  "sheet": 1
+ },
+ "overlay-sunlit-grass": {
+  "ow": 1429,
+  "oh": 972,
+  "w": 256,
+  "h": 174,
+  "foot_m": [
+   109.0,
+   77.0
+  ],
+  "src": "concept/scenery5/overlay-sunlit-grass.png",
+  "set": false,
+  "ax": 0.474,
+  "ay": 0.502,
+  "foot": 1.0,
+  "atlas": [
+   2997,
+   1992,
+   256,
+   174
+  ],
+  "sheet": 1
+ },
+ "pine-group-large": {
+  "ow": 1479,
+  "oh": 1149,
+  "w": 151,
+  "h": 117,
+  "foot_m": [
+   64.0,
+   49.0
+  ],
+  "src": "concept/scenery5/pine-group-large.png",
+  "set": false,
+  "ax": 0.463,
+  "ay": 0.53,
+  "foot": 1.0,
+  "atlas": [
+   675,
+   2679,
+   151,
+   117
+  ],
+  "sheet": 1
+ },
+ "pine-group-small": {
+  "ow": 1103,
+  "oh": 1121,
+  "w": 78,
+  "h": 79,
+  "foot_m": [
+   33.0,
+   26.0
+  ],
+  "src": "concept/scenery5/pine-group-small.png",
+  "set": false,
+  "ax": 0.463,
+  "ay": 0.586,
+  "foot": 1.0,
+  "atlas": [
+   3585,
+   2901,
+   78,
+   79
+  ],
+  "sheet": 1
+ },
+ "quay-mooring-wide-ew": {
+  "ow": 2143,
+  "oh": 589,
+  "w": 89,
+  "h": 24,
+  "foot_m": [
+   38.0,
+   7.0
+  ],
+  "src": "concept/scenery5/quay-mooring-wide-ew.png",
+  "set": false,
+  "ax": 0.493,
+  "ay": 0.512,
+  "foot": 1.0,
+  "atlas": [
+   2422,
+   3071,
+   89,
+   24
+  ],
+  "sheet": 1
+ },
+ "quay-mooring-wide-ne-sw": {
+  "ow": 1161,
+  "oh": 1193,
+  "w": 89,
+  "h": 91,
+  "foot_m": [
+   38.0,
+   7.0
+  ],
+  "src": "concept/scenery5/quay-mooring-wide-ne-sw.png",
+  "set": false,
+  "ax": 0.506,
+  "ay": 0.496,
+  "foot": 1.0,
+  "atlas": [
+   2655,
+   2802,
+   89,
+   91
+  ],
+  "sheet": 1
+ },
+ "quay-mooring-wide-ns": {
+  "ow": 526,
+  "oh": 1526,
+  "w": 89,
+  "h": 258,
+  "foot_m": [
+   38.0,
+   7.0
+  ],
+  "src": "concept/scenery5/quay-mooring-wide-ns.png",
+  "set": false,
+  "ax": 0.502,
+  "ay": 0.499,
+  "foot": 1.0,
+  "atlas": [
+   380,
+   1730,
+   89,
+   258
+  ],
+  "sheet": 1
+ },
+ "quay-mooring-wide-nw-se": {
+  "ow": 1193,
+  "oh": 1253,
+  "w": 89,
+  "h": 93,
+  "foot_m": [
+   38.0,
+   7.0
+  ],
+  "src": "concept/scenery5/quay-mooring-wide-nw-se.png",
+  "set": false,
+  "ax": 0.488,
+  "ay": 0.496,
+  "foot": 1.0,
+  "atlas": [
+   2475,
+   2802,
+   89,
+   93
+  ],
+  "sheet": 1
+ },
+ "rocky-bank-low": {
+  "ow": 1427,
+  "oh": 945,
+  "w": 75,
+  "h": 50,
+  "foot_m": [
+   32.0,
+   5.0
+  ],
+  "src": "concept/scenery5/rocky-bank-low.png",
+  "set": false,
+  "ax": 0.495,
+  "ay": 0.474,
+  "foot": 1.0,
+  "atlas": [
+   1692,
+   3071,
+   75,
+   50
+  ],
+  "sheet": 1
+ },
+ "rocky-bank-wide": {
+  "ow": 2163,
+  "oh": 667,
+  "w": 125,
+  "h": 39,
+  "foot_m": [
+   53.0,
+   10.0
+  ],
+  "src": "concept/scenery5/rocky-bank-wide.png",
+  "set": false,
+  "ax": 0.49,
+  "ay": 0.516,
+  "foot": 1.0,
+  "atlas": [
+   1997,
+   3071,
+   125,
+   39
+  ],
+  "sheet": 1
+ },
+ "tree-avenue-ew": {
+  "ow": 2234,
+  "oh": 825,
+  "w": 188,
+  "h": 69,
+  "foot_m": [
+   80.0,
+   16.0
+  ],
+  "src": "concept/scenery5/tree-avenue-ew.png",
+  "set": false,
+  "ax": 0.493,
+  "ay": 0.492,
+  "foot": 1.0,
+  "atlas": [
+   3218,
+   2993,
+   188,
+   69
+  ],
+  "sheet": 1
+ },
+ "tree-avenue-ne-sw": {
+  "ow": 1232,
+  "oh": 1051,
+  "w": 188,
+  "h": 160,
+  "foot_m": [
+   80.0,
+   16.0
+  ],
+  "src": "concept/scenery5/tree-avenue-ne-sw.png",
+  "set": false,
+  "ax": 0.498,
+  "ay": 0.497,
+  "foot": 1.0,
+  "atlas": [
+   455,
+   2207,
+   188,
+   160
+  ],
+  "sheet": 1
+ },
+ "tree-avenue-ns": {
+  "ow": 801,
+  "oh": 1595,
+  "w": 188,
+  "h": 374,
+  "foot_m": [
+   80.0,
+   16.0
+  ],
+  "src": "concept/scenery5/tree-avenue-ns.png",
+  "set": false,
+  "ax": 0.504,
+  "ay": 0.486,
+  "foot": 1.0,
+  "atlas": [
+   3322,
+   0,
+   188,
+   374
+  ],
+  "sheet": 1
+ },
+ "tree-avenue-nw-se": {
+  "ow": 1275,
+  "oh": 1240,
+  "w": 188,
+  "h": 183,
+  "foot_m": [
+   80.0,
+   16.0
+  ],
+  "src": "concept/scenery5/tree-avenue-nw-se.png",
+  "set": false,
+  "ax": 0.493,
+  "ay": 0.494,
+  "foot": 1.0,
+  "atlas": [
+   2417,
+   1992,
+   188,
+   183
+  ],
+  "sheet": 1
+ }
+}
