@@ -8,6 +8,7 @@
 // - MapLibre doesn't fetch a missing tile again while it stays in view, so when a pending
 //   tile on screen becomes ready, `revision` changes and the layer is mounted afresh under a
 //   new source id (painted tiles come back from MapLibre's cache, without the network).
+import { OfflineManager } from '@maplibre/maplibre-react-native';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
@@ -21,6 +22,12 @@ const PENDING_POLL_MS = 1500;
 /** Stop asking after this long; the next camera move asks again. */
 const PENDING_GIVE_UP_MS = 90_000;
 const CONFIG_KEY = 'fantasyConfig';
+/**
+ * MapLibre's on-device tile cache. The default (50 MB) holds about 400 painted tiles, less
+ * than a tester's home area with the street map tiles beside it, so tiles would be fetched
+ * again on every visit.
+ */
+const AMBIENT_CACHE_BYTES = 200 * 1024 * 1024;
 
 export type FantasyMapState = {
   /** Raster tile URL template, or null when the server switched the fantasy map off. */
@@ -74,6 +81,7 @@ export function useFantasyMap(
     );
   });
   useEffect(() => {
+    OfflineManager.setMaximumAmbientCacheSize(AMBIENT_CACHE_BYTES).catch(() => {});
     loadConfig();
     const sub = AppState.addEventListener('change', (s) => s === 'active' && loadConfig());
     return () => sub.remove();
