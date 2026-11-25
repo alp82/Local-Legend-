@@ -131,9 +131,12 @@ const fromBase64 = (b64) => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 
 /**
  * Paints z16 tile x/y. Returns { webp (base64), rgbaHash, labels, hearts, ms, tm }.
- * quality: WebP quality 0..1.
+ * quality: WebP quality 0..1. For checks, opts.edges adds the raw pixels of the outer
+ * EDGE_PX columns and rows ({ left, right, top, bottom }, base64 RGBA, before encoding), and
+ * opts.plans the nine plans the paint used ({ "x/y": JSON }).
  */
-async function paintTile(x, y, quality) {
+const EDGE_PX = 3;
+async function paintTile(x, y, quality, opts = {}) {
   const t0 = performance.now();
   const near = [];
   for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) if (a || b) near.push(plan(x + a, y + b));
@@ -153,7 +156,23 @@ async function paintTile(x, y, quality) {
   let h = 2166136261;
   for (let k = 0; k < px.length; k += 1) h = Math.imul(h ^ px[k], 16777619);
   const blob = await canvas.convertToBlob({ type: 'image/webp', quality });
+  const extra = {};
+  if (opts.edges) {
+    const strip = (sx0, sy0, w, h) => toBase64(ctx.getImageData(sx0, sy0, w, h).data.buffer);
+    extra.edges = {
+      left: strip(0, 0, EDGE_PX, CHUNK_PX),
+      right: strip(CHUNK_PX - EDGE_PX, 0, EDGE_PX, CHUNK_PX),
+      top: strip(0, 0, CHUNK_PX, EDGE_PX),
+      bottom: strip(0, CHUNK_PX - EDGE_PX, CHUNK_PX, EDGE_PX),
+    };
+  }
+  if (opts.plans) {
+    extra.plans = { [`${x}/${y}`]: JSON.stringify(r.reg.plan) };
+    let k = 0;
+    for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) if (a || b) extra.plans[`${x + a}/${y + b}`] = JSON.stringify(nearRegions[k++].plan);
+  }
   return {
+    ...extra,
     webp: toBase64(await blob.arrayBuffer()),
     rgbaHash: (h >>> 0).toString(16),
     labels: r.reg.labels,

@@ -47,13 +47,16 @@ export async function startRenderer({ sourceDir, workers = 4, log = () => {} }) 
     page,
     stats: server.stats,
     chromium: browser.version(),
-    /** Paints z16 tile x/y; returns { webp: Buffer, rgbaHash, labels, hearts, ms, tm }. */
-    async paint(x, y, quality) {
+    /**
+     * Paints z16 tile x/y; returns { webp: Buffer, rgbaHash, labels, hearts, ms, tm }.
+     * opts { edges, plans } add check data (see paintTile in page/render.js).
+     */
+    async paint(x, y, quality, opts = {}) {
       await prefetch(x, y);
       for (let attempt = 0; ; attempt++) {
         await reloading;
         const errorsBefore = server.stats.errors;
-        const r = await page.evaluate(([a, b, q]) => window.paintTile(a, b, q), [x, y, quality]);
+        const r = await page.evaluate(([a, b, q, o]) => window.paintTile(a, b, q, o), [x, y, quality, opts]);
         if (server.stats.errors === errorsBefore) return { ...r, webp: Buffer.from(r.webp, 'base64') };
         if (attempt >= 1) throw new Error(`source data failed twice while painting 16/${x}/${y}`);
         log(`source error during 16/${x}/${y}; reloading the painter and trying again`);
