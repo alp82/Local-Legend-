@@ -7,7 +7,7 @@
 //
 // After a sync, `git diff painter/ VENDORED.md` is the whole change.
 import { createHash } from 'node:crypto';
-import { copyFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -15,18 +15,9 @@ const here = dirname(fileURLToPath(import.meta.url));
 const root = resolve(here, '..');
 const proto = resolve(process.argv[2] ?? join(root, '../../prototypes/fantasy-map'));
 
-// The painter's module graph as loaded by chunkworker.js, and nothing else.
-const CODE = [
-  'chunkworker.js',
-  'painter5.js',
-  'tiledata.js',
-  'world.js',
-  'density.js',
-  'styles.js',
-  'sprites.js',
-  'vendor/vt.mjs',
-  'vendor/geo.mjs',
-];
+// The painter exactly as the prototype's README hands it over (round 10, "Handover"): the
+// entry point tilepainter.js and its module graph, and nothing else.
+const CODE = ['tilepainter.js', 'painter5.js', 'fmworld.js', 'fmcore.js', 'tiledata.js', 'vendor/vt.mjs'];
 
 const sprites = join(proto, 'sprites5');
 const bundle = JSON.parse(readFileSync(join(sprites, 'bundle.json'), 'utf8'));
@@ -39,6 +30,9 @@ const ART = [
 ];
 // The village name font (SIL Open Font License), painted into the tiles.
 const FONTS = ['IMFeENsc28P.ttf', 'OFL.txt'];
+
+// painter/ holds the copy and nothing else: files the prototype dropped go with it.
+rmSync(join(root, 'painter'), { recursive: true, force: true });
 
 const sha = (file) => createHash('sha256').update(readFileSync(file)).digest('hex').slice(0, 16);
 const rows = [];

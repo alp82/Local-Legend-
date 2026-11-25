@@ -4,19 +4,16 @@ The files in `painter/` and `assets/` are copies from the fantasy map prototype
 (`prototypes/fantasy-map/`, untracked and never committed). Don't edit them here. Change
 the prototype, then run `node scripts/sync-prototype.mjs` and review `git diff`.
 
-Copied on 2026-11-25T20:48:54Z. Art: 9.8 MB in 35 files.
+Copied on 2026-11-25T22:43:44Z. Art: 9.8 MB in 35 files.
 
 | Here | Prototype file | SHA-256 (first 16) |
 | --- | --- | --- |
-| painter/chunkworker.js | chunkworker.js | 43cfae139910a03a |
-| painter/painter5.js | painter5.js | 2eeb3b2501d7ddeb |
-| painter/tiledata.js | tiledata.js | 0281f262684a8da8 |
-| painter/world.js | world.js | 5125738670be364d |
-| painter/density.js | density.js | c8e257e45efff9d6 |
-| painter/styles.js | styles.js | d499e2ff14070747 |
-| painter/sprites.js | sprites.js | 7d83cbbb7f8a0d82 |
+| painter/tilepainter.js | tilepainter.js | 4b3aad1dc4d196b8 |
+| painter/painter5.js | painter5.js | fd44e4bdd2e9a1b9 |
+| painter/fmworld.js | fmworld.js | 52b47e9e99a456b9 |
+| painter/fmcore.js | fmcore.js | 8437327755e366e3 |
+| painter/tiledata.js | tiledata.js | ba868f82f408d824 |
 | painter/vendor/vt.mjs | vendor/vt.mjs | 1a97c81fb53218ae |
-| painter/vendor/geo.mjs | vendor/geo.mjs | 06f6767b6d813b30 |
 | assets/bundle.json | sprites5/bundle.json | 01585b1a072aa747 |
 | assets/index.json | sprites5/index.json | 8cc413cdf22e296b |
 | assets/atlas.webp | sprites5/atlas.webp | 87704bdf639e458c |

@@ -21,7 +21,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { test } from 'node:test';
 
-import { startRenderer, tileBounds, tileOf, lngLatOf } from '../src/renderer.mjs';
+import { startRenderer, tileBounds, tileOf } from '../src/renderer.mjs';
 
 // The painted settlements (hearts, hamlets, farmsteads), from the art index.
 const SET_PIECES = new Set(
@@ -34,7 +34,7 @@ const PX = 1024;
 const EDGE_PX = 3;
 const SEGMENT = 16;
 
-// Pairs around village hearts in three cities, and two where a set piece itself lies across
+// Pairs around village hearts in three cities, and three where a set piece itself lies across
 // the edge. [name, z16 x, z16 y of T, direction of N, set piece that must cross (or null)]
 const at = (lng, lat) => Object.values(tileOf(lng, lat, 16));
 const PAIRS = [
@@ -43,7 +43,8 @@ const PAIRS = [
   ['Manhattan Midtown, east edge', ...at(-73.98674, 40.75628), 'east', null],
   ['Innsbruck Sankt Nikolaus, south edge', ...at(11.39186, 47.272375), 'south', null],
   ['Berlin walled town across an east edge', 35206, 21500, 'east', 'walled-town-grey-corner'],
-  ['Berlin town across a south edge', 35208, 21500, 'south', 'town-orchard-market'],
+  ['Berlin town across a south edge', 35208, 21500, 'south', 'town-golden-thatch'],
+  ['Manhattan town across a south edge', 19301, 24628, 'south', 'town-orchard-market'],
 ];
 
 const rgba = (b64) => Buffer.from(b64, 'base64');
@@ -76,9 +77,7 @@ function seamFaults(a1, a0, b0, b1) {
 function crossing(planJson, x, y, dir) {
   const [x0, y0, x1, y1] = tileBounds(x, y, 16);
   const ts = x1 - x0;
-  const lat = lngLatOf(0, (y0 + y1) / 2)[1];
-  const kF = 1 / Math.cos((Math.round(lat * 2) / 2) * (Math.PI / 180));
-  const sx = PX / ts, ppm = sx * kF;
+  const sx = PX / ts, ppm = sx * 1.4; // the painter's KF: 1.4 mercator units per map metre
   return JSON.parse(planJson).filter((o) => {
     const w = o.w * ppm, h = o.h * ppm, px = (o.wx - x0) * sx, py = (y1 - o.wy) * sx;
     const left = px - w * o.ax, right = px + w * (1 - o.ax), top = py - h * o.ay, bottom = py + h * (1 - o.ay);

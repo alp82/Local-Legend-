@@ -3,7 +3,7 @@
 //
 //   node src/cli.mjs --at 13.4140,52.5005 --radius 1 --out out/berlin [--quality 0.8] [--workers 6]
 //
-// Writes <out>/16/x/y.webp, <out>/16/x/y.json (labels, hearts, pixel hash) and, with --z15,
+// Writes <out>/16/x/y.webp, <out>/16/x/y.json (live labels, village names, pixel hash) and, with --z15,
 // the z15 parents of complete 2×2 groups. Prints one line per tile and a summary.
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
@@ -43,8 +43,8 @@ await Promise.all(
     const dir = join(a.out, '16', String(x));
     await mkdir(dir, { recursive: true });
     await writeFile(join(dir, `${y}.webp`), t.webp);
-    await writeFile(join(dir, `${y}.json`), JSON.stringify({ rgbaHash: t.rgbaHash, labels: t.labels, hearts: t.hearts, ms: t.ms }));
-    console.log(`16/${x}/${y} ${t.ms} ms ${(t.webp.length / 1024).toFixed(0)} KB hash ${t.rgbaHash} | ${t.tm}`);
+    await writeFile(join(dir, `${y}.json`), JSON.stringify({ rgbaHash: t.rgbaHash, labels: t.labels, names: t.names, dropped: t.dropped, ms: t.ms }));
+    console.log(`16/${x}/${y} ${t.ms} ms ${(t.webp.length / 1024).toFixed(0)} KB hash ${t.rgbaHash}${t.names.length ? ` | ${t.names.join(', ')}` : ''}${t.dropped.length ? ` | dropped road names: ${t.dropped.join(', ')}` : ''}`);
   }),
 );
 const wall = Date.now() - t1;

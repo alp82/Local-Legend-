@@ -1,4 +1,4 @@
-// The renderer end to end, in headless Chromium. Needs the network the first time (source
+// The renderer end to end, in headless Chromium, with the vendored painter's paintTile. Needs the network the first time (source
 // tiles are then kept in .source/). Slow: about 10 s.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -15,15 +15,6 @@ before(async () => {
 after(() => a?.close());
 
 const md5 = (b) => createHash('md5').update(b).digest('hex');
-
-test('tileworker.js gives the same plans as chunkworker.js (re-sync check)', async () => {
-  // Berlin Kreuzberg and the Innsbruck old town
-  for (const [x, y] of [[35210, 21497], [34842, 22865]]) {
-    const r = await a.page.evaluate(([p, q]) => window.comparePlans(p, q), [x, y]);
-    assert.ok(r.objects > 0, 'the plan has objects');
-    assert.equal(r.tileworker, r.chunkworker, `plans of 16/${x}/${y} agree`);
-  }
-});
 
 test('the same tile gives the same pixels in another browser, in any order', async () => {
   const b = await startRenderer({ sourceDir, workers: 1 });

@@ -1,4 +1,4 @@
-// Tile arithmetic: XYZ tiles at z16 must coincide with the painter's chunks (CW = tile width).
+// Tile arithmetic shared with the painter (painter/tilepainter.js, tileRect).
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
