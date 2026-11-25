@@ -52,3 +52,5 @@ Copied on 2026-11-25T20:48:54Z. Art: 9.8 MB in 35 files.
 | assets/tex-vegetable-rows.webp | sprites5/tex-vegetable-rows.webp | 9484c849cbd47e90 |
 | assets/tex-wheat-field.webp | sprites5/tex-wheat-field.webp | 15b314820aa59216 |
 | assets/tex-wildflower-meadow.webp | sprites5/tex-wildflower-meadow.webp | 29f50379611edb91 |
+| assets/fonts/IMFeENsc28P.ttf | fonts/IMFeENsc28P.ttf | 102324fb5434bb5d |
+| assets/fonts/OFL.txt | fonts/OFL.txt | 2a3ca501fc4d5efc |

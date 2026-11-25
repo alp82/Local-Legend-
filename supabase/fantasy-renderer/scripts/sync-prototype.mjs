@@ -37,6 +37,8 @@ const ART = [
   ...bundle.sheets,
   ...bundle.textures.map((n) => `tex-${n}.webp`),
 ];
+// The village name font (SIL Open Font License), painted into the tiles.
+const FONTS = ['IMFeENsc28P.ttf', 'OFL.txt'];
 
 const sha = (file) => createHash('sha256').update(readFileSync(file)).digest('hex').slice(0, 16);
 const rows = [];
@@ -53,8 +55,14 @@ for (const f of ART) {
   artBytes += readFileSync(to).length;
   rows.push(`| assets/${f} | sprites5/${f} | ${sha(to)} |`);
 }
+mkdirSync(join(root, 'assets/fonts'), { recursive: true });
+for (const f of FONTS) {
+  const to = join(root, 'assets/fonts', f);
+  copyFileSync(join(proto, 'fonts', f), to);
+  rows.push(`| assets/fonts/${f} | fonts/${f} | ${sha(to)} |`);
+}
 // Art the prototype no longer lists would linger here; report it so it can be deleted.
-const stale = readdirSync(join(root, 'assets')).filter((f) => !ART.includes(f));
+const stale = readdirSync(join(root, 'assets')).filter((f) => f !== 'fonts' && !ART.includes(f));
 
 const now = new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 writeFileSync(
