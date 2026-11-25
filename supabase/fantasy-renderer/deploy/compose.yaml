@@ -14,9 +14,13 @@ services:
     environment:
       SOURCE_CACHE_DIR: /data/source
       HEARTBEAT_FILE: /tmp/fantasy-worker-heartbeat.json
-      # Measured at 2 CPUs: about 0.34 s per tile and 1.1 GB peak memory with 3 painters.
-      PAINT_WORKERS: "3"
-      LEASE_BATCH: "6"
+      # Measured at these limits on dense Berlin with the final painter: one painter, about
+      # 0.8 s per tile (on a fast desktop core) and 1.8 GB peak. Two painters hit the 3 GB limit:
+      # each decodes the same data within its 2 km reach and keeps its own caches.
+      PAINT_WORKERS: "1"
+      # The painter's caches only grow: replace the page every 100 tiles.
+      RECYCLE_TILES: "100"
+      LEASE_BATCH: "4"
       IDLE_POLL_MS: "1000"
     volumes:
       # Frozen OpenFreeMap and terrain tiles. Keep this volume: deleting it lets map changes

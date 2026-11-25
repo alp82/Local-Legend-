@@ -11,17 +11,25 @@ the public `fantasy-tiles` bucket. The queue is in
 
 ## Tiles
 
-- Zoom 16 tiles are painted, 1024 × 1024 px, as WebP. That is the painter's own
-  resolution (quality 2 at band 16). The app shows them at 512 px.
-- A z16 tile is exactly one of the painter's chunks: chunk `i = x - 2^15`,
-  `j = 2^15 - 1 - y` with the chunk width set to the tile width. Its sprites come from
-  the plans of the 3 × 3 neighbourhood, as in the prototype, so neighbouring tiles meet.
-- Village names are painted into the tiles in the prototype's label style (Fell SC).
-  Road and water names are live labels in the app.
+- Zoom 16 tiles are painted, 1024 × 1024 px, as WebP. The app shows them at 512 px.
+- Each paint is exactly the painter's `paintTile(16, x, y)`: the tile plus its fixed
+  margin, one painter Web Worker per paint (`src/page/tileworker.js`). Never paint another
+  window: the painter's README says a different canvas window rounds pixels differently.
+- Every decision a tile edge can see is made once per fixed world cell (the painter's README,
+  round 10), so neighbouring tiles meet whichever process paints them, and whenever.
+- Village names are painted into the tiles in the prototype's label style (Fell SC), from the
+  labels of the tile and its eight neighbours at their fixed spots.
+- Road and water names are live labels in the app, from `<tile>.json` next to each WebP:
+  `[{ name, lng, lat, rot, water }]`. These are the painter's own line labels, a road name only
+  where a road the painter drew runs under its spot (`drawnNear` within 4 m).
 - Zoom 15 tiles are the four z16 children scaled down. Missing children are painted
   first.
-- Paths: `fantasy-tiles/v<version>/<z>/<x>/<y>.webp`, uploaded with
+- Paths: `fantasy-tiles/v<version>/<z>/<x>/<y>.webp` and `.json`, uploaded with
   `cache-control: public, max-age=31536000, immutable`.
+
+Pixels depend on Chromium's rasteriser. The image pins it (Playwright 1.65.1, Chromium
+159.0.8154.6, base image by digest), and so does `package.json` (`playwright` 1.65.1).
+Treat any Chromium change as a tile version bump.
 
 The same tile always gets the same pixels, whatever was painted before it and in
 whichever browser process. `test/renderer.test.mjs` checks this.
@@ -36,8 +44,8 @@ Tiles painted weeks apart therefore read the same data and still meet at their e
 Keep `SOURCE_CACHE_DIR` on a persistent volume. Deleting it lets OpenStreetMap changes in,
 and a new tile can then disagree with an older neighbour.
 
-The painter treats a failed source fetch as "no data". So the renderer fetches every
-source tile a paint needs before painting. A paint during which any source request
+After three failed fetches the painter treats a data tile as empty. So the renderer
+fetches the source tiles within 2 km before painting. A paint during which any source request
 failed is thrown away, and the painter page is reloaded.
 
 ## Configuration
@@ -51,7 +59,8 @@ The worker reads only environment variables:
 | `FANTASY_RENDERER_EMAIL`, `FANTASY_RENDERER_PASSWORD` | | The renderer user (production) |
 | `SUPABASE_SECRET_KEY` | | Instead of the renderer user: a secret key (`sb_secret_…`) or the legacy `service_role` JWT (local stack, admin) |
 | `SOURCE_CACHE_DIR` | `.source` (`/data/source` in Docker) | Frozen source tiles |
-| `PAINT_WORKERS` | `4` | Painter Web Workers; about one per CPU core |
+| `PAINT_WORKERS` | `4` | Painter Web Workers. Each needs about 1.5 GB in a dense city; production runs 1 |
+| `RECYCLE_TILES` | `300` | Tiles per painter page; the page is then replaced (the painter's caches only grow). Production: 100 |
 | `LEASE_BATCH` | `8` | Tiles leased per round |
 | `IDLE_POLL_MS` | `1000` | Wait between empty polls |
 | `EXIT_WHEN_IDLE` | (unset) | `1`: stop when the queue is empty, for batch runs |
@@ -112,20 +121,22 @@ python3 scripts/phone-view.py out/berlin <mercator x> <mercator y> view.png [app
 
 ## Speed and size
 
-These numbers were measured on a 32-thread desktop with 8 painter workers, for Berlin
-Kreuzberg:
+The final painter loads wider windows (the world plan looks up to 2 km round a tile) and
+keeps its caches for good:
 
-- About 110 ms per tile throughput.
-- 1.0 to 2.5 s for one tile in a fresh process.
-- In Docker at 2 CPUs and 3 painter workers: about 0.34 s per tile and 1.1 GB of peak
-  memory.
-- Mean z16 tile by WebP quality (Berlin, Manhattan, Innsbruck): 0.7: 112 KB, 0.75: 121 KB,
-  0.8: 152 KB, 0.85: 195 KB. A z15 tile is about 15% larger.
+- Docker at the production limits (2 CPUs, 3 GB), dense Berlin, one painter: about 0.8 s per
+  tile on a fast desktop core, 1.8 GB peak. Two painters hit the 3 GB limit and gain little.
+- The first tile of a new area takes 6 to 10 s (cold caches and source data); with one
+  painter, a phone screen of never-painted ground filled in about 13 s.
+- A painter page is replaced every `RECYCLE_TILES` tiles. A page that crashes is replaced
+  and its tiles painted again.
+- Mean z16 tile by WebP quality (27 tiles, Berlin, Manhattan, Innsbruck): 0.7: 109 KB,
+  0.75: 118 KB, 0.8: 149 KB. A z15 tile is about 25% larger.
 
 ## Tests
 
 ```sh
-npm test   # tile arithmetic, plan agreement, determinism, z15, neighbours agreeing at edges
+npm test   # tile arithmetic, determinism, z15, neighbours agreeing at edges
 ```
 
 ## Re-sync with the prototype
@@ -133,10 +144,10 @@ npm test   # tile arithmetic, plan agreement, determinism, z15, neighbours agree
 ```sh
 node scripts/sync-prototype.mjs
 git diff painter/ VENDORED.md
-npm test   # fails if tileworker.js no longer matches chunkworker.js
+npm test
 ```
 
-Painter or art changes paint different pixels. After a re-sync, raise
+Painter, art or Chromium changes paint different pixels. After a re-sync, raise
 `fantasy_config.version`, so the app asks for new tiles instead of mixing old and new
 ones.
 
@@ -145,14 +156,22 @@ histories. It checks that they share plans, that sprites across the edge have on
 that no two set pieces stand on the same ground, and that pixels change no more across the
 edge than inside a tile. Run it on every re-sync.
 
-### Open points for the next re-sync
+### Known issues in the final painter (November 26, 2026)
 
-- **Road names on removed roads.** The app's live road names come from the base map
-  (`trunk`, `primary`, `secondary` and `tertiary` in `fantasy-layer.tsx`). The painter thins
-  roads, though: in town cores only every third parallel lane survives, and dead ends are
-  dropped. So a name can appear where no road is painted. Derive the named roads from the
-  tile's plan instead: emit the surviving named road lines with each tile, as a small JSON
-  file next to the WebP, and show those as the live layer. Otherwise, drop live names for the
-  road classes the painter thins.
-- **Church and landmark names** aren't shown yet; only village names (painted in) and road
-  and water names (live) are.
+Compared with the round 8 look the owner approved:
+
+- **Roads in dense districts.** Around Berlin's Luisenstadt the approved view had dirt roads
+  leading to the town; the final painter draws none there (its own round 10 shot shows the
+  same).
+- **Mountain detail.** North of Innsbruck's Sankt Nikolaus the pine groups, rock outcrop and
+  winding roads of the approved view are gone; small fillers stand in their place.
+- **Faded landmark trees.** `landmark-sweet-chestnut`, `landmark-silver-birch`,
+  `landmark-lombardy-poplar` and `landmark-mountain-rowan` are packed into the atlas only
+  40 px wide and drawn up to 2.6 times larger, so they look blurred and half transparent. The
+  hamlet set pieces are drawn up to 2 times their atlas size. This is fixed in the
+  prototype's art build (`tools/sprites5.py` sizes), followed by a re-sync and a version
+  bump.
+- From the painter's own report: fillers can overlap at a tile edge, some hearts get no
+  name, and fields can appear on high open slopes.
+- Church and landmark names aren't shown; only village names (painted in) and road and
+  water names (live) are.

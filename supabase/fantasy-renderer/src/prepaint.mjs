@@ -6,7 +6,8 @@
 //   node src/prepaint.mjs --bbox 13.38,52.49,13.45,52.52 [--yes]
 //
 // Without --yes it only prints the estimate. Options: --no-z15 (skip zoom 15),
-// --seconds-per-tile (painting time per tile on the worker host, default 0.8),
+// --seconds-per-tile (painting time per tile on the worker host, default 1.5: one painter
+// on the worker host; 0.8 s was measured on a fast desktop core),
 // --kb-z16 / --kb-z15 (tile sizes; default: the averages measured so far, from fantasy_status).
 //
 // The worker paints the queued tiles itself. Don't paint an area on another machine and
@@ -26,7 +27,7 @@ const { values: a } = parseArgs({
     bbox: { type: 'string' },
     yes: { type: 'boolean', default: false },
     'no-z15': { type: 'boolean', default: false },
-    'seconds-per-tile': { type: 'string', default: '0.8' },
+    'seconds-per-tile': { type: 'string', default: '1.5' },
     'kb-z16': { type: 'string' },
     'kb-z15': { type: 'string' },
   },
@@ -76,7 +77,7 @@ async function count(tiles, dryRun) {
 const c16 = await count(z16, true), c15 = await count(z15, true);
 const sec = Number(a['seconds-per-tile']);
 // A z15 tile is a scaled-down copy of its four children, which the worker has by then.
-const hours = (c16.queued * sec + c15.queued * 0.1) / 3600;
+const hours = (c16.queued * sec + c15.queued * 0.3) / 3600;
 const mb = (c16.queued * kb16 + c15.queued * kb15) / 1024;
 const km = (x) => x.toFixed(1);
 const widthKm = (e - w) * 111.32 * Math.cos((((s + n) / 2) * Math.PI) / 180), heightKm = (n - s) * 111.32;
