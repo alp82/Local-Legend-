@@ -61,6 +61,8 @@ export function useFantasyMap(
   const [pollTick, setPollTick] = useState(0);
   const pendingSince = useRef<number | null>(null);
   const lastPending = useRef<string[]>([]);
+  /** The tiles of the last answered request; the walking camera moves every second or so. */
+  const lastAsked = useRef('');
 
   const loadConfig = useEffectEvent(() => {
     fetchFantasyConfig().then(
@@ -79,6 +81,7 @@ export function useFantasyMap(
 
   const available = !!config?.enabled && !!supabaseUrl;
   const on = wanted && available;
+  const version = config?.version ?? 0;
   const boundsKey = view?.bounds.map((v) => v.toFixed(5)).join(',');
   const zoom = view?.zoom ?? 0;
 
@@ -87,11 +90,16 @@ export function useFantasyMap(
     const bounds = boundsKey.split(',').map(Number) as BBox;
     const { tiles, visible } = tilesForView(bounds, zoom);
     if (tiles.length === 0) return;
+    const sorted = (list: typeof tiles) => list.map(tileKey).sort().join(',');
+    const asked = `${version}|${sorted(tiles.slice(0, visible))}|${sorted(tiles)}`;
+    // The same tiles (in any order) as last time and nothing waiting: the answer can't have changed.
+    if (asked === lastAsked.current && lastPending.current.length === 0) return;
     let cancelled = false;
     const timer = setTimeout(() => {
       requestFantasyTiles(tiles, visible).then(
         (r) => {
           if (cancelled) return;
+          lastAsked.current = asked;
           const now = r.pending.map(tileKey);
           const onScreen = new Set(tiles.slice(0, visible).map(tileKey));
           // A tile on screen that was pending and isn't any more has just been painted.
@@ -116,7 +124,7 @@ export function useFantasyMap(
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [on, boundsKey, zoom, pollTick]);
+  }, [on, version, boundsKey, zoom, pollTick]);
 
   // A camera move gives pending tiles a fresh 90 s.
   useEffect(() => {
