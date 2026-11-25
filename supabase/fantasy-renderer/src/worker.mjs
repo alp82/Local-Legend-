@@ -37,16 +37,30 @@ async function beat(state) {
 }
 
 const tilePath = (v, z, x, y) => `v${v}/${z}/${x}/${y}.webp`;
+const labelPath = (v, z, x, y) => `v${v}/${z}/${x}/${y}.json`;
+const HALF = 20037508.342789244;
+const lngLat = (mx, my) => [
+  Math.round(((mx / HALF) * 180) * 1e6) / 1e6,
+  Math.round((Math.atan(Math.exp(my / 6378137)) * 2 - Math.PI / 2) * (180 / Math.PI) * 1e6) / 1e6,
+];
+/** The app's live labels for a tile: [{ name, lng, lat, rot, water }]. */
+const labelJson = (labels) => JSON.stringify(labels.map((L) => {
+  const [lng, lat] = lngLat(L.wx, L.wy);
+  return { name: L.name, lng, lat, rot: L.rot, water: L.water };
+}));
 
-/** Paints, uploads and records one z16 tile; returns its bytes. */
+/** Paints, uploads and records one z16 tile; returns { webp, labels } (labels as JSON text). */
 async function paint16(v, x, y, quality) {
   const t = await renderer.paint(x, y, quality);
+  const labels = labelJson(t.labels);
+  // the labels first: a tile the app can load always has its label file
+  await sb.upload(labelPath(v, 16, x, y), Buffer.from(labels), 'application/json');
   await sb.upload(tilePath(v, 16, x, y), t.webp);
   await sb.rpc('finish_fantasy_tile', { p_version: v, p_z: 16, p_x: x, p_y: y, p_ok: true, p_bytes: t.webp.length, p_paint_ms: t.ms });
   log(`16/${x}/${y} v${v} ${t.ms} ms ${(t.webp.length / 1024).toFixed(0)} KB`);
   stats.painted++;
   stats.lastPaintAt = new Date().toISOString();
-  return t.webp;
+  return { webp: t.webp, labels };
 }
 
 async function paint15(v, x, y, quality) {
@@ -54,10 +68,14 @@ async function paint15(v, x, y, quality) {
   const kids = await Promise.all(
     [[0, 0], [1, 0], [0, 1], [1, 1]].map(async ([u, w]) => {
       const cx = x * 2 + u, cy = y * 2 + w;
-      return (await sb.download(tilePath(v, 16, cx, cy))) ?? paint16(v, cx, cy, quality);
+      const [webp, labels] = await Promise.all([sb.download(tilePath(v, 16, cx, cy)), sb.download(labelPath(v, 16, cx, cy))]);
+      return webp && labels ? { webp, labels: labels.toString() } : paint16(v, cx, cy, quality);
     }),
   );
-  const webp = await renderer.downsample(kids, quality);
+  const webp = await renderer.downsample(kids.map((k) => k.webp), quality);
+  // a z15 tile's labels are its children's
+  const labels = JSON.stringify(kids.flatMap((k) => JSON.parse(k.labels)));
+  await sb.upload(labelPath(v, 15, x, y), Buffer.from(labels), 'application/json');
   await sb.upload(tilePath(v, 15, x, y), webp);
   const ms = Date.now() - t0;
   await sb.rpc('finish_fantasy_tile', { p_version: v, p_z: 15, p_x: x, p_y: y, p_ok: true, p_bytes: webp.length, p_paint_ms: ms });

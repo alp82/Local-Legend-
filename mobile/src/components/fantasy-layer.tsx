@@ -7,10 +7,12 @@
 // 16.5 and are stretched above that; z15 tiles cover 14.5 to 15.5. Below FANTASY_MIN_ZOOM
 // the parchment layer covers everything, as it always has.
 //
-// Village names are painted into the tiles. Road and water names are live labels on the
-// street map's own vector source ("openmaptiles" in the OpenFreeMap style), styled like the
-// prototype's (supabase/fantasy-renderer/painter/styles.js) in the fonts that style serves.
-import { Layer, LogManager, RasterSource } from '@maplibre/maplibre-react-native';
+// Village names are painted into the tiles. Road and water names are live labels from each
+// tile's label file: the painter places them at fixed spots, only on roads it drew and on
+// rivers and canals, turned with the line. MapLibre hides the ones that collide. They're
+// styled like the prototype's (lm-names in its app.js) in the italic the street map's font
+// server has.
+import { GeoJSONSource, Layer, LogManager, RasterSource } from '@maplibre/maplibre-react-native';
 import { memo, useState } from 'react';
 
 import { FANTASY_MIN_ZOOM } from '@/lib/fantasyTiles';
@@ -21,10 +23,6 @@ import { FANTASY_MIN_ZOOM } from '@/lib/fantasyTiles';
  * under them, also when a revision mounts it again.
  */
 const BELOW = 'parchment-fill';
-/** The street map style's vector source. */
-const BASE_SOURCE = 'openmaptiles';
-/** The roads the painter keeps and names (painter5.js). */
-const NAMED_ROADS = ['trunk', 'primary', 'secondary', 'tertiary'];
 
 // A tile that isn't painted yet answers 400 from Storage, which MapLibre logs as an error
 // for every such tile. That is the expected fallback, not a fault.
@@ -36,56 +34,46 @@ let mounts = 0;
 export const FantasyLayer = memo(function FantasyLayer({
   tiles,
   revision,
+  labels,
   visible,
 }: {
   tiles: string;
   revision: number;
+  /** Road and water names, GeoJSON points with name, rot (degrees) and water (0 or 1). */
+  labels: string;
   visible: boolean;
 }) {
   const [m] = useState(() => ++mounts);
   const visibility = visible ? 'visible' : 'none';
-  const waterNames = `fantasy-water-names-${m}`;
+  const names = `fantasy-names-${m}`;
   return (
     <>
-      <Layer
-        type="symbol"
-        id={waterNames}
-        beforeId={BELOW}
-        source={BASE_SOURCE}
-        source-layer="waterway"
-        minzoom={FANTASY_MIN_ZOOM}
-        filter={['all', ['in', ['get', 'class'], ['literal', ['river', 'canal']]], ['has', 'name']]}
-        layout={{
-          visibility,
-          'symbol-placement': 'line',
-          'symbol-spacing': 600,
-          'text-field': ['coalesce', ['get', 'name:latin'], ['get', 'name']],
-          'text-font': ['Noto Sans Italic'],
-          'text-size': 14,
-          'text-letter-spacing': 0.15,
-          'text-max-angle': 25,
-        }}
-        paint={{ 'text-color': '#24506e', 'text-halo-color': 'rgba(200,226,240,0.8)', 'text-halo-width': 1.2 }}
-      />
-      <Layer
-        type="symbol"
-        id={`fantasy-road-names-${m}`}
-        beforeId={BELOW}
-        source={BASE_SOURCE}
-        source-layer="transportation_name"
-        minzoom={FANTASY_MIN_ZOOM}
-        filter={['in', ['get', 'class'], ['literal', NAMED_ROADS]]}
-        layout={{
-          visibility,
-          'symbol-placement': 'line',
-          'symbol-spacing': 600,
-          'text-field': ['coalesce', ['get', 'name:latin'], ['get', 'name']],
-          'text-font': ['Noto Sans Italic'],
-          'text-size': ['interpolate', ['linear'], ['zoom'], 14.8, 12, 17, 15],
-          'text-max-angle': 25,
-        }}
-        paint={{ 'text-color': '#4a3218', 'text-halo-color': 'rgba(236,226,190,0.85)', 'text-halo-width': 1.6 }}
-      />
+      <GeoJSONSource id={`fantasy-labels-${m}`} data={labels}>
+        <Layer
+          type="symbol"
+          id={names}
+          beforeId={BELOW}
+          minzoom={FANTASY_MIN_ZOOM}
+          layout={{
+            visibility,
+            'text-field': ['get', 'name'],
+            'text-font': ['Noto Sans Italic'],
+            'text-size': ['interpolate', ['linear'], ['zoom'], 14.6, 12, 16, 14, 17, 16],
+            'text-rotate': ['get', 'rot'],
+            'text-rotation-alignment': 'map',
+            'text-pitch-alignment': 'map',
+            'text-letter-spacing': ['case', ['==', ['get', 'water'], 1], 0.15, 0.05],
+            'text-padding': 4,
+            'symbol-sort-key': ['case', ['==', ['get', 'water'], 1], 0, 1],
+          }}
+          paint={{
+            'text-color': ['case', ['==', ['get', 'water'], 1], '#24506e', '#3a2410'],
+            'text-halo-color': ['case', ['==', ['get', 'water'], 1], 'rgba(200,226,240,0.8)', 'rgba(252,240,205,0.85)'],
+            'text-halo-width': 1.4,
+            'text-halo-blur': 0.8,
+          }}
+        />
+      </GeoJSONSource>
       {/* New ids on each mount and revision. MapLibre then asks again for tiles that were
           missing; a source mounted again under the same id keeps its failed tiles, or doesn't
           come back at all. Painted tiles come from MapLibre's cache. */}
@@ -93,7 +81,7 @@ export const FantasyLayer = memo(function FantasyLayer({
         <Layer
           type="raster"
           id={`fantasy-raster-${m}-${revision}`}
-          beforeId={waterNames}
+          beforeId={names}
           layout={{ visibility }}
           minzoom={FANTASY_MIN_ZOOM}
           paint={{ 'raster-fade-duration': 200, 'raster-resampling': 'linear' }}

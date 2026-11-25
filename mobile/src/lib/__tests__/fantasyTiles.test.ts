@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { fantasyTileUrl, MAX_TILES_PER_REQUEST, tileKey, tileZoomFor, tilesForView } from '../fantasyTiles';
+import { fantasyLabelUrl, fantasyTileUrl, labelsGeoJSON, MAX_TILES_PER_REQUEST, tileKey, tileZoomFor, tilesForView } from '../fantasyTiles';
 import type { BBox } from '../sitesApi';
 
 // A phone screen at z16 over Berlin Kreuzberg (390 x 844 CSS px).
@@ -56,5 +56,26 @@ describe('tile URL', () => {
     expect(fantasyTileUrl('http://127.0.0.1:54321/', 'fantasy-tiles', 3)).toBe(
       'http://127.0.0.1:54321/storage/v1/object/public/fantasy-tiles/v3/{z}/{x}/{y}.webp',
     );
+  });
+});
+
+describe('labels', () => {
+  it('sit next to the tile, as JSON', () => {
+    expect(fantasyLabelUrl(fantasyTileUrl('http://h', 'fantasy-tiles', 2), [16, 35210, 21497])).toBe(
+      'http://h/storage/v1/object/public/fantasy-tiles/v2/16/35210/21497.json',
+    );
+  });
+
+  it('become one feature collection, without duplicates', () => {
+    const oranien = { name: 'Oranienstraße', lng: 13.42, lat: 52.5, rot: -12.5, water: 0 as const };
+    const spree = { name: 'Spree', lng: 13.43, lat: 52.51, rot: 30, water: 1 as const };
+    const fc = JSON.parse(labelsGeoJSON([[oranien], [oranien, spree], []]));
+    expect(fc.features).toHaveLength(2);
+    expect(fc.features[0]).toEqual({
+      type: 'Feature',
+      properties: { name: 'Oranienstraße', rot: -12.5, water: 0 },
+      geometry: { type: 'Point', coordinates: [13.42, 52.5] },
+    });
+    expect(fc.features[1].properties.water).toBe(1);
   });
 });

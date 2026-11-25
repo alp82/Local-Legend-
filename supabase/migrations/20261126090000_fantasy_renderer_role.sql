@@ -14,7 +14,8 @@
 --           where email = '<that email>';
 --
 -- Also: queue_fantasy_tiles (pre-painting, priority 2, no daily cap), fantasy_status
--- (queue depth, throughput, storage, last error), and finished_at on each tile.
+-- (queue depth, throughput, storage, last error), finished_at on each tile, and JSON label
+-- files in the bucket.
 
 create function public.is_fantasy_renderer()
 returns boolean
@@ -246,6 +247,9 @@ grant execute on function public.fantasy_status() to authenticated, service_role
 -- ---------------------------------------------------------------------------
 -- Storage: the renderer writes the fantasy-tiles bucket (an upsert needs all three)
 -- ---------------------------------------------------------------------------
+
+-- Each tile also gets its live labels (road and water names) as <tile>.json next to the WebP.
+update storage.buckets set allowed_mime_types = array['image/webp', 'application/json'] where id = 'fantasy-tiles';
 
 create policy "fantasy renderer reads tiles" on storage.objects
   for select to authenticated

@@ -335,7 +335,9 @@ export default function MapScreen() {
         }}>
         <Camera ref={cameraRef} initialViewState={cam.initialViewState} />
         {/* Bottom to top; see components/map-layers.tsx. */}
-        {fantasy.tiles && <FantasyLayer tiles={fantasy.tiles} revision={fantasy.revision} visible={fantasy.visible} />}
+        {fantasy.tiles && (
+          <FantasyLayer tiles={fantasy.tiles} revision={fantasy.revision} labels={fantasy.labels} visible={fantasy.visible} />
+        )}
         <ParchmentLayer />
         <FogLayer data={prepared.fogJson} visible={showMist} />
         <RevealLayer data={revealJson} k={showMist ? revealK : 0} />

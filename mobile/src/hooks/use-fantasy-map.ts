@@ -13,7 +13,7 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
 import { fetchFantasyConfig, requestFantasyTiles, type FantasyConfig } from '@/lib/fantasyApi';
-import { fantasyTileUrl, tileKey, tilesForView } from '@/lib/fantasyTiles';
+import { fantasyLabelUrl, fantasyTileUrl, labelsGeoJSON, tileKey, tilesForView, type FantasyLabel, type TileZXY } from '@/lib/fantasyTiles';
 import type { BBox } from '@/lib/sitesApi';
 
 const DEBOUNCE_MS = 400;
@@ -22,6 +22,9 @@ const PENDING_POLL_MS = 1500;
 /** Stop asking after this long; the next camera move asks again. */
 const PENDING_GIVE_UP_MS = 90_000;
 const CONFIG_KEY = 'fantasyConfig';
+const NO_LABELS = labelsGeoJSON([]);
+/** Label files kept in memory (a few hundred bytes each). */
+const LABEL_CACHE_MAX = 1500;
 /**
  * MapLibre's on-device tile cache. The default (50 MB) holds about 400 painted tiles, less
  * than a tester's home area with the street map tiles beside it, so tiles would be fetched
@@ -36,6 +39,8 @@ export type FantasyMapState = {
   visible: boolean;
   /** Changes when tiles on screen were painted since the layer was mounted. */
   revision: number;
+  /** The road and water names of the tiles around the view, as GeoJSON (from the tiles' label files). */
+  labels: string;
   /** Tiles of the last request still being painted. */
   pending: number;
   /** Of those, the ones on screen. */
@@ -70,6 +75,30 @@ export function useFantasyMap(
   const lastPending = useRef<string[]>([]);
   /** The tiles of the last answered request; the walking camera moves every second or so. */
   const lastAsked = useRef('');
+  /** Label files of one tile version by tile key; null: none yet (the tile isn't painted). */
+  const labelFiles = useRef({ url: '', files: new Map<string, FantasyLabel[] | null>() });
+  const [labels, setLabels] = useState(NO_LABELS);
+
+  /** Loads the label files of these tiles that aren't known yet (and aren't being painted), then shows theirs. */
+  const showLabels = useEffectEvent(async (url: string, tiles: TileZXY[], painting: string[]) => {
+    // a new tile version has new label files
+    if (labelFiles.current.url !== url) labelFiles.current = { url, files: new Map() };
+    const { files } = labelFiles.current;
+    const todo = tiles.filter((t) => !painting.includes(tileKey(t)) && !files.get(tileKey(t)));
+    await Promise.all(
+      todo.map(async (t) => {
+        try {
+          const res = await fetch(fantasyLabelUrl(url, t));
+          files.set(tileKey(t), res.ok ? ((await res.json()) as FantasyLabel[]) : null);
+        } catch {
+          // offline: keep what is known
+        }
+      }),
+    );
+    while (files.size > LABEL_CACHE_MAX) files.delete(files.keys().next().value!);
+    const json = labelsGeoJSON(tiles.map((t) => files.get(tileKey(t)) ?? []));
+    setLabels((cur) => (cur === json ? cur : json));
+  });
 
   const loadConfig = useEffectEvent(() => {
     fetchFantasyConfig().then(
@@ -90,11 +119,13 @@ export function useFantasyMap(
   const available = !!config?.enabled && !!supabaseUrl;
   const on = wanted && available;
   const version = config?.version ?? 0;
+  const tileUrl = available && config && supabaseUrl ? fantasyTileUrl(supabaseUrl, config.bucket, config.version) : null;
+
   const boundsKey = view?.bounds.map((v) => v.toFixed(5)).join(',');
   const zoom = view?.zoom ?? 0;
 
   useEffect(() => {
-    if (!on || !boundsKey) return;
+    if (!on || !boundsKey || !tileUrl) return;
     const bounds = boundsKey.split(',').map(Number) as BBox;
     const { tiles, visible } = tilesForView(bounds, zoom);
     if (tiles.length === 0) return;
@@ -117,6 +148,7 @@ export function useFantasyMap(
           setPendingOnScreen(now.filter((k) => onScreen.has(k)).length);
           setCapped(r.capped);
           setError(null);
+          showLabels(tileUrl, tiles, now);
           if (!r.enabled) setConfig((c) => (c ? { ...c, enabled: false } : c));
           if (now.some((k) => onScreen.has(k))) {
             pendingSince.current ??= Date.now();
@@ -125,14 +157,18 @@ export function useFantasyMap(
             pendingSince.current = null;
           }
         },
-        (e: unknown) => !cancelled && setError(e instanceof Error ? e.message : String(e)),
+        (e: unknown) => {
+          if (cancelled) return;
+          setError(e instanceof Error ? e.message : String(e));
+          showLabels(tileUrl, tiles, []); // offline: the label files fetched before still show
+        },
       );
     }, DEBOUNCE_MS);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [on, version, boundsKey, zoom, pollTick]);
+  }, [on, version, tileUrl, boundsKey, zoom, pollTick]);
 
   // A camera move gives pending tiles a fresh 90 s.
   useEffect(() => {
@@ -140,9 +176,10 @@ export function useFantasyMap(
   }, [boundsKey]);
 
   return {
-    tiles: available && config && supabaseUrl ? fantasyTileUrl(supabaseUrl, config.bucket, config.version) : null,
+    tiles: tileUrl,
     visible: wanted,
     revision,
+    labels,
     pending: pending.length,
     pendingOnScreen: on ? pendingOnScreen : 0,
     capped,

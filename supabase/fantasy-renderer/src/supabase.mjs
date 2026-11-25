@@ -81,17 +81,17 @@ export function createSupabase(url, auth) {
       const text = await res.text();
       return text ? JSON.parse(text) : null;
     },
-    async upload(path, bytes) {
+    async upload(path, bytes, contentType = 'image/webp') {
       await call(`upload ${path}`, (h) =>
         fetch(`${base}/storage/v1/object/${BUCKET}/${path}`, {
           method: 'POST',
-          headers: { ...h, 'content-type': 'image/webp', 'cache-control': CACHE_CONTROL, 'x-upsert': 'true' },
+          headers: { ...h, 'content-type': contentType, 'cache-control': CACHE_CONTROL, 'x-upsert': 'true' },
           body: bytes,
           signal: AbortSignal.timeout(60_000),
         }),
       );
     },
-    /** The stored tile, or null when there is none. Public: no credential needed. */
+    /** A stored tile or label file, or null when there is none. Public: no credential needed. */
     async download(path) {
       const res = await fetch(`${base}/storage/v1/object/public/${BUCKET}/${path}`, { signal: AbortSignal.timeout(30_000) });
       // Storage answers a missing object with 400 (code NoSuchKey) or 404.

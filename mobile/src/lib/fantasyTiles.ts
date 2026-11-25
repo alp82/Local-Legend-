@@ -52,3 +52,30 @@ export function tilesForView(bounds: BBox, zoom: number, ring = 1): { tiles: Til
 }
 
 export const tileKey = ([z, x, y]: TileZXY) => `${z}/${x}/${y}`;
+
+/** A live label from a tile's label file: a road or water name the painter placed. */
+export type FantasyLabel = { name: string; lng: number; lat: number; rot: number; water: 0 | 1 };
+
+/** The label file next to a tile: <tile>.json in the same version folder. */
+export function fantasyLabelUrl(tileUrl: string, [z, x, y]: TileZXY): string {
+  return tileUrl.replace('{z}', String(z)).replace('{x}', String(x)).replace('{y}', String(y)).replace(/\.webp$/, '.json');
+}
+
+/** The labels of some tiles as one GeoJSON string; a label two files share is kept once. */
+export function labelsGeoJSON(files: FantasyLabel[][]): string {
+  const seen = new Set<string>();
+  const features: GeoJSON.Feature[] = [];
+  for (const file of files) {
+    for (const l of file) {
+      const key = `${l.name}|${l.lng}|${l.lat}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      features.push({
+        type: 'Feature',
+        properties: { name: l.name, rot: l.rot, water: l.water },
+        geometry: { type: 'Point', coordinates: [l.lng, l.lat] },
+      });
+    }
+  }
+  return JSON.stringify({ type: 'FeatureCollection', features });
+}
