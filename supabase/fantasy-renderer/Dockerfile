@@ -1,6 +1,6 @@
-# The fantasy tile worker. Playwright's image carries the Chromium build that
+# The fantasy tile worker. Playwright's image (pinned by digest) carries the Chromium build that
 # playwright@1.65.1 drives, so the pixels match what the tests check.
-FROM mcr.microsoft.com/playwright:v1.65.1-noble
+FROM mcr.microsoft.com/playwright:v1.65.1-noble@sha256:1507cbfc550a63a6b7396791ca4f00df17beb56342d2447b3f106c306f525579
 
 WORKDIR /app
 COPY package.json package-lock.json ./

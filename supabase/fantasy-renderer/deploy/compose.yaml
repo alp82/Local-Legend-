@@ -1,0 +1,51 @@
+# The fantasy tile worker in production: one container on a shared host, with hard limits
+# so it can't starve the host's other stacks. Runbook: docs/fantasy-map-deploy.md.
+#
+# Files next to this one on the host (/opt/fantasy-renderer):
+#   .env        FANTASY_RENDERER_TAG=<image tag>, written by deploy/ship.sh
+#   worker.env  the worker's credentials (chmod 600), from deploy/worker.env.example
+name: fantasy-renderer
+
+services:
+  worker:
+    image: fantasy-renderer:${FANTASY_RENDERER_TAG:?set FANTASY_RENDERER_TAG in .env}
+    restart: unless-stopped
+    env_file: worker.env
+    environment:
+      SOURCE_CACHE_DIR: /data/source
+      HEARTBEAT_FILE: /tmp/fantasy-worker-heartbeat.json
+      # Measured at 2 CPUs: about 0.34 s per tile and 1.1 GB peak memory with 3 painters.
+      PAINT_WORKERS: "3"
+      LEASE_BATCH: "6"
+      IDLE_POLL_MS: "1000"
+    volumes:
+      # Frozen OpenFreeMap and terrain tiles. Keep this volume: deleting it lets map changes
+      # in, and new tiles can then disagree with older neighbours at their edges.
+      - source:/data
+    # No ports: the worker only makes outbound requests (Supabase, OpenFreeMap, AWS terrain).
+    cpus: 2
+    mem_limit: 3g
+    memswap_limit: 3g
+    pids_limit: 1024
+    shm_size: 1gb # Chromium's shared memory
+    init: true
+    stop_grace_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+    healthcheck:
+      test: ["CMD", "node", "src/health.mjs", "180"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  source:
+    name: fantasy-renderer-source

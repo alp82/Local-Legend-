@@ -5,33 +5,36 @@
 //
 // A z16 tile is painted directly. A z15 tile is its four z16 children scaled down; children
 // not painted yet are painted (and stored) first.
+//
+// After every round the worker writes a heartbeat file (HEARTBEAT_FILE); src/health.mjs
+// reads it for the container health check, src/status.mjs shows it with the queue.
+import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import { startRenderer } from './renderer.mjs';
-import { createSupabase } from './supabase.mjs';
+import { supabaseFromEnv } from './supabase.mjs';
 
-const env = (name, fallback) => {
-  const v = process.env[name] || fallback;
-  if (v === undefined) throw new Error(`${name} is required`);
-  return v;
-};
+const env = (name, fallback) => process.env[name] || fallback;
 
 const config = {
-  url: env('SUPABASE_URL'),
-  key: env('SUPABASE_SECRET_KEY'),
   sourceDir: resolve(env('SOURCE_CACHE_DIR', '.source')),
   paintWorkers: Number(env('PAINT_WORKERS', '4')),
   batch: Number(env('LEASE_BATCH', '8')),
   idleMs: Number(env('IDLE_POLL_MS', '1000')),
   once: env('EXIT_WHEN_IDLE', '') === '1',
+  heartbeat: env('HEARTBEAT_FILE', '/tmp/fantasy-worker-heartbeat.json'),
 };
 
-if (!/^https?:\/\//.test(config.url)) throw new Error(`SUPABASE_URL must be an http(s) URL, got "${config.url}"`);
-
 const log = (msg) => console.log(`${new Date().toISOString()} ${msg}`);
-const sb = createSupabase(config.url, config.key);
+const sb = supabaseFromEnv();
 const renderer = await startRenderer({ sourceDir: config.sourceDir, workers: config.paintWorkers, log });
-log(`worker ready: Chromium ${renderer.chromium}, ${config.paintWorkers} paint workers, source data in ${config.sourceDir}`);
+log(`worker ready: Chromium ${renderer.chromium}, ${config.paintWorkers} paint workers, ${sb.mode}, source data in ${config.sourceDir}`);
+
+const stats = { startedAt: new Date().toISOString(), painted: 0, failed: 0, lastPaintAt: null, lastError: null };
+async function beat(state) {
+  const body = { ...stats, state, at: new Date().toISOString(), source: renderer.stats };
+  await writeFile(config.heartbeat, JSON.stringify(body)).catch((e) => log(`heartbeat: ${e.message}`));
+}
 
 const tilePath = (v, z, x, y) => `v${v}/${z}/${x}/${y}.webp`;
 
@@ -41,6 +44,8 @@ async function paint16(v, x, y, quality) {
   await sb.upload(tilePath(v, 16, x, y), t.webp);
   await sb.rpc('finish_fantasy_tile', { p_version: v, p_z: 16, p_x: x, p_y: y, p_ok: true, p_bytes: t.webp.length, p_paint_ms: t.ms });
   log(`16/${x}/${y} v${v} ${t.ms} ms ${(t.webp.length / 1024).toFixed(0)} KB`);
+  stats.painted++;
+  stats.lastPaintAt = new Date().toISOString();
   return t.webp;
 }
 
@@ -57,6 +62,8 @@ async function paint15(v, x, y, quality) {
   const ms = Date.now() - t0;
   await sb.rpc('finish_fantasy_tile', { p_version: v, p_z: 15, p_x: x, p_y: y, p_ok: true, p_bytes: webp.length, p_paint_ms: ms });
   log(`15/${x}/${y} v${v} ${ms} ms ${(webp.length / 1024).toFixed(0)} KB`);
+  stats.painted++;
+  stats.lastPaintAt = new Date().toISOString();
 }
 
 async function job({ version, z, x, y, webp_quality: quality }) {
@@ -65,6 +72,8 @@ async function job({ version, z, x, y, webp_quality: quality }) {
     else await paint15(version, x, y, quality);
   } catch (e) {
     log(`${z}/${x}/${y} v${version} failed: ${e.message}`);
+    stats.failed++;
+    stats.lastError = { tile: `${z}/${x}/${y}`, error: e.message, at: new Date().toISOString() };
     await sb.rpc('finish_fantasy_tile', { p_version: version, p_z: z, p_x: x, p_y: y, p_ok: false, p_error: e.message }).catch(() => {});
   }
 }
@@ -72,24 +81,29 @@ async function job({ version, z, x, y, webp_quality: quality }) {
 let stopping = false;
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { stopping = true; });
 
+await beat('starting');
 while (!stopping) {
   let leased;
   try {
     leased = await sb.rpc('lease_fantasy_tiles', { p_limit: config.batch });
   } catch (e) {
     log(`lease failed: ${e.message}`);
+    stats.lastError = { tile: null, error: `lease: ${e.message}`, at: new Date().toISOString() };
+    await beat('lease failing');
     await new Promise((r) => setTimeout(r, 5000));
     continue;
   }
   if (!leased.length) {
+    await beat('idle');
     if (config.once) break;
     await new Promise((r) => setTimeout(r, config.idleMs));
     continue;
   }
+  await beat('painting');
   // z16 first: a z15 job in the same batch can then reuse its children
-  leased.sort((a, b) => b.z - a.z);
   await Promise.all(leased.filter((t) => t.z === 16).map(job));
   await Promise.all(leased.filter((t) => t.z === 15).map(job));
 }
+await beat('stopped');
 await renderer.close();
 log('worker stopped');
