@@ -11,7 +11,7 @@ import { startRenderer } from './renderer.mjs';
 import { createSupabase } from './supabase.mjs';
 
 const env = (name, fallback) => {
-  const v = process.env[name] ?? fallback;
+  const v = process.env[name] || fallback;
   if (v === undefined) throw new Error(`${name} is required`);
   return v;
 };
@@ -25,6 +25,8 @@ const config = {
   idleMs: Number(env('IDLE_POLL_MS', '1000')),
   once: env('EXIT_WHEN_IDLE', '') === '1',
 };
+
+if (!/^https?:\/\//.test(config.url)) throw new Error(`SUPABASE_URL must be an http(s) URL, got "${config.url}"`);
 
 const log = (msg) => console.log(`${new Date().toISOString()} ${msg}`);
 const sb = createSupabase(config.url, config.key);

@@ -23,8 +23,10 @@ const PENDING_GIVE_UP_MS = 90_000;
 const CONFIG_KEY = 'fantasyConfig';
 
 export type FantasyMapState = {
-  /** Raster tile URL template, or null when the fantasy map is off. */
+  /** Raster tile URL template, or null when the server switched the fantasy map off. */
   tiles: string | null;
+  /** The player's switch. Off hides the layer without unmounting it. */
+  visible: boolean;
   /** Changes when tiles on screen were painted since the layer was mounted. */
   revision: number;
   /** Tiles of the last request still being painted. */
@@ -75,7 +77,8 @@ export function useFantasyMap(
     return () => sub.remove();
   }, []);
 
-  const on = wanted && !!config?.enabled && !!supabaseUrl;
+  const available = !!config?.enabled && !!supabaseUrl;
+  const on = wanted && available;
   const boundsKey = view?.bounds.map((v) => v.toFixed(5)).join(',');
   const zoom = view?.zoom ?? 0;
 
@@ -121,7 +124,8 @@ export function useFantasyMap(
   }, [boundsKey]);
 
   return {
-    tiles: on && config && supabaseUrl ? fantasyTileUrl(supabaseUrl, config.bucket, config.version) : null,
+    tiles: available && config && supabaseUrl ? fantasyTileUrl(supabaseUrl, config.bucket, config.version) : null,
+    visible: wanted,
     revision,
     pending: pending.length,
     pendingOnScreen: on ? pendingOnScreen : 0,

@@ -335,7 +335,7 @@ export default function MapScreen() {
         }}>
         <Camera ref={cameraRef} initialViewState={cam.initialViewState} />
         {/* Bottom to top; see components/map-layers.tsx. */}
-        {fantasy.tiles && <FantasyLayer tiles={fantasy.tiles} revision={fantasy.revision} />}
+        {fantasy.tiles && <FantasyLayer tiles={fantasy.tiles} revision={fantasy.revision} visible={fantasy.visible} />}
         <ParchmentLayer />
         <FogLayer data={prepared.fogJson} visible={showMist} />
         <RevealLayer data={revealJson} k={showMist ? revealK : 0} />
@@ -386,7 +386,7 @@ export default function MapScreen() {
               <Text style={styles.statusText}>Loading sites…</Text>
             </View>
           )}
-          {fantasy.tiles && fantasy.pendingOnScreen > 0 && (
+          {fantasy.tiles && fantasy.visible && fantasy.pendingOnScreen > 0 && (
             <View style={styles.loadingPill}>
               <ActivityIndicator size="small" color="#fff" />
               <Text style={styles.statusText}>Painting the map…</Text>

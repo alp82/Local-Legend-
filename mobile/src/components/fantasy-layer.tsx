@@ -11,7 +11,7 @@
 // street map's own vector source ("openmaptiles" in the OpenFreeMap style), styled like the
 // prototype's (supabase/fantasy-renderer/painter/styles.js) in the fonts that style serves.
 import { Layer, LogManager, RasterSource } from '@maplibre/maplibre-react-native';
-import { memo } from 'react';
+import { memo, useState } from 'react';
 
 import { FANTASY_MIN_ZOOM } from '@/lib/fantasyTiles';
 
@@ -30,18 +30,33 @@ const NAMED_ROADS = ['trunk', 'primary', 'secondary', 'tertiary'];
 // for every such tile. That is the expected fallback, not a fault.
 LogManager.onLog(({ message }) => /for source fantasy\b/.test(message));
 
-export const FantasyLayer = memo(function FantasyLayer({ tiles, revision }: { tiles: string; revision: number }) {
+/** Mounts so far: each mount gets ids of its own (see the RasterSource comment). */
+let mounts = 0;
+
+export const FantasyLayer = memo(function FantasyLayer({
+  tiles,
+  revision,
+  visible,
+}: {
+  tiles: string;
+  revision: number;
+  visible: boolean;
+}) {
+  const [m] = useState(() => ++mounts);
+  const visibility = visible ? 'visible' : 'none';
+  const waterNames = `fantasy-water-names-${m}`;
   return (
     <>
       <Layer
         type="symbol"
-        id="fantasy-water-names"
+        id={waterNames}
         beforeId={BELOW}
         source={BASE_SOURCE}
         source-layer="waterway"
         minzoom={FANTASY_MIN_ZOOM}
         filter={['all', ['in', ['get', 'class'], ['literal', ['river', 'canal']]], ['has', 'name']]}
         layout={{
+          visibility,
           'symbol-placement': 'line',
           'symbol-spacing': 600,
           'text-field': ['coalesce', ['get', 'name:latin'], ['get', 'name']],
@@ -54,13 +69,14 @@ export const FantasyLayer = memo(function FantasyLayer({ tiles, revision }: { ti
       />
       <Layer
         type="symbol"
-        id="fantasy-road-names"
+        id={`fantasy-road-names-${m}`}
         beforeId={BELOW}
         source={BASE_SOURCE}
         source-layer="transportation_name"
         minzoom={FANTASY_MIN_ZOOM}
         filter={['in', ['get', 'class'], ['literal', NAMED_ROADS]]}
         layout={{
+          visibility,
           'symbol-placement': 'line',
           'symbol-spacing': 600,
           'text-field': ['coalesce', ['get', 'name:latin'], ['get', 'name']],
@@ -70,13 +86,15 @@ export const FantasyLayer = memo(function FantasyLayer({ tiles, revision }: { ti
         }}
         paint={{ 'text-color': '#4a3218', 'text-halo-color': 'rgba(236,226,190,0.85)', 'text-halo-width': 1.6 }}
       />
-      {/* A new id on each revision: MapLibre then asks again for tiles that were missing (a
-          remount under the same id keeps its failed tiles). Painted tiles come from its cache. */}
-      <RasterSource key={revision} id={`fantasy-${revision}`} tiles={[tiles]} tileSize={512} minzoom={15} maxzoom={16}>
+      {/* New ids on each mount and revision. MapLibre then asks again for tiles that were
+          missing; a source mounted again under the same id keeps its failed tiles, or doesn't
+          come back at all. Painted tiles come from MapLibre's cache. */}
+      <RasterSource key={revision} id={`fantasy-${m}-${revision}`} tiles={[tiles]} tileSize={512} minzoom={15} maxzoom={16}>
         <Layer
           type="raster"
-          id={`fantasy-raster-${revision}`}
-          beforeId="fantasy-water-names"
+          id={`fantasy-raster-${m}-${revision}`}
+          beforeId={waterNames}
+          layout={{ visibility }}
           minzoom={FANTASY_MIN_ZOOM}
           paint={{ 'raster-fade-duration': 200, 'raster-resampling': 'linear' }}
         />
