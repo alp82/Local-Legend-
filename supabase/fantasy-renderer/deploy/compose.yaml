@@ -2,18 +2,30 @@
 # so it can't starve the host's other stacks, and no way out but an allow-list proxy.
 # Runbook: docs/fantasy-map-deploy.md.
 #
-# Files next to this one on the host (/opt/fantasy-renderer):
-#   .env        FANTASY_RENDERER_TAG=<image tag> (written by deploy/ship.sh),
-#               FANTASY_SUPABASE_HOST=<project ref>.supabase.co, and optionally
-#               FANTASY_RENDERER_MEMORY
-#   worker.env  the worker's credentials (chmod 600), from deploy/worker.env.example
+# Deployed by Coolify as a Git-based Docker Compose application in raw mode ("deploy file as-is"):
+# Coolify pulls the images and runs this file unchanged. Raw mode matters: without it Coolify
+# joins every service to every network and to its own bridge network, which would give the
+# worker a way round the egress proxy, and hands every variable to every container. So:
+# - images only, from the registry (no build); every deploy pulls :release again;
+# - the worker's credentials come from a file on the host (worker.env, chmod 600), never from
+#   Coolify, so the renderer password stays on the host;
+# - the frozen source data is an external volume with a fixed name: it outlives every deploy,
+#   and Coolify never manages or deletes it;
+# - no domain, no proxy labels, no published ports.
+#
+# Variables (Coolify's Environment Variables, or .env next to this file without Coolify):
+#   FANTASY_SUPABASE_HOST    <project ref>.supabase.co, for the egress allow-list (required)
+#   FANTASY_RENDERER_DIR     the host folder with worker.env (default /opt/fantasy-renderer)
+#   FANTASY_RENDERER_IMAGE   the image (default the registry's :release; deploy/ship.sh sets a
+#                            locally loaded image instead)
+#   FANTASY_RENDERER_MEMORY  memory limit (default 3g)
 name: fantasy-renderer
 
 services:
   worker:
-    image: fantasy-renderer:${FANTASY_RENDERER_TAG:?set FANTASY_RENDERER_TAG in .env}
+    image: ${FANTASY_RENDERER_IMAGE:-ghcr.io/process-roman/local-legend-fantasy-renderer:release}
     restart: unless-stopped
-    env_file: worker.env
+    env_file: ${FANTASY_RENDERER_DIR:-/opt/fantasy-renderer}/worker.env
     environment:
       SOURCE_CACHE_DIR: /data/source
       HEARTBEAT_FILE: /tmp/fantasy-worker-heartbeat.json
@@ -76,11 +88,11 @@ services:
   # a private, loopback or link-local address, so the worker can't reach the other machines
   # on the host's private network.
   egress:
-    image: fantasy-renderer:${FANTASY_RENDERER_TAG:?set FANTASY_RENDERER_TAG in .env}
+    image: ${FANTASY_RENDERER_IMAGE:-ghcr.io/process-roman/local-legend-fantasy-renderer:release}
     command: ["node", "src/egress-proxy.mjs"]
     restart: unless-stopped
     environment:
-      EGRESS_ALLOW: ${FANTASY_SUPABASE_HOST:?set FANTASY_SUPABASE_HOST in .env},tiles.openfreemap.org,elevation-tiles-prod.s3.amazonaws.com
+      EGRESS_ALLOW: ${FANTASY_SUPABASE_HOST:?},tiles.openfreemap.org,elevation-tiles-prod.s3.amazonaws.com
     networks:
       - inside
       - outside
@@ -113,5 +125,8 @@ networks:
   outside: {}
 
 volumes:
+  # Created once on the host (docker volume create fantasy-renderer-source); the first manual
+  # deployment already did. External: no deploy ever recreates, renames or deletes it.
   source:
+    external: true
     name: fantasy-renderer-source

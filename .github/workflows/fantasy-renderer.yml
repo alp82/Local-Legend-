@@ -1,0 +1,168 @@
+# The fantasy map renderer: tests on every pull request that touches it, and a release on every merge to main.
+#
+#   pull request  → renderer tests in the pinned Chromium, database tests on a local Supabase stack, and the
+#                   golden tiles painted in the worker image itself
+#   push to main  → the same, then the image is pushed to GitHub's container registry (sha-<commit> and the
+#                   moving :release tag) and Coolify is told to pull it. The worker reports its painter
+#                   fingerprint when it starts; a new one paints a new tile version in the background and switches
+#                   phones when it's done (docs/fantasy-map-deploy.md, "Releases").
+#
+# Security: the repository is public.
+# - Permissions are empty by default and granted per job: read-only everywhere except the release job, which
+#   may write packages.
+# - pull_request only (never pull_request_target): a fork's pull request runs with a read-only token and no
+#   secrets, and the release job never runs for pull requests.
+# - The release job runs only for pushes to main in this repository, in the "fantasy-release" environment
+#   (restrict it to the main branch in the repository settings). The Coolify webhook URL and deploy token are
+#   that environment's secrets, so nothing else can read them.
+# - Actions are pinned by commit; the Playwright and base images by digest.
+# - Nothing from an event's free text (titles, branch names) is put into a shell command.
+name: Fantasy renderer
+
+on:
+  pull_request:
+    paths:
+      - supabase/fantasy-renderer/**
+      - supabase/migrations/**
+      - supabase/tests/**
+      - .github/workflows/fantasy-renderer.yml
+  push:
+    branches: [main]
+    paths:
+      - supabase/fantasy-renderer/**
+      - supabase/migrations/**
+      - supabase/tests/**
+      - .github/workflows/fantasy-renderer.yml
+
+permissions: {}
+
+concurrency:
+  group: fantasy-renderer-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  renderer:
+    name: Renderer tests (pinned Chromium)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    # the same image the worker is built on: the Chromium build every tile is painted with
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.1-noble@sha256:1507cbfc550a63a6b7396791ca4f00df17beb56342d2447b3f106c306f525579
+      options: --shm-size=1g
+    defaults:
+      run:
+        working-directory: supabase/fantasy-renderer
+    env:
+      QUEUE_TEST: "off" # the database job runs it against a local stack
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: npm ci
+      - name: Painter fingerprint
+        run: node src/fingerprint.mjs --list
+      - name: Tests (determinism, neighbours, golden tiles, source limits, egress proxy)
+        run: npm test
+
+  database:
+    name: Database tests (local Supabase stack)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: 3.4.0
+      - name: Start the local stack
+        run: supabase start -x studio,imgproxy,mailpit,logflare,vector,supavisor,edge-runtime
+      - name: pgTAP (every migration, from scratch)
+        run: supabase test db
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: Queue and release API tests
+        working-directory: supabase/fantasy-renderer
+        run: node --test test/queue.test.mjs
+
+  golden:
+    name: Golden tiles in the worker image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the image
+        run: docker build -t fantasy-renderer:ci supabase/fantasy-renderer
+      - name: Golden tiles, painted by the image from frozen source data
+        run: |
+          docker run --rm --shm-size=1g -v "$PWD/supabase/fantasy-renderer/test:/app/test:ro" fantasy-renderer:ci \
+            node --test test/golden.test.mjs
+
+  release:
+    name: Release (image to the registry, Coolify deploy)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'process-roman/Local-Legend-'
+    needs: [renderer, database, golden]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: fantasy-release
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build
+        id: build
+        env:
+          OWNER: ${{ github.repository_owner }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          image="ghcr.io/${OWNER,,}/local-legend-fantasy-renderer"
+          docker build -t fantasy-renderer:release supabase/fantasy-renderer
+          fp=$(docker run --rm fantasy-renderer:release node src/fingerprint.mjs)
+          echo "Painter fingerprint: $fp"
+          # the labels on top of the tested build: no layer changes
+          printf 'FROM fantasy-renderer:release\n' | docker build -t "$image:sha-${SHA:0:12}" -t "$image:release" \
+            --label "org.opencontainers.image.source=https://github.com/$REPO" \
+            --label "org.opencontainers.image.revision=$SHA" \
+            --label "local-legend.painter-fingerprint=$fp" -
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "fingerprint=$fp" >> "$GITHUB_OUTPUT"
+      - name: Golden tiles in the image about to be pushed
+        run: |
+          docker run --rm --shm-size=1g -v "$PWD/supabase/fantasy-renderer/test:/app/test:ro" fantasy-renderer:release \
+            node --test test/golden.test.mjs
+      - name: Push
+        env:
+          IMAGE: ${{ steps.build.outputs.image }}
+          SHA: ${{ github.sha }}
+          ACTOR: ${{ github.actor }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          printf '%s' "$TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+          docker push "$IMAGE:sha-${SHA:0:12}"
+          docker push "$IMAGE:release"
+          docker logout ghcr.io
+      - name: Tell Coolify to deploy
+        env:
+          COOLIFY_DEPLOY_URL: ${{ secrets.COOLIFY_DEPLOY_URL }}
+          COOLIFY_DEPLOY_TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
+        run: |
+          if [ -z "$COOLIFY_DEPLOY_URL" ] || [ -z "$COOLIFY_DEPLOY_TOKEN" ]; then
+            echo "::notice::The Coolify deploy webhook isn't configured yet; the image is pushed but not deployed."
+            exit 0
+          fi
+          # the token goes to curl on stdin, not on its command line
+          printf 'Authorization: Bearer %s\n' "$COOLIFY_DEPLOY_TOKEN" |
+            curl --fail-with-body --silent --show-error --max-time 60 -X POST -H @- "$COOLIFY_DEPLOY_URL"

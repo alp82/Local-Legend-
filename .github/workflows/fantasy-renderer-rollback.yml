@@ -1,0 +1,52 @@
+# Rolls the fantasy renderer back (or forward) to an image already in the registry: points :release at
+# sha-<commit> and tells Coolify to deploy. The worker reports that image's painter fingerprint when it starts,
+# and the database switches phones back to that painter's tile version if its tiles still exist (otherwise it
+# paints a new version for it). Run it from the Actions tab; only people with write access can.
+name: Fantasy renderer rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Image to deploy: sha-<first 12 characters of a main commit>"
+        required: true
+        type: string
+
+permissions: {}
+
+concurrency:
+  group: fantasy-renderer-refs/heads/main
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    if: github.repository == 'process-roman/Local-Legend-' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: fantasy-release
+    permissions:
+      packages: write
+    steps:
+      - name: Point :release at the chosen image
+        env:
+          OWNER: ${{ github.repository_owner }}
+          TAG: ${{ inputs.tag }}
+          ACTOR: ${{ github.actor }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          [[ "$TAG" =~ ^sha-[0-9a-f]{12}$ ]] || { echo "::error::tag must look like sha-0123456789ab"; exit 1; }
+          image="ghcr.io/${OWNER,,}/local-legend-fantasy-renderer"
+          printf '%s' "$TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+          docker buildx imagetools create --tag "$image:release" "$image:$TAG"
+          docker logout ghcr.io
+      - name: Tell Coolify to deploy
+        env:
+          COOLIFY_DEPLOY_URL: ${{ secrets.COOLIFY_DEPLOY_URL }}
+          COOLIFY_DEPLOY_TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
+        run: |
+          if [ -z "$COOLIFY_DEPLOY_URL" ] || [ -z "$COOLIFY_DEPLOY_TOKEN" ]; then
+            echo "::notice::The Coolify deploy webhook isn't configured yet; :release moved but nothing was deployed."
+            exit 0
+          fi
+          printf 'Authorization: Bearer %s\n' "$COOLIFY_DEPLOY_TOKEN" |
+            curl --fail-with-body --silent --show-error --max-time 60 -X POST -H @- "$COOLIFY_DEPLOY_URL"
