@@ -1,5 +1,5 @@
 {
-  "fingerprint": "28ba5dba9d364260",
+  "fingerprint": "ea50df47c283491d",
   "chromium": "159.0.8154.6",
   "quality": 0.75,
   "tiles": {
@@ -24,7 +24,8 @@
       "labels": "d751713988987e9331980363e24189ce"
     },
     "15/17401/11394": {
-      "webp": "1205dc07ae00af0058832f6045ec660f"
+      "webp": "1205dc07ae00af0058832f6045ec660f",
+      "labels": "a1014fb40668da4241edcafcc9fd26ea"
     }
   }
 }

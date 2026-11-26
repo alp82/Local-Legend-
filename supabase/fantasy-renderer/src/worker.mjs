@@ -20,7 +20,7 @@ import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 import { painterFingerprint } from './fingerprint.mjs';
-import { labelJson } from './paint-output.mjs';
+import { labelJson, Z15_CHILDREN, z15LabelJson } from './paint-output.mjs';
 import { createRelease } from './release.mjs';
 import { startRenderer } from './renderer.mjs';
 import { supabaseFromEnv } from './supabase.mjs';
@@ -70,15 +70,14 @@ async function paint16(v, x, y, quality) {
 async function paint15(v, x, y, quality) {
   const t0 = Date.now();
   const kids = await Promise.all(
-    [[0, 0], [1, 0], [0, 1], [1, 1]].map(async ([u, w]) => {
+    Z15_CHILDREN.map(async ([u, w]) => {
       const cx = x * 2 + u, cy = y * 2 + w;
       const [webp, labels] = await Promise.all([sb.download(tilePath(v, 16, cx, cy)), sb.download(labelPath(v, 16, cx, cy))]);
       return webp && labels ? { webp, labels: labels.toString() } : paint16(v, cx, cy, quality);
     }),
   );
   const webp = await renderer.downsample(kids.map((k) => k.webp), quality);
-  // a z15 tile's labels are its children's
-  const labels = JSON.stringify(kids.flatMap((k) => JSON.parse(k.labels)));
+  const labels = z15LabelJson(kids.map((k) => k.labels));
   await sb.upload(labelPath(v, 15, x, y), Buffer.from(labels), 'application/json');
   await sb.upload(tilePath(v, 15, x, y), webp);
   const ms = Date.now() - t0;

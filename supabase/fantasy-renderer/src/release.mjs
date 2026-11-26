@@ -42,7 +42,10 @@ export function createRelease(sb, fingerprint, log) {
         state.staging = null;
         state.version = r.to;
         state.lastCleanup = 0;
-      } else state.staging = r.staging ? { version: r.version, remaining: r.remaining } : null;
+      } else {
+        if (r.blocked && !state.staging?.blocked) log(`release: version ${r.version} held, phones stay on version ${state.version ?? '?'}: ${r.reason}`);
+        state.staging = r.staging ? { version: r.version, remaining: r.remaining, blocked: !!r.blocked, reason: r.reason ?? null } : null;
+      }
     }
     if (now - state.lastCleanup >= CLEANUP_EVERY_MS) {
       state.lastCleanup = now;
@@ -53,9 +56,17 @@ export function createRelease(sb, fingerprint, log) {
   /** Deletes the files of replaced versions past their grace period, then forgets those versions. */
   async function cleanup() {
     let removed = 0;
+    let previous = '';
     for (;;) {
       const names = await sb.rpc('fantasy_cleanup_candidates', { p_limit: CLEANUP_BATCH });
       if (!names?.length) break;
+      // the same batch again: the last delete removed nothing (Storage refused it); try again in an hour
+      const key = names.join('\n');
+      if (key === previous) {
+        log(`cleanup: Storage deleted none of ${names.length} files; stopping until the next round`);
+        break;
+      }
+      previous = key;
       await sb.remove(names);
       removed += names.length;
       if (names.length < CLEANUP_BATCH) break;

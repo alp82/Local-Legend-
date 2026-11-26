@@ -19,3 +19,17 @@ export const labelJson = (labels) =>
       return { name: L.name, lng, lat, rot: L.rot, water: L.water };
     }),
   );
+
+/** A z15 tile's children, in the order the downsample draws them: NW, NE, SW, SE ([dx, dy] from x * 2, y * 2). */
+export const Z15_CHILDREN = [[0, 0], [1, 0], [0, 1], [1, 1]];
+
+/** A z15 tile's label file: its children's labels, in Z15_CHILDREN order (each child's as its label file text). */
+export const z15LabelJson = (childLabelTexts) => JSON.stringify(childLabelTexts.flatMap((t) => JSON.parse(t)));
+
+/**
+ * The source data the painter reads. It asks the local server's TileJSON stand-in for tiles[0] and fills in
+ * z/x/y (always z14); a source tile stored empty (missing upstream: open sea, the poles) answers this status,
+ * which the painter reads as no data.
+ */
+export const ofmTileJson = (origin) => ({ tiles: [`${origin}/ofm/frozen/{z}/{x}/{y}.pbf`] });
+export const MISSING_SOURCE_STATUS = 404;

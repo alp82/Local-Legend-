@@ -19,14 +19,14 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 
 import { painterFingerprint } from '../src/fingerprint.mjs';
-import { labelJson } from '../src/paint-output.mjs';
+import { labelJson, Z15_CHILDREN, z15LabelJson } from '../src/paint-output.mjs';
 import { startRenderer } from '../src/renderer.mjs';
 
 const GOLDEN = new URL('./golden.json', import.meta.url);
 const FIXTURE = new URL('./fixtures/golden-source/', import.meta.url);
 const QUALITY = 0.75;
 const Z15 = [17401, 11394];
-const CHILDREN = [[0, 0], [1, 0], [0, 1], [1, 1]].map(([u, v]) => [Z15[0] * 2 + u, Z15[1] * 2 + v]); // NW NE SW SE
+const CHILDREN = Z15_CHILDREN.map(([u, v]) => [Z15[0] * 2 + u, Z15[1] * 2 + v]);
 const md5 = (b) => createHash('md5').update(b).digest('hex');
 
 async function paintGolden() {
@@ -40,12 +40,14 @@ async function paintGolden() {
   try {
     const tiles = {};
     const webps = [];
+    const labels = [];
     for (const [x, y] of CHILDREN) {
       const t = await r.paint(x, y, QUALITY);
-      tiles[`16/${x}/${y}`] = { rgba: t.rgbaHash, webp: md5(t.webp), labels: md5(labelJson(t.labels)) };
+      labels.push(labelJson(t.labels));
+      tiles[`16/${x}/${y}`] = { rgba: t.rgbaHash, webp: md5(t.webp), labels: md5(labels.at(-1)) };
       webps.push(t.webp);
     }
-    tiles[`15/${Z15[0]}/${Z15[1]}`] = { webp: md5(await r.downsample(webps, QUALITY)) };
+    tiles[`15/${Z15[0]}/${Z15[1]}`] = { webp: md5(await r.downsample(webps, QUALITY)), labels: md5(z15LabelJson(labels)) };
     return { chromium: r.chromium, tiles };
   } finally {
     await r.close();
