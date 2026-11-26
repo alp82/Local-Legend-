@@ -1,10 +1,25 @@
-# Vendored painter
+# Where the painter came from
 
-The files in `painter/` and `assets/` are copies from the fantasy map prototype
-(`prototypes/fantasy-map/`, untracked and never committed). Don't edit them here. Change
-the prototype, then run `node scripts/sync-prototype.mjs` and review `git diff`.
+The painter (`painter/`) and its art (`assets/`) are no longer vendored: since November 26,
+2026 this repository is their source of truth. Change them here
+([painter/README.md](painter/README.md), [art/README.md](art/README.md)); the old sync script is
+gone.
 
-Copied on 2026-11-26T02:28:49Z. Art: 18.1 MB in 36 files.
+They began as a local prototype (`prototypes/fantasy-map/`, never committed), copied here up to
+its round 11. On November 26, 2026 the rest of what a contributor needs came along:
+
+- the art build tools (`art/tools/`: `sprites5.py`, `cutout.py`, `sidebyside.py`, and
+  `drawn-sizes.mjs`, rewritten to run on the renderer instead of the prototype's viewer);
+- the small inputs that decide placement (`art/meta/`: footprints, set piece placements,
+  filler templates, drawn sizes, the generation log);
+- the painter's design notes (`painter/HISTORY.md`) and the map research (`painter/RESEARCH.md`).
+
+Left out on purpose: the prototype's viewer and its check tools (a throwaway; the renderer's
+tests cover determinism and seams), and the raw concept art (658 MB, of which the atlas build
+reads about 560 MB), which stays on the owner's machine. A rebuild from that art reproduced
+all 36 committed art files byte for byte.
+
+The last copy from the prototype, on 2026-11-26T02:28:49Z (art: 18.1 MB in 36 files):
 
 | Here | Prototype file | SHA-256 (first 16) |
 | --- | --- | --- |

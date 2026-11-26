@@ -1,0 +1,367 @@
+{
+  "basis": "North-up screen-space pixels measured from the upper-left of the final PNG. Quad goes around the ground rectangle from the local length/width origin.",
+  "placement": "Use the quadrilateral for the lot interior. The transparent gutter is outside the ground quad. The last 1.5 to 2.5 metres of painted ground feather into the surrounding meadow. For parcels with a slightly different bearing, yaw along the ground before placing; tall scene details assume the original upper-left light.",
+  "lookup": "Match the filename suffix -(40|80|160)-(ew|ns|ne-sw|nw-se).png to select a template.",
+  "templates": {
+    "40-ew": {
+      "length_m": 40,
+      "width_m": 31,
+      "size_px": [
+        268,
+        214
+      ],
+      "ground_quad_px": [
+        [
+          13.5,
+          13.5
+        ],
+        [
+          253.5,
+          13.5
+        ],
+        [
+          253.5,
+          199.5
+        ],
+        [
+          13.5,
+          199.5
+        ]
+      ],
+      "anchor_px": [
+        133.5,
+        106.5
+      ]
+    },
+    "40-ns": {
+      "length_m": 40,
+      "width_m": 31,
+      "size_px": [
+        214,
+        268
+      ],
+      "ground_quad_px": [
+        [
+          13.5,
+          253.5
+        ],
+        [
+          13.5,
+          13.5
+        ],
+        [
+          199.5,
+          13.5
+        ],
+        [
+          199.5,
+          253.5
+        ]
+      ],
+      "anchor_px": [
+        106.5,
+        133.5
+      ]
+    },
+    "40-ne-sw": {
+      "length_m": 40,
+      "width_m": 31,
+      "size_px": [
+        342,
+        342
+      ],
+      "ground_quad_px": [
+        [
+          19.89,
+          189.59
+        ],
+        [
+          189.59,
+          19.89
+        ],
+        [
+          321.11,
+          151.41
+        ],
+        [
+          151.41,
+          321.11
+        ]
+      ],
+      "anchor_px": [
+        170.5,
+        170.5
+      ]
+    },
+    "40-nw-se": {
+      "length_m": 40,
+      "width_m": 31,
+      "size_px": [
+        342,
+        342
+      ],
+      "ground_quad_px": [
+        [
+          151.41,
+          19.89
+        ],
+        [
+          321.11,
+          189.59
+        ],
+        [
+          189.59,
+          321.11
+        ],
+        [
+          19.89,
+          151.41
+        ]
+      ],
+      "anchor_px": [
+        170.5,
+        170.5
+      ]
+    },
+    "80-ew": {
+      "length_m": 80,
+      "width_m": 39,
+      "size_px": [
+        508,
+        262
+      ],
+      "ground_quad_px": [
+        [
+          13.5,
+          13.5
+        ],
+        [
+          493.5,
+          13.5
+        ],
+        [
+          493.5,
+          247.5
+        ],
+        [
+          13.5,
+          247.5
+        ]
+      ],
+      "anchor_px": [
+        253.5,
+        130.5
+      ]
+    },
+    "80-ns": {
+      "length_m": 80,
+      "width_m": 39,
+      "size_px": [
+        262,
+        508
+      ],
+      "ground_quad_px": [
+        [
+          13.5,
+          493.5
+        ],
+        [
+          13.5,
+          13.5
+        ],
+        [
+          247.5,
+          13.5
+        ],
+        [
+          247.5,
+          493.5
+        ]
+      ],
+      "anchor_px": [
+        130.5,
+        253.5
+      ]
+    },
+    "80-ne-sw": {
+      "length_m": 80,
+      "width_m": 39,
+      "size_px": [
+        546,
+        546
+      ],
+      "ground_quad_px": [
+        [
+          20.06,
+          359.47
+        ],
+        [
+          359.47,
+          20.06
+        ],
+        [
+          524.94,
+          185.53
+        ],
+        [
+          185.53,
+          524.94
+        ]
+      ],
+      "anchor_px": [
+        272.5,
+        272.5
+      ]
+    },
+    "80-nw-se": {
+      "length_m": 80,
+      "width_m": 39,
+      "size_px": [
+        546,
+        546
+      ],
+      "ground_quad_px": [
+        [
+          185.53,
+          20.06
+        ],
+        [
+          524.94,
+          359.47
+        ],
+        [
+          359.47,
+          524.94
+        ],
+        [
+          20.06,
+          185.53
+        ]
+      ],
+      "anchor_px": [
+        272.5,
+        272.5
+      ]
+    },
+    "160-ew": {
+      "length_m": 160,
+      "width_m": 48,
+      "size_px": [
+        988,
+        316
+      ],
+      "ground_quad_px": [
+        [
+          13.5,
+          13.5
+        ],
+        [
+          973.5,
+          13.5
+        ],
+        [
+          973.5,
+          301.5
+        ],
+        [
+          13.5,
+          301.5
+        ]
+      ],
+      "anchor_px": [
+        493.5,
+        157.5
+      ]
+    },
+    "160-ns": {
+      "length_m": 160,
+      "width_m": 48,
+      "size_px": [
+        316,
+        988
+      ],
+      "ground_quad_px": [
+        [
+          13.5,
+          973.5
+        ],
+        [
+          13.5,
+          13.5
+        ],
+        [
+          301.5,
+          13.5
+        ],
+        [
+          301.5,
+          973.5
+        ]
+      ],
+      "anchor_px": [
+        157.5,
+        493.5
+      ]
+    },
+    "160-ne-sw": {
+      "length_m": 160,
+      "width_m": 48,
+      "size_px": [
+        924,
+        924
+      ],
+      "ground_quad_px": [
+        [
+          20.27,
+          699.09
+        ],
+        [
+          699.09,
+          20.27
+        ],
+        [
+          902.73,
+          223.91
+        ],
+        [
+          223.91,
+          902.73
+        ]
+      ],
+      "anchor_px": [
+        461.5,
+        461.5
+      ]
+    },
+    "160-nw-se": {
+      "length_m": 160,
+      "width_m": 48,
+      "size_px": [
+        924,
+        924
+      ],
+      "ground_quad_px": [
+        [
+          223.91,
+          20.27
+        ],
+        [
+          902.73,
+          699.09
+        ],
+        [
+          699.09,
+          902.73
+        ],
+        [
+          20.27,
+          223.91
+        ]
+      ],
+      "anchor_px": [
+        461.5,
+        461.5
+      ]
+    }
+  }
+}
