@@ -143,7 +143,16 @@ Check:
 
 ### 6. Pre-paint the testers' home areas
 
-For each tester, take a point near home and a radius, and print the estimate first:
+First, every tester's claimed land plus about 1 km. This runs inside the database; only totals
+come out, never a position:
+
+```sh
+npx supabase db query --remote --read-only -f supabase/fantasy-renderer/sql/prepaint-territory-count.sql
+npx supabase db query --remote -f supabase/fantasy-renderer/sql/prepaint-territory-queue.sql
+```
+
+Then, for testers who haven't walked yet, take a point near home and a radius, and print the
+estimate first:
 
 ```sh
 ssh "$WORKER" 'cd /opt/fantasy-renderer && docker compose exec -T worker node src/prepaint.mjs --at 13.4140,52.5005 --radius-km 2'
@@ -159,8 +168,9 @@ Pre-paint every tester's home area before step 8. Ground nobody has painted yet 
 host. The first tile of a new area takes 4 to 17 s there (countryside to Manhattan), the ones
 next to it about 1 s. Painted ground loads in well under a second.
 
-Run pre-painting on the worker host only. Every tile must come from the worker's frozen
-source data, or tiles painted elsewhere can disagree with their neighbours at the edges.
+Both ways only queue tiles; the worker paints them. Never paint tiles on another machine and
+upload them: every tile must come from the worker's frozen source data, or tiles painted
+elsewhere can disagree with their neighbours at the edges.
 
 Check: run `src/status.mjs` until `queue.queued` is 0 and `last_error` is null.
 

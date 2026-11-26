@@ -103,6 +103,10 @@ node src/prepaint.mjs --at 13.4140,52.5005 --radius-km 2 [--yes]
 node src/prepaint.mjs --bbox 13.38,52.49,13.45,52.52 [--yes]
 ```
 
+To pre-paint the testers' areas (every claimed cell plus about 1 km) without any position
+leaving the database, run `sql/prepaint-territory-count.sql` (read only: tile counts, time,
+storage) and then `sql/prepaint-territory-queue.sql` against the database.
+
 To read health and progress (queue depth, tiles painted, storage, last error, requests today,
 and the worker's heartbeat):
 
