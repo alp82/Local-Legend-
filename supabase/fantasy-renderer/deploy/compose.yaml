@@ -14,9 +14,9 @@ services:
     environment:
       SOURCE_CACHE_DIR: /data/source
       HEARTBEAT_FILE: /tmp/fantasy-worker-heartbeat.json
-      # Measured at these limits on dense Berlin with the final painter: one painter, about
-      # 0.8 s per tile (on a fast desktop core) and 1.8 GB peak. Two painters hit the 3 GB limit:
-      # each decodes the same data within its 2 km reach and keeps its own caches.
+      # One painter. Measured with the round 11 painter on dense Manhattan (100 tiles, 2 CPUs):
+      # its page alone peaks at about 2.4 GB and the container at about 3.2 GB; 0.8 to 1.1 s per
+      # tile on a fast desktop core. A second painter doesn't fit.
       PAINT_WORKERS: "1"
       # The painter's caches only grow: replace the page every 100 tiles.
       RECYCLE_TILES: "100"
@@ -28,8 +28,11 @@ services:
       - source:/data
     # No ports: the worker only makes outbound requests (Supabase, OpenFreeMap, AWS terrain).
     cpus: 2
-    mem_limit: 3g
-    memswap_limit: 3g
+    # 3 GB is too little for the round 11 painter in dense cities: Chromium was killed about
+    # once per 100 Manhattan tiles (the tile is then painted again, so nothing wrong is stored,
+    # but each restart costs about 10 s). 4 GB had no kills. Set FANTASY_RENDERER_MEMORY in .env.
+    mem_limit: ${FANTASY_RENDERER_MEMORY:-3g}
+    memswap_limit: ${FANTASY_RENDERER_MEMORY:-3g}
     pids_limit: 1024
     shm_size: 1gb # Chromium's shared memory
     init: true

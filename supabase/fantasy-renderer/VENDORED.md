@@ -4,20 +4,21 @@ The files in `painter/` and `assets/` are copies from the fantasy map prototype
 (`prototypes/fantasy-map/`, untracked and never committed). Don't edit them here. Change
 the prototype, then run `node scripts/sync-prototype.mjs` and review `git diff`.
 
-Copied on 2026-11-25T22:43:44Z. Art: 9.8 MB in 35 files.
+Copied on 2026-11-26T02:28:49Z. Art: 18.1 MB in 36 files.
 
 | Here | Prototype file | SHA-256 (first 16) |
 | --- | --- | --- |
-| painter/tilepainter.js | tilepainter.js | 4b3aad1dc4d196b8 |
-| painter/painter5.js | painter5.js | fd44e4bdd2e9a1b9 |
-| painter/fmworld.js | fmworld.js | 52b47e9e99a456b9 |
-| painter/fmcore.js | fmcore.js | 8437327755e366e3 |
-| painter/tiledata.js | tiledata.js | ba868f82f408d824 |
+| painter/tilepainter.js | tilepainter.js | 38a5e03021f05123 |
+| painter/painter5.js | painter5.js | e4883ac753c1ff3b |
+| painter/fmworld.js | fmworld.js | 93bd099cba05bae4 |
+| painter/fmcore.js | fmcore.js | 05b62fa9ccb0fbd2 |
+| painter/tiledata.js | tiledata.js | 7123a8725aeae46b |
 | painter/vendor/vt.mjs | vendor/vt.mjs | 1a97c81fb53218ae |
-| assets/bundle.json | sprites5/bundle.json | 01585b1a072aa747 |
-| assets/index.json | sprites5/index.json | 8cc413cdf22e296b |
-| assets/atlas.webp | sprites5/atlas.webp | 87704bdf639e458c |
-| assets/atlas2.webp | sprites5/atlas2.webp | 8c0cc9acad56b11d |
+| assets/bundle.json | sprites5/bundle.json | dcd414733ae88b56 |
+| assets/index.json | sprites5/index.json | 0b4e5dd9108873b2 |
+| assets/atlas.webp | sprites5/atlas.webp | 4d6abfe7b20547c7 |
+| assets/atlas2.webp | sprites5/atlas2.webp | 17f4846624a69429 |
+| assets/atlas3.webp | sprites5/atlas3.webp | a2b40867d882ba00 |
 | assets/tex-canal-reflection-painted.webp | sprites5/tex-canal-reflection-painted.webp | f9d93b192c164d36 |
 | assets/tex-canal-sun-sweeps.webp | sprites5/tex-canal-sun-sweeps.webp | b6d233f96c8569d7 |
 | assets/tex-cobbled-road.webp | sprites5/tex-cobbled-road.webp | db66997a58c7c401 |

@@ -60,6 +60,34 @@ async function demTile(z, x, y) {
   }
   return demCache.get(key);
 }
+// the synchronous elevation query (the world plan's): a tile that is not loaded throws NeedDem, and
+// tiledata.withData() loads it and runs the computation again (as for the vector tiles)
+export class NeedDem extends Error { constructor(list) { super(`need ${list.length} elevation tiles`); this.tiles = list; } }
+const DEMZ = 14, demDone = new Map(), demFails = new Map();
+/** Load elevation tiles [[x, y], ...] at z14 (a tile that fails three times counts as sea level, and is logged). */
+export async function loadDem(list) {
+  await Promise.all(list.map(async ([x, y]) => {
+    const key = x + '/' + y; if (demDone.has(key)) return;
+    const e = await demTile(DEMZ, x, y);
+    if (e) demDone.set(key, e);
+    else { const n = (demFails.get(key) || 0) + 1; demFails.set(key, n); if (n >= 3) { console.warn('elevation tile', key, 'failed three times: sea level'); demDone.set(key, null); } }
+  }));
+}
+/** Elevation in metres at a mercator point (z14 Terrarium, bilinear); throws NeedDem when a tile is missing. */
+export function demAt(mx, my) {
+  const ts = WORLD / 2 ** DEMZ, fx = (mx + HALF) / ts * 256 - 0.5, fy = (HALF - my) / ts * 256 - 0.5;
+  const x0 = Math.floor(fx), y0 = Math.floor(fy), ax = fx - x0, ay = fy - y0;
+  let miss = null; const px = [];
+  for (const [gx, gy] of [[x0, y0], [x0 + 1, y0], [x0, y0 + 1], [x0 + 1, y0 + 1]]) {
+    const tx = Math.floor(gx / 256), ty = Math.floor(gy / 256), key = tx + '/' + ty;
+    if (!demDone.has(key)) { (miss ||= []).push([tx, ty]); continue; }
+    const e = demDone.get(key); px.push(e ? e[(gy - ty * 256) * 256 + (gx - tx * 256)] : 0);
+  }
+  if (miss) throw new NeedDem(miss);
+  return px[0] * (1 - ax) * (1 - ay) + px[1] * ax * (1 - ay) + px[2] * (1 - ax) * ay + px[3] * ax * ay;
+}
+/** The elevation tiles under a mercator bbox. */
+export function demTilesIn(bb) { const ts = WORLD / 2 ** DEMZ, out = []; for (let x = Math.floor((bb[0] + HALF) / ts); x <= Math.floor((bb[2] + HALF) / ts); x++) for (let y = Math.floor((HALF - bb[3]) / ts); y <= Math.floor((HALF - bb[1]) / ts); y++) out.push([x, y]); return out; }
 /** Elevation in metres at a mercator point, bilinear over Terrarium tiles at zoom z (pure: a missing tile reads 0). */
 export async function demSampler(bb, z) {
   const ts = WORLD / 2 ** z;

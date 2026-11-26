@@ -10,7 +10,7 @@
 //
 // Nothing is random: every object comes from real data at that spot and every choice among variants is a
 // hash of world coordinates.
-import { hash, fbm, demSampler, toM, KF, H01, inPoly, ringArea, polysM, linesM, lineLen, obb, bboxOf } from './fmcore.js';
+import { hash, fbm, demAt, loadDem, demTilesIn, toM, KF, H01, inPoly, ringArea, polysM, linesM, lineLen, obb, bboxOf } from './fmcore.js';
 import * as WD from './fmworld.js';
 import { features } from './tiledata.js';
 
@@ -151,7 +151,8 @@ export async function paintRegion(opts) {
   for (const l of trailL) for (let i = 1; i < l.length; i++) { const [ax, ay] = l[i - 1], [bx, by] = l[i], n = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / (4 * kF))); for (let m = 0; m <= n; m++) trailHash.add(Math.floor((ax + (bx - ax) * m / n) / (8 * kF)) + ',' + Math.floor((ay + (by - ay) * m / n) / (8 * kF))); }
   const nearTrail = (x, y) => { const i = Math.floor(x / (8 * kF)), j = Math.floor(y / (8 * kF)); for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) if (trailHash.has((i + a) + ',' + (j + b))) return true; return false; };
   T('g-roads');
-  const dem = await demSampler([BB[0] - 260 * kF, BB[1] - 260 * kF, BB[2] + 260 * kF, BB[3] + 260 * kF], 14);
+  await loadDem(demTilesIn([BB[0] - 2200 * kF, BB[1] - 2200 * kF, BB[2] + 2200 * kF, BB[3] + 2200 * kF])); // (a prefetch: the valley floor looks 1.5 km round)
+  const dem = demAt, rel = WD.relHeight;
   T('gather');
 
   // ------------------------------------------------------------ the world plan round the region
@@ -169,7 +170,6 @@ export async function paintRegion(opts) {
   const ctx = canvas.getContext('2d');
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none'; ctx.globalAlpha = 1;
   const smooth = (a, b, v) => Math.max(0, Math.min(1, (v - a) / (b - a)));
-  let floor = 600; // a fixed valley base (a chunk's own lowest point made seams between chunks)
   // point queries of the world (fmworld.js): water, buildings, streets, city cores
   const streetNear = WD.streetNear, localStats = WD.localStats, onLand = WD.onLand, coreAt = WD.coreAt;
   const inPlaza = (h, x, y, pad = 0) => { const c = Math.cos(h.ang), s = Math.sin(h.ang), dx = x - h.x, dy = y - h.y, u = dx * c + dy * s, v = -dx * s + dy * c; return Math.abs(u) < h.pa + pad && Math.abs(v) < h.pb + pad; };
@@ -188,12 +188,12 @@ export async function paintRegion(opts) {
   const nearDeck = (x, y) => { const i = Math.floor(x / (8 * kF)), j = Math.floor(y / (8 * kF)); for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) if (deckHash.has((i + a) + ',' + (j + b))) return true; return false; };
   if (planOnly) {
   const TREE = SPR['forest-deciduous-round'] ? 'forest-deciduous-round' : 'forest-clump';
-  const repCount = new Map(), RC = WD.RC, NOCAP = /-(ew|ns|ne-sw|nw-se)$|^decals|^lily|^river-|^rocky-bank|^gravel-bar|^banner|^lantern|^kerb|^quay|^rowing|^churchyard|^castle|^market-stall|fountain|^well$|^reeds$|^haystack$/;
+  const repCount = new Map(), RC = WD.RC, NOCAP = /-(ew|ns|ne-sw|nw-se)$|^decals|^lily|^river-|^rocky-bank|^gravel-bar|^banner|^lantern|^kerb|^quay|^rowing|^churchyard|^castle|^market-stall|fountain|^well$|^reeds$|^haystack$|^pine-group|^larch-group|^forest-pine/; // (groups of conifers on a slope repeat by nature, as in the approved look)
   const kindOf = (n) => n.replace(/-(40|80|160)-(ew|ns|ne-sw|nw-se)$/, '');
   // a pure world rule: each kind may stand only in about a third of the 160 m world cells (chosen by a hash of
   // kind and cell), once per cell, so any one drawing appears about three times per phone screen at most
   const kindSeed = (k3) => { let h9 = 7; for (let i = 0; i < k3.length; i++) h9 = (h9 * 31 + k3.charCodeAt(i)) % 9973; return 4000 + h9; };
-  const capped = (name, x, y) => { if ((NOCAP.test(name) && !/-(40|80|160)-/.test(name)) || (SPRIDX[name] && SPRIDX[name].set)) return false; const k3 = kindOf(name), i0 = Math.floor(x / RC), j0 = Math.floor(y / RC); if (hash(i0, j0, kindSeed(k3)) > (/-(40|80|160)-/.test(name) ? 0.36 : 0.3)) return true; return (repCount.get(k3 + '|' + i0 + ',' + j0) || 0) >= 1; };
+  const capped = (name, x, y) => { if ((NOCAP.test(name) && !/-(40|80|160)-/.test(name)) || (SPRIDX[name] && SPRIDX[name].set)) return false; const k3 = kindOf(name), i0 = Math.floor(x / RC), j0 = Math.floor(y / RC); if (hash(i0, j0, kindSeed(k3)) > (/-(40|80|160)-/.test(name) ? 0.36 : /^landmark-/.test(name) ? 0.12 /* a landmark tree: about one cell in eight */ : /^deciduous-(trio|five|eight|dozen)/.test(name) ? 0.55 /* a painted clump: seven drawings share the cells */ : 0.3)) return true; return (repCount.get(k3 + '|' + i0 + ',' + j0) || 0) >= 1; };
   const counted = (name, x, y) => { const key = kindOf(name) + '|' + Math.floor(x / RC) + ',' + Math.floor(y / RC); repCount.set(key, (repCount.get(key) || 0) + 1); };
   const put = (name, x, y, o = {}) => {
     const img = SPR[name] || ASSETS[name]; if (!img) return null;
@@ -301,35 +301,19 @@ export async function paintRegion(opts) {
   for (const h of hearts) if (h.piece) { const pc = h.piece; placePiece(pc.name, pc.x, pc.y, { flip: pc.flip, wM: pc.wM, canon: true }); }
   for (const c of compoundsW) for (const pc of c.pieces) placePiece(pc.name, pc.x, pc.y, { flip: pc.flip, wM: pc.wM, z: pc.z, canon: true });
   for (const a of abbeysW) { if (a.piece) placePiece(a.piece.name, a.piece.x, a.piece.y, { wM: a.piece.wM, canon: true }); else if (inCanvas(a.church.x, a.church.y)) placeChurch({ ...a.church, sprite: churchSprite(a.church) }); }
-  // round each heart: paddocks, field quilts, orchards and tree clumps on its open ground, as in the targets
-  for (const h of hearts) {
-    const pc = h.piece; if (!pc || !(h.x + 500 * kF >= BB[0] && h.x - 500 * kF <= BB[2] && h.y + 500 * kF >= BB[1] && h.y - 500 * kF <= BB[3])) continue;
-    let n = 0; const want = 3 + Math.floor(H01(h.x0, h.y0, 3171) * 3);
-    for (let k3 = 0; k3 < 24 && n < want; k3++) {
-      const a = (k3 * 2.39996 + H01(h.x0, h.y0, 3173) * 6.283), r = (pc.fw * 0.5 + 55 + (k3 % 4) * 38) * kF, x = pc.cx + Math.cos(a) * r, y = pc.cy + Math.sin(a) * r * 0.9;
-      const kind = H01(x, y, 3175), n2 = kind < 0.3 ? pickOf(['paddock-sheep-shelter', 'paddock-cattle-shelter'].filter((n9) => !pieces.some((p2) => p2.name === n9 && Math.hypot(p2.x - x, p2.y - y) < 600 * kF)), x, y, 3177) : kind < 0.55 ? pickOf(['field-quilt-ribbon', 'field-quilt-kite', 'field-quilt-step', 'field-quilt-hook'], x, y, 3179) : kind < 0.75 ? pickOf(['orchard-block-rows', 'orchard-block-bloom'], x, y, 3181) : null;
-      const rr = (n2 ? SPRIDX[n2].foot_m[0] * 0.5 : 18) * kF;
-      if (!onLand(x, y, rr) || hitW(x, y, rr * 0.9) || WD.woodAt(x, y) || streetNear(x, y)[0] < rr / kF * 0.45) continue;
-      if (n2) { if (placePiece(n2, x, y, { z: -0.6, flip: kind < 0.5 === (H01(x, y, 3183) < 0.5), k: 1.15, unique: true })) n++; continue; }
-      paintedClump(x, y, 3 + (k3 % 3) * 2, 3187); n++; continue;
-      for (let t = 0; t < 4; t++) { const tx = x + Math.cos(t * 2.3) * (t ? 9 : 0) * kF, ty = y + Math.sin(t * 2.3) * (t ? 7 : 0) * kF; if (inCanvas(tx, ty) && onLand(tx, ty, 4 * kF)) putW(['round-tree-beech', TREE, 'round-tree-young-oak', 'round-tree-elm'][(t + k3) % 4], tx, ty, { s: 1 + H01(tx, ty, 3185) * 0.3, shadow: 0.9, flip: t % 2 === 1 }); }
-      takeW(x, y, 20 * kF); n++;
-    }
+  // B. the world plan's ground pieces round the region: fillers along the drawn roads and on open land, field
+  //    quilts, orchard blocks, and the paddocks, quilts, orchards and clumps round each heart. Every tile sees the
+  //    same ones (fmworld.js decides overlaps by a world rule), so none overlaps another across a tile edge
+  for (const g of WD.groundIn([BB[0] - 200 * kF, BB[1] - 200 * kF, BB[2] + 200 * kF, BB[3] + 200 * kF])) {
+    const B = g.box, [px, py] = P([g.x, g.y]), ob = put(g.name, px, py, { w: g.sprite.wM * ppm, ax: g.sprite.ax, ay: g.sprite.ay, rot: g.sprite.rot, flip: g.sprite.flip, shadow: 0, z: g.sprite.z });
+    if (ob) { ob.wx = g.x; ob.wy = g.y; const fw = 2 * (Math.abs(B.hl * B.ux) + Math.abs(B.hw * B.uy)) / kF, fh = 2 * (Math.abs(B.hl * B.uy) + Math.abs(B.hw * B.ux)) / kF; ob.box = [fw * (g.filler ? 0.8 : 1), fh * (g.filler ? 0.8 : 1)]; ob.bcx = B.cx; ob.bcy = B.cy; ob.pc = { cx: B.cx, cy: B.cy, fw, fh, filler: g.filler }; }
+    for (let u = -0.45; u <= 0.451; u += 0.075) for (let v = -0.42; v <= 0.421; v += 0.21) takeW(B.cx + u * 2 * B.hl * B.ux - v * 2 * B.hw * B.uy, B.cy + u * 2 * B.hl * B.uy + v * 2 * B.hw * B.ux, OC * 0.5);
+    if (!g.filler) pieces.push({ name: g.name, x: g.x, y: g.y, cx: B.cx, cy: B.cy, fw: 2 * B.hl / kF, fh: 2 * B.hw / kF });
   }
   T('o-hearts');
   // C. scenery on real land use, until the painted pieces arrive
-  // C2b. every parcel of open land gets a deliberate treatment, chosen from what is really there (a fixed
-  //      72 m world grid of parcels; about one in six stays open meadow by choice). The pools name the
-  //      painted fillers first (concept/fillers, when present) and the set-four scenery as stand-ins.
-  const FILL = {
-    garden: ['filler-kitchen-garden', 'filler-allotments', 'orchard-block-bloom', 'orchard-block-rows', 'village-green-pond'],
-    pasture: ['filler-sheep-pasture', 'filler-cow-pasture', 'filler-horse-pasture', 'paddock-sheep-shelter', 'paddock-cattle-shelter'],
-    field: ['filler-hedged-wheat', 'filler-plough', 'filler-hay-meadow', 'field-quilt-ribbon', 'field-quilt-kite', 'field-quilt-step', 'field-quilt-hook'],
-    orchard: ['filler-orchard-rows', 'orchard-block-rows', 'orchard-block-bloom'],
-    vine: ['filler-vineyard-rows', 'vineyard-block-long', 'vineyard-block-slope'],
-    grave: ['filler-graveyard', 'graveyard-chapel'],
-  };
-  const fillPick = (cat, x, y, seed) => { const l = FILL[cat].filter((n) => SPR[n] && SPRIDX[n]); if (!l.length) return null; const pre = l.filter((n) => n.startsWith('filler-')); const pool = pre.length ? pre : l; return pool[Math.floor(H01(x, y, seed) * pool.length)]; };
+  // (the fields, gardens, pastures, orchards and paddocks are the world plan's ground pieces, placed above; the
+  //  plan itself only adds the yew graveyards in real cemeteries, with the block filler below)
   // a straight-sided block filler (set five) along the street's direction: the longest of 160/80/40 m whose
   // whole rectangle is dry, free and off the roads; turned by the rest of the angle
   const OANG = { ew: 0, 'ne-sw': Math.PI / 4, ns: Math.PI / 2, 'nw-se': 3 * Math.PI / 4 };
@@ -354,27 +338,7 @@ export async function paintRegion(opts) {
     }
     fstat.none++; return false;
   };
-  const FILLK = { field: ['hedged-wheat', 'hay-meadow', 'flax-strip', 'ploughed-strip'], garden: ['kitchen-garden', 'vegetable-allotments', 'beehive-garden', 'pond-common', 'bowling-green', 'bleaching-field'], orchard: ['orchard-rows', 'vineyard-rows'], pasture: ['sheep-pasture', 'cow-pasture', 'horse-paddock', 'hay-meadow'], grave: ['yew-graveyard'], wet: ['reed-osiers'] };
   const clump = (x, y, n, seed) => paintedClump(x, y, n, seed);
-  // C1b. parcels line the real streets: block fillers side by side along each street, up to two rows deep,
-  //      their kind from what is there (gardens, orchards and pastures near a heart; fields further out)
-  for (const L of streets) {
-    alongW(L.pts, 94 * kF, (mx, my, ang, nx, ny) => {
-      if (!(mx > BB[0] - 100 * kF && mx < BB[2] + 100 * kF && my > BB[1] - 100 * kF && my < BB[3] + 100 * kF)) return;
-      for (const sd of [1, -1]) {
-        if (H01(mx + sd * 7, my, 3301) < 0.14) continue; // a stretch of open meadow, by choice
-        const hidden = !drawnKeys.has(L.key);
-        for (const row of [0, 1, 2]) {
-          const off = (L.w / 2 + (hidden ? 3 : 9) + 19.5 + row * 40) * kF, x = mx + nx * off * sd, y = my + ny * off * sd;
-          const [h0, dh] = nearestHeart(x, y); if (h0 && dh < 1.25) break;
-          if (WD.woodAt(x, y) || WD.parkAt(x, y) || WD.cemeteryAt(x, y)) break;
-          const r = H01(x, y, 3303), near = h0 && dh < 3.5;
-          const cat = WD.orchardAt(x, y) ? 'orchard' : near ? (r < 0.4 ? 'garden' : r < 0.65 ? 'orchard' : r < 0.85 ? 'pasture' : 'field') : (r < 0.6 ? 'field' : r < 0.8 ? 'pasture' : 'orchard');
-          if (!placeFiller(FILLK[cat], x, y, ang, 3305, hidden ? [160, 80, 40] : [80, 40]) && !placeFiller([...FILLK.field, ...FILLK.pasture, ...FILLK.garden, ...FILLK.orchard], x, y, ang, 3307, [80, 40])) break;
-        }
-      }
-    }, 'pr');
-  }
   // C1c. the surviving roads get their edges: tree avenues in town and near the hearts, hedgerows with
   //      standard trees in the country (painted 80 m runs in four directions, with gaps)
   if (SPR['tree-avenue-ew']) for (const L of drawnStreets) {
@@ -420,7 +384,7 @@ export async function paintRegion(opts) {
       if (!onLand(mx, my, 10 * kF) || WD.woodAt(mx, my) || WD.parkAt(mx, my) || WD.cemeteryAt(mx, my) || streetNear(mx, my)[0] < 10) continue;
       const [h0, dh] = nearestHeart(mx, my); if (h0 && dh < 1.3) continue;
       if (fbm(mx / (170 * kF), my / (170 * kF), 1731) < 0.66) continue;
-      const pine = dem(mx, my) - floor > 120;
+      const pine = rel(mx, my) > 120 || WD.mountainAt(mx, my); // (mountain ground: pines, whatever the height)
       const pool = pine ? ['pine-tall', 'forest-pine-small', 'pine-tall'] : ['round-tree-beech', TREE, 'bush-hawthorn', 'round-tree-young-oak', 'round-tree-elm'];
       if (!pine) { paintedClump(mx, my, 3 + Math.floor(hash(i, j, 1733) * 6), 1745); continue; }
       const nT = 2 + Math.floor(hash(i, j, 1733) * 3);
@@ -432,54 +396,27 @@ export async function paintRegion(opts) {
       }
     }
   }
-  {
+  { // where the open-land grid has no ground piece: a painted clump of trees (in real wood: nothing)
     const g = 72 * kF;
     for (let i = Math.floor(BB[0] / g) - 1; i <= Math.floor(BB[2] / g) + 1; i++) for (let j = Math.floor(BB[1] / g) - 1; j <= Math.floor(BB[3] / g) + 1; j++) {
       const mx = (i + 0.35 + hash(i, j, 3203) * 0.3) * g, my = (j + 0.35 + hash(i, j, 3205) * 0.3) * g;
-      if (hash(i, j, 3201) < 0.17) continue; // open meadow, chosen
-      if (!onLand(mx, my, 22 * kF) || hitW(mx, my, 24 * kF) || WD.woodAt(mx, my) || drawnNear(mx, my) < 14) continue;
-      const [h0, dh] = nearestHeart(mx, my), near = h0 && dh < 3.5, r = hash(i, j, 3207);
-      let cat;
-      if (WD.cemeteryAt(mx, my)) cat = 'grave';
-      else if (WD.parkAt(mx, my)) cat = null;
-      else if (WD.orchardAt(mx, my)) cat = WD.orchardAt(mx, my).props?.subclass === 'vineyard' ? 'vine' : 'orchard';
-      else if (WD.farmAt(mx, my)) cat = r < 0.75 ? 'field' : 'pasture';
-      else if (near) cat = r < 0.4 ? 'garden' : r < 0.65 ? 'pasture' : r < 0.8 ? 'orchard' : null;
-      else cat = r < 0.45 ? 'field' : r < 0.75 ? 'pasture' : r < 0.85 ? 'orchard' : null;
-      if (cat && FILLK[cat]) { const [, sm] = streetNear(mx, my, 90 * kF); const ang = sm ? sm[3] : 0; if (placeFiller(FILLK[cat], mx, my, ang, 3221) || placeFiller(cat === 'garden' || cat === 'orchard' ? FILLK.field : cat === 'pasture' ? FILLK.field : FILLK.garden, mx, my, ang, 3223)) continue; }
-      const n2 = cat ? fillPick(cat, mx, my, 3209) : null;
-      if (n2 && placePiece(n2, mx, my, { z: -0.6, wM: Math.min(SPRIDX[n2].foot_m[0] * 1.12, 88), flip: hash(i, j, 3215) < 0.5, unique: !n2.startsWith('filler-') })) continue;
+      if (hash(i, j, 3201) < 0.17 || WD.gridTaken(i, j)) continue; // open meadow, chosen
+      if (!onLand(mx, my, 22 * kF) || hitW(mx, my, 24 * kF) || WD.woodAt(mx, my) || drawnNear(mx, my) < 14 || WD.cemeteryAt(mx, my)) continue;
+      if (WD.mountainAt(mx, my)) { const pn = pickOf(['pine-group-small', 'pine-group-large', 'larch-group-small'], mx, my, 3225); if (pn && placePiece(pn, mx, my, { z: -0.2, k: 1.15, flip: hash(i, j, 3227) < 0.5 })) continue; }
       clump(mx, my, 3 + Math.floor(hash(i, j, 3217) * 3), 3219);
     }
   }
   // C3. painted scenery on real land use (set four): orchard and vineyard blocks, forest masses on real
   //     woods (single trees only fill what is left), field quilts on real farmland
-  for (const it of orchItems) {
-    const g = 70 * kF, vine = it.props && it.props.subclass === 'vineyard';
-    for (let i = Math.floor(Math.max(it.bb[0], BB[0]) / g); i <= Math.floor(Math.min(it.bb[2], BB[2]) / g); i++) for (let j = Math.floor(Math.max(it.bb[1], BB[1]) / g); j <= Math.floor(Math.min(it.bb[3], BB[3]) / g); j++) {
-      const mx = (i + 0.5) * g, my = (j + 0.5) * g; if (!inPoly(mx, my, it.rings) || hitW(mx, my, 25 * kF)) continue;
-      const n2 = pickOf(vine ? ['vineyard-block-slope', 'vineyard-block-long'] : ['orchard-block-rows', 'orchard-block-bloom'], mx, my, 3141);
-      if (n2) placePiece(n2, mx, my, { z: -0.6, flip: hash(i, j, 3143) < 0.5, k: 1.3 });
-    }
-  }
   {
     const g = 82 * kF;
     for (let i = Math.floor(BB[0] / g) - 1; i <= Math.floor(BB[2] / g) + 1; i++) for (let j = Math.floor(BB[1] / g) - 1; j <= Math.floor(BB[3] / g) + 1; j++) {
       const mx = (i + 0.25 + hash(i, j, 3151) * 0.5) * g, my = (j + 0.25 + hash(i, j, 3153) * 0.5) * g;
       if (!WD.woodAt(mx, my) || [[-35, 0], [35, 0], [0, -25], [0, 25]].filter(([a, b2]) => WD.woodAt(mx + a * kF, my + b2 * kF)).length < 3) continue;
       if (!onLand(mx, my, 25 * kF) || hitW(mx, my, 22 * kF)) continue;
-      const rel = dem(mx, my) - floor, r = hash(i, j, 3155);
-      const fam = rel > 90 ? ['forest-pine-ragged', 'forest-pine-swept', 'forest-pine-pocket'] : r < 0.5 ? ['forest-deciduous-broad', 'forest-deciduous-lobed', 'forest-deciduous-hook'] : ['forest-mixed-broad', 'forest-mixed-bent', 'forest-mixed-pocket'];
+      const relH = rel(mx, my), r = hash(i, j, 3155);
+      const fam = relH > 90 || WD.mountainAt(mx, my) ? ['forest-pine-ragged', 'forest-pine-swept', 'forest-pine-pocket'] : r < 0.5 ? ['forest-deciduous-broad', 'forest-deciduous-lobed', 'forest-deciduous-hook'] : ['forest-mixed-broad', 'forest-mixed-bent', 'forest-mixed-pocket'];
       const n2 = pickOf(fam, mx, my, 3157); if (n2) placePiece(n2, mx, my, { z: -0.4, flip: hash(i, j, 3159) < 0.5, k: 1.3 });
-    }
-  }
-  {
-    const g = 92 * kF;
-    for (let i = Math.floor(BB[0] / g) - 1; i <= Math.floor(BB[2] / g) + 1; i++) for (let j = Math.floor(BB[1] / g) - 1; j <= Math.floor(BB[3] / g) + 1; j++) {
-      const mx = (i + 0.3 + hash(i, j, 3161) * 0.4) * g, my = (j + 0.3 + hash(i, j, 3163) * 0.4) * g;
-      if (!WD.farmAt(mx, my) || [[-40, 0], [40, 0], [0, -30], [0, 30]].filter(([a, b2]) => WD.farmAt(mx + a * kF, my + b2 * kF)).length < 3) continue;
-      if (hitW(mx, my, 32 * kF) || streetNear(mx, my)[0] < 18) continue;
-      const n2 = pickOf(['field-quilt-ribbon', 'field-quilt-kite', 'field-quilt-step', 'field-quilt-hook'], mx, my, 3165); if (n2) placePiece(n2, mx, my, { z: -0.6, flip: hash(i, j, 3167) < 0.5, k: 1.3 });
     }
   }
   T('o-land'); tm.push(`fill ${JSON.stringify(fstat)}`);
@@ -490,8 +427,8 @@ export async function paintRegion(opts) {
       const mx = (i + 0.2 + hash(i, j, 1101) * 0.6) * g, my = (j + 0.2 + hash(i, j, 1103) * 0.6) * g;
       if (!WD.woodAt(mx, my) || !onLand(mx, my, 8 * kF) || nearTrail(mx, my) || hitW(mx, my, 10 * kF)) continue;
       { const d5 = 15 * kF, sl5 = Math.hypot(dem(mx + d5, my) - dem(mx - d5, my), dem(mx, my + d5) - dem(mx, my - d5)) / (2 * d5 / kF); if (sl5 > 0.62) continue; }
-      const rel = dem(mx, my) - floor, edge = [0, 1, 2, 3].some((a) => !WD.woodAt(mx + Math.cos(a * 1.57) * 16 * kF, my + Math.sin(a * 1.57) * 16 * kF));
-      const conif = rel > 90 || hash(i, j, 1105) < 0.2;
+      const relH = rel(mx, my), edge = [0, 1, 2, 3].some((a) => !WD.woodAt(mx + Math.cos(a * 1.57) * 16 * kF, my + Math.sin(a * 1.57) * 16 * kF));
+      const conif = relH > 90 || WD.mountainAt(mx, my) || hash(i, j, 1105) < 0.2;
       if (edge) putW(conif ? 'pine-tall' : ['round-tree-beech', 'deciduous-birch', 'bush-hawthorn', TREE, 'round-tree-elm'][Math.floor(hash(i, j, 1107) * 5)], mx, my, { flip: hash(i, j, 1109) < 0.5, s: 0.9 + hash(i, j, 1111) * 0.3, shadow: 0.7 });
       else if (conif) putW(SPR['forest-pine-large'] ? ['forest-pine-large', 'forest-pine-small', 'forest-pine-large', 'pine-tall'][Math.floor(hash(i, j, 1113) * 4)] : 'pine-tall', mx, my, { flip: hash(i, j, 1117) < 0.5, s: 0.9 + hash(i, j, 1119) * 0.25, shadow: 0.5 });
       else putW(SPR['forest-deciduous-hook'] ? ['forest-deciduous-round', 'forest-deciduous-hook', 'forest-deciduous-belt', 'forest-clump'][Math.floor(hash(i, j, 1115) * 4)] : 'forest-clump', mx, my, { flip: hash(i, j, 1117) < 0.5, s: 0.85 + hash(i, j, 1119) * 0.25, full: true, shadow: 0.5 });
@@ -517,10 +454,10 @@ export async function paintRegion(opts) {
       const mx = (i + 0.25 + hash(i, j, 1201) * 0.5) * rs, my = (j + 0.25 + hash(i, j, 1203) * 0.5) * rs;
       const sl = Math.hypot(dem(mx + dd, my) - dem(mx - dd, my), dem(mx, my + dd) - dem(mx, my - dd)) / (2 * dd / kF);
       if (sl < 0.2 || !onLand(mx, my, 10 * kF) || !freeW(mx, my, 14 * kF)) continue;
-      const rel = dem(mx, my) - floor;
+      const relH = rel(mx, my);
       const [hh, dh2] = nearestHeart(mx, my); if (hh && dh2 < 1.6) continue;
       if (sl < 0.5) {
-        if (rel > 250 && sl < 0.38 && !WD.woodAt(mx, my) && hash(i, j, 1223) < 0.07 && SPR['alpine-hut']) { putW('alpine-hut', mx, my, { flip: hash(i, j, 1225) < 0.5 }); takeW(mx, my, 16 * kF); continue; }
+        if (relH > 250 && sl < 0.38 && !WD.woodAt(mx, my) && hash(i, j, 1223) < 0.07 && SPR['alpine-hut']) { putW('alpine-hut', mx, my, { flip: hash(i, j, 1225) < 0.5 }); takeW(mx, my, 16 * kF); continue; }
         if (SPR['pine-group-small'] && placePiece(pickOf(dem(mx, my) > 1100 ? ['larch-group-small', 'larch-group-large', 'pine-group-large'] : ['pine-group-small', 'pine-group-large', 'larch-group-small'], mx, my, 1239), mx, my, { z: -0.2, k: 1.15, flip: hash(i, j, 1215) < 0.5 })) continue;
         { const pp = ['forest-pine-small', 'pine-tall', 'forest-pine-large', 'pine-tall'][Math.floor(hash(i, j, 1227) * 4)]; putW(SPR[pp] ? pp : 'pine-tall', mx, my, { flip: hash(i, j, 1215) < 0.5, s: 0.8 + hash(i, j, 1211) * 0.35, shadow: 0.6 }); if (pp === 'pine-tall' && hash(i, j, 1229) < 0.6) putW('pine-tall', mx + 7 * kF, my - 4 * kF, { s: 0.75, shadow: 0.6, flip: true }); }
         if (hash(i, j, 1217) < 0.35) putW(SPR['slope-boulder-pair'] ? 'slope-boulder-pair' : 'rock-mossy', mx + 2 * kF, my - 12 * kF, { s: 0.7 });
@@ -528,10 +465,10 @@ export async function paintRegion(opts) {
       }
       if (dem(mx, my) > 2000 && SPR['mountain-snow-ridge']) { placePiece('mountain-snow-ridge', mx, my, { z: -0.3 }); continue; }
       if (sl > 0.7 && SPR['crag-large']) { const cn = pickOf(sl > 0.95 ? ['crag-large', 'crag-medium'] : ['crag-medium', 'crag-small', 'outcrop-large'], mx, my, 1233); if (cn && placePiece(cn, mx, my, { z: -0.2, k: 1.2, flip: hash(i, j, 1205) < 0.5 })) continue; }
-      if (sl > 0.45 && rel > 120 && SPR['boulder-field-medium'] && hash(i, j, 1235) < 0.45) { const bn = pickOf(['boulder-field-medium', 'boulder-field-small', 'outcrop-small'], mx, my, 1237); if (bn && placePiece(bn, mx, my, { z: -0.3, k: 1.2 })) continue; }
+      if (sl > 0.45 && relH > 120 && SPR['boulder-field-medium'] && hash(i, j, 1235) < 0.45) { const bn = pickOf(['boulder-field-medium', 'boulder-field-small', 'outcrop-small'], mx, my, 1237); if (bn && placePiece(bn, mx, my, { z: -0.3, k: 1.2 })) continue; }
       if (sl > 0.75 && SPR['mountain-limestone-cliff-band']) { placePiece('mountain-limestone-cliff-band', mx, my, { z: -0.3, flip: hash(i, j, 1205) < 0.5 }); continue; }
       if (WD.woodAt(mx, my) && SPR['mountain-forested-slope-band']) { placePiece('mountain-forested-slope-band', mx, my, { z: -0.35, flip: hash(i, j, 1205) < 0.5 }); continue; }
-      if (sl > 0.6 && rel > 250 && SPR['mountain-scree-fan'] && hash(i, j, 1231) < 0.5) { placePiece('mountain-scree-fan', mx, my, { z: -0.35, flip: hash(i, j, 1205) < 0.5 }); continue; }
+      if (sl > 0.6 && relH > 250 && SPR['mountain-scree-fan'] && hash(i, j, 1231) < 0.5) { placePiece('mountain-scree-fan', mx, my, { z: -0.35, flip: hash(i, j, 1205) < 0.5 }); continue; }
       if (false) putW('', mx, my);
       else { const pool = SPR['slope-outcrop-shelf'] ? ['slope-outcrop-shelf', 'slope-outcrop-spur', 'slope-boulder-pair', 'rock-mossy'] : ['rock-mossy', 'rock-angular', 'rock-flat']; putW(pool[Math.floor(hash(i, j, 1207) * pool.length)], mx, my, { flip: hash(i, j, 1209) < 0.5 }); }
       takeW(mx, my, 18 * kF);
@@ -677,7 +614,7 @@ export async function paintRegion(opts) {
     { ctx.save(); ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = 'rgb(255,236,150)'; ctx.fillRect(0, 0, W, H); ctx.globalCompositeOperation = 'screen'; ctx.fillStyle = 'rgb(26,20,0)'; ctx.fillRect(0, 0, W, H); ctx.restore(); }
     // the meadow overlays (set five): flower drifts, cloud shadows, damp grass, large and soft, on a world grid
     if (SPR['overlay-flower-drift']) { const g = 130 * kF; for (let i = Math.floor(BB[0] / g) - 1; i <= Math.floor(BB[2] / g) + 1; i++) for (let j = Math.floor(BB[1] / g) - 1; j <= Math.floor(BB[3] / g) + 1; j++) { const r = hash(i, j, 3401), n = r < 0.4 ? 'overlay-flower-drift' : r < 0.5 ? 'overlay-damp-grass' : null; if (!n || !SPR[n] || !SPRIDX[n]) continue; const [px, py] = P([(i + 0.2 + hash(i, j, 3403) * 0.6) * g, (j + 0.2 + hash(i, j, 3405) * 0.6) * g]), w = q64(SPRIDX[n].foot_m[0] * 1.12 * ppm), h = q64(w * SPR[n].height / SPR[n].width); ctx.save(); ctx.globalAlpha = n === 'overlay-cloud-shadow' ? 0.28 : n === 'overlay-damp-grass' ? 0.35 : 0.7; drawS(ctx, SPR[n], q64(px - w / 2), q64(py - h / 2), w, h); ctx.restore(); } }
-    texThrough('meadow-cool', fieldMask((x, y) => smooth(150, 450, dem(x, y) - floor) * 0.25)); // (zero below the valley floor + 150 m)
+    texThrough('meadow-cool', fieldMask((x, y) => smooth(150, 450, rel(x, y)) * 0.25)); // (zero below the valley floor + 150 m)
     // under every painted piece the meadow turns softly towards the piece's own grass, so its painted
     //    ground fades in without a pad or a halo
     for (const pc of planPieces) { const [cx, cy] = P([pc.cx, pc.cy]), rx = pc.fw * 0.75 * ppm, ry = pc.fh * 0.75 * ppm; ctx.save(); ctx.translate(cx, cy); ctx.scale(1, ry / rx); const gr = ctx.createRadialGradient(0, 0, rx * 0.35, 0, 0, rx); gr.addColorStop(0, 'rgba(166,148,42,0.6)'); gr.addColorStop(1, 'rgba(166,148,42,0)'); ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(0, 0, rx, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
@@ -939,7 +876,7 @@ export async function paintRegion(opts) {
   const roadsNear = drawnStreets.filter((L) => nearBC(L.bb || (L.bb = bboxOf([L.pts]))));
   const roadsOut = roadsNear.map((L) => L.pts.map((q) => [Math.round(q[0] * 10) / 10, Math.round(q[1] * 10) / 10]));
   // the world plan as this tile sees it, for the purity checks: road survival, compounds, line labels
-  const seen = planOnly ? { roads: streets.filter((L) => nearBC(L.bb || (L.bb = bboxOf([L.pts])))).map((L) => [L.key, drawnKeys.has(L.key) ? 1 : 0]).sort(), compounds: compoundsW.map((c) => [c.key, c.pieces.map((q) => [q.name, Math.round(q.x * 100) / 100, Math.round(q.y * 100) / 100, q.flip ? 1 : 0])]), decks: decks.map((d) => d.key).sort(), lineLabels: WD.labelCellsIn(BB).map(([I, J]) => [I + ',' + J, WD.lineLabels(I, J)]) } : null;
+  const seen = planOnly ? { roads: streets.filter((L) => nearBC(L.bb || (L.bb = bboxOf([L.pts])))).map((L) => [L.key, drawnKeys.has(L.key) ? 1 : 0]).sort(), compounds: compoundsW.map((c) => [c.key, c.pieces.map((q) => [q.name, Math.round(q.x * 100) / 100, Math.round(q.y * 100) / 100, q.flip ? 1 : 0])]), decks: decks.map((d) => d.key).sort(), ground: WD.groundIn([BB[0] - 200 * kF, BB[1] - 200 * kF, BB[2] + 200 * kF, BB[3] + 200 * kF]).map((g) => [g.id, [g.name, Math.round(g.x * 100) / 100, Math.round(g.y * 100) / 100, ...['cx', 'cy', 'ux', 'uy', 'hl', 'hw'].map((k2) => Math.round(g.box[k2] * 1000) / 1000)]]), lineLabels: WD.labelCellsIn(BB).map(([I, J]) => [I + ',' + J, WD.lineLabels(I, J)]) } : null;
   return { plan, labels, heartInfo, stubs, hearts: heartsOut, roads: roadsOut, roadKeys: roadsNear.map((L) => L.key).sort(), seen, chunk: [vx0, vy0, vx1, vy1], steads: compoundsW.filter((c) => inView(c.x, c.y)).length, ground: planOnly ? null : canvas, BB, W, H, ms: Math.round(performance.now() - t0), tm: tm.join(', ') };
 }
 

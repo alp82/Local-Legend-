@@ -11,7 +11,7 @@
 // crosses a tile edge is the world plan's (fmworld.js). Two tiles painted on different machines months apart
 // meet without a seam. paintWindow() paints any rectangle of world pixels the same way (the purity check
 // uses it to paint a tile from other windows).
-import { paintRegion, provide, bake, off } from './painter5.js';
+import { paintRegion, provide, bake, off, spritesReady, texturesReady } from './painter5.js';
 import { withData } from './tiledata.js';
 import { KF, HALF } from './fmcore.js';
 import { TILE } from './fmworld.js';
@@ -26,9 +26,10 @@ export async function loadAssets(base) {
   const get = async (u) => { const r = await fetch(new URL(u, base)); if (!r.ok) throw new Error(`${u}: HTTP ${r.status}`); return r; };
   const list = await (await get('bundle.json')).json();
   const tex = await Promise.all(list.textures.map(async (n) => [n, await (await get(`tex-${n}.webp`)).arrayBuffer()]));
-  provide({ type: 'tex', tex });
+  await provide({ type: 'tex', tex });
   const [idx, sheets] = await Promise.all([get('index.json').then((r) => r.json()), Promise.all((list.sheets || ['atlas.webp']).map(async (f) => (await get(f)).arrayBuffer()))]);
-  provide({ type: 'atlas', idx, sheets });
+  await provide({ type: 'atlas', idx, sheets });
+  await Promise.all([spritesReady, texturesReady]); // (decoded, and the world plan knows which drawings exist)
 }
 
 // the plan of z16 tile (x, y) (x east, y south, as in the tile URL): kept, it never changes

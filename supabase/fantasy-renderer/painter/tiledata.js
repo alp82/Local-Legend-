@@ -9,7 +9,7 @@
 //
 // Geometry is decoded straight from tile coordinates to web-mercator metres (a linear map).
 import { VectorTile, PbfReader } from './vendor/vt.mjs';
-import { toLL, NET, HALF } from './fmcore.js';
+import { toLL, NET, HALF, NeedDem, loadDem } from './fmcore.js';
 
 export const Z14 = 14, TS14 = (2 * HALF) / 2 ** Z14; // the data tile and its size in mercator units
 const LAYERS = ['landcover', 'park', 'landuse', 'water', 'waterway', 'building', 'poi', 'place', 'transportation', 'transportation_name', 'mountain_peak'];
@@ -89,8 +89,10 @@ export async function ensureTiles(list) {
 export async function withData(fn) {
   for (let i = 0; ; i++) {
     try { return await fn(); } catch (e) {
-      if (!(e instanceof NeedTiles) || i > 200) throw e;
-      await ensureTiles(e.tiles);
+      if (i > 2000 || !(e instanceof NeedTiles || e instanceof NeedDem)) throw e;
+      if (typeof self !== 'undefined' && self.__dataLog) self.__dataLog.push( // (the check tools' load log)
+        (e instanceof NeedDem ? 'dem ' : 'tile ') + e.tiles.map((t) => t.join('/')).join(' '));
+      if (e instanceof NeedDem) await loadDem(e.tiles); else await ensureTiles(e.tiles);
     }
   }
 }
