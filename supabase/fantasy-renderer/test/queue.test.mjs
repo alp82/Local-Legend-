@@ -46,7 +46,7 @@ async function newPlayer() {
   players.push(p);
   return p;
 }
-const request = (p, tiles) => call('/rest/v1/rpc/request_fantasy_tiles', { method: 'POST', key: env.PUBLISHABLE_KEY, token: p.token, body: { p_tiles: tiles, p_visible: 0 } });
+const request = (p, tiles, visible = 0) => call('/rest/v1/rpc/request_fantasy_tiles', { method: 'POST', key: env.PUBLISHABLE_KEY, token: p.token, body: { p_tiles: tiles, p_visible: visible } });
 const config = (patch) => admin('/rest/v1/fantasy_config?id=eq.true', { method: 'PATCH', body: patch });
 const today = new Date().toISOString().slice(0, 10);
 const globalToday = async () => (await admin(`/rest/v1/fantasy_daily?day=eq.${today}&select=tiles`))[0]?.tiles ?? 0;
@@ -93,8 +93,10 @@ test('many accounts together cannot overshoot the global daily limit', { skip },
 test('a z15 tile costs five units against the cap', { skip }, async () => {
   await config({ daily_tiles_per_player: 7, global_daily_tiles: 1000000 });
   const p = await newPlayer();
-  const a = await request(p, [[15, BERLIN[0] >> 1, BERLIN[1] >> 1], near(80), [15, (BERLIN[0] >> 1) + 1, BERLIN[1] >> 1]]);
-  // 5 + 1 = 6 fits in 7; the second z15 (5 more) doesn't
+  // two z15 tiles whose children nobody queued (north of the near() block), each 5 units
+  const z15 = (dx) => [15, (BERLIN[0] >> 1) - 2 + dx, (BERLIN[1] >> 1) - 3];
+  // the first two on screen (queued first): 5 + 1 = 6 fits in 7; the second z15 (5 more) doesn't
+  const a = await request(p, [z15(0), near(80), z15(1)], 2);
   assert.equal(a.queued, 2);
   assert.equal(a.reason, 'player');
   const [row] = await admin(`/rest/v1/fantasy_requests?player=eq.${p.id}&select=tiles`);

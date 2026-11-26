@@ -1,15 +1,17 @@
 -- pgTAP tests for the fantasy tile queue: defaults, grants, requests near the caller's own
 -- ground only, cost in tile units (z15 = 5), the per-player cap, the global daily limit, the
--- queue depth, the rate limit, no queue jumping, the kill switch, input checks, fair leasing,
--- retries and the cool-down for tiles given up, and versions. Parallel calls against the caps
+-- queue depth (players' tiles only), nearest tiles first under a limit, the rate limit, no
+-- queue jumping, the kill switch, input checks, fair leasing, retries, expired leases and the
+-- cool-down for tiles given up, versions, and a very large territory. Parallel calls against the caps
 -- are tested in supabase/fantasy-renderer/test/queue.test.mjs (separate connections).
 -- Run with: npx supabase test db
 begin;
 
-select plan(54);
+select plan(60);
 
 -- f01..f05: players. f01 and f02 claimed land at Berlin tile 16/35209/21498; f03 has no
--- ground until it submits a position; f05 only an old position.
+-- ground until it submits a position; f04 gets a very large territory at the end; f05
+-- only an old position.
 insert into auth.users (id, aud, role, is_anonymous)
 select ('f0000000-0000-0000-0000-0000000000' || lpad(i::text, 2, '0'))::uuid, 'authenticated', 'authenticated', true
 from generate_series(1, 5) as i;
@@ -156,8 +158,10 @@ select pg_temp.as_postgres();
 select is((select tiles from public.fantasy_requests where player = pg_temp.u(2)), 5, 'Only what was queued counts');
 update public.fantasy_config set daily_tiles_per_player = 10;
 select pg_temp.as_player(2);
-select is(public.request_fantasy_tiles('[[15, 17603, 10748]]') ->> 'queued', '1', 'A z15 tile fits exactly in 5 units');
+-- One of its children (35207/21497) was queued by the call before: it costs 1 + 3.
+select is(public.request_fantasy_tiles('[[15, 17603, 10748]]') ->> 'queued', '1', 'A z15 tile with a child already queued fits in 5 units');
 select pg_temp.as_postgres();
+select is((select tiles from public.fantasy_requests where player = pg_temp.u(2)), 9, 'It costs 1 plus its children not painted or queued (4)');
 update public.fantasy_requests set day = day - 1 where player = pg_temp.u(2);
 select pg_temp.as_player(2);
 select is(public.request_fantasy_tiles('[[16, 35207, 21499]]') ->> 'queued', '1', 'A new day has a new cap');
@@ -176,13 +180,31 @@ select is(public.request_fantasy_tiles('[[16, 35206, 21500]]') ->> 'reason', 'gl
 select pg_temp.as_postgres();
 update public.fantasy_config set global_daily_tiles = 2000;
 
+-- Cut short by a limit, the tiles nearest the middle of the screen go first, whatever the
+-- order they were sent in.
+update public.fantasy_config set daily_tiles_per_player =
+  (select tiles + 1 from public.fantasy_requests where player = pg_temp.u(1) and day = (now() at time zone 'utc')::date);
+select pg_temp.as_player(1);
+select is(public.request_fantasy_tiles('[[16, 35211, 21496], [16, 35207, 21496], [16, 35209, 21496]]', 3) -> 'pending',
+  '[[16, 35209, 21496]]'::jsonb, 'Under a limit the tile nearest the middle of the screen is queued first');
+select pg_temp.as_postgres();
+update public.fantasy_config set daily_tiles_per_player = 300;
+
 -- Queue depth.
 update public.fantasy_config set max_queue_depth = 3;
 select pg_temp.as_player(1);
 select is(public.request_fantasy_tiles('[[16, 35205, 21497]]') - 'pending' - 'ready',
   '{"enabled": true, "version": 1, "queued": 0, "capped": true, "reason": "queue", "far": 0}'::jsonb,
   'With the queue full nothing more is queued');
+-- Pre-painting waiting in the queue doesn't count toward it.
 select pg_temp.as_postgres();
+insert into public.fantasy_tiles (version, z, x, y, priority) select 1, 16, 1000 + i, 1000, 2 from generate_series(1, 50) i;
+update public.fantasy_config set max_queue_depth =
+  (select sum(cost) + 1 from public.fantasy_tiles where priority < 2 and status in ('queued', 'painting'));
+select pg_temp.as_player(1);
+select is(public.request_fantasy_tiles('[[16, 35205, 21497]]') ->> 'queued', '1', 'Pre-painted tiles waiting don''t count toward the queue depth');
+select pg_temp.as_postgres();
+delete from public.fantasy_tiles where priority = 2;
 update public.fantasy_config set max_queue_depth = 500;
 
 -- Rate limit: calls closer together than min_request_interval queue nothing, but still answer.
@@ -233,6 +255,14 @@ select pg_temp.as_postgres();
 update public.fantasy_tiles set lease_until = now() - interval '1 second' where x = 101;
 select pg_temp.as_service();
 select results_eq($$select x from public.lease_fantasy_tiles(64)$$, $$values (101)$$, 'An expired lease comes back');
+select pg_temp.as_postgres();
+update public.fantasy_tiles set lease_until = now() - interval '1 second', attempts = 3 where x = 103;
+select pg_temp.as_service();
+select is((select count(*)::int from public.lease_fantasy_tiles(64) where x = 103), 0, 'A lease that expired max_attempts times is not leased again');
+select pg_temp.as_postgres();
+select results_eq($$select status, error like 'lease expired%' from public.fantasy_tiles where x = 103$$, $$values ('failed', true)$$,
+  'It is given up instead, so a tile that crashes the worker can''t restart it forever');
+select pg_temp.as_service();
 
 select public.finish_fantasy_tile(1, 16, 101, 100, true, 140000, 950);
 select public.finish_fantasy_tile(1, 16, 102, 100, false, p_error => 'source data failed');
@@ -256,6 +286,30 @@ select pg_temp.as_player(1);
 select is((public.request_fantasy_tiles('[[16, 35209, 21498]]') ->> 'queued'), '1', 'A new version starts empty');
 select pg_temp.as_service();
 select results_eq($$select version from public.lease_fantasy_tiles(64)$$, $$values (2)$$, 'Only the current version is leased');
+
+-- A very large territory (50,000 claimed cells, 10,000 recent positions) with a full call
+-- of 64 tiles: the ground is read once, not once per tile (4.5 s before, about 40 ms after).
+select pg_temp.as_postgres();
+insert into public.claimed_cells (user_id, cell, first_claimed_at)
+select pg_temp.u(4), (40000::bigint * 32 + i % 224) * 2097152 + (20000::bigint * 32 + i / 224), now()
+from generate_series(0, 49999) i;
+insert into public.walk_points (user_id, session_id, batch_id, recorded_at, geom, accuracy_m)
+select pg_temp.u(4), 's4', 'b4', now() - i * interval '1 second', pg_temp.point(40003 + i % 7, 20003 + i % 5), 10
+from generate_series(1, 10000) i;
+create function pg_temp.timed_request(p jsonb, out r jsonb, out ms float8) language plpgsql as $$
+declare t0 timestamptz := clock_timestamp();
+begin
+  r := public.request_fantasy_tiles(p);
+  ms := extract(epoch from clock_timestamp() - t0) * 1000;
+end $$;
+select pg_temp.as_player(4);
+select is(
+  (select format('queued %s, far %s, fast %s', r ->> 'queued', r ->> 'far', (ms < 1000)::text) from pg_temp.timed_request(
+    (select jsonb_agg(t) from (
+      select jsonb_build_array(16, 40003, 20003) as t
+      union all select jsonb_build_array(16, 45000 + i, 20000) from generate_series(1, 63) i) s))),
+  'queued 1, far 63, fast true',
+  'A very large territory answers a full call in well under a second');
 
 select * from finish();
 rollback;

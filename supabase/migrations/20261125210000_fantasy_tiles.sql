@@ -18,8 +18,13 @@
 --     positions they submitted in the last recent_positions are accepted, so a
 --     script can't order the world painted.
 --   - A daily cap per player and a global daily limit, in tile units: a z16 tile
---     costs 1, a z15 tile 5 (its four z16 children and itself).
---   - A maximum queue depth, in the same units.
+--     costs 1, a z15 tile 1 plus each of its four z16 children not painted or
+--     queued yet (up to 5).
+--   - A maximum queue depth of players' tiles, in the same units. Pre-painting
+--     (priority 2, renderer only) doesn't count: it is leased last and would
+--     otherwise block every player until it drained.
+--   - When a limit cuts a request short, the tiles on screen go first, then the
+--     ones nearest the middle of the screen.
 --   - At most max_visible_tiles count as on screen (priority 0), and a player's
 --     calls closer together than min_request_interval queue nothing.
 --
@@ -84,6 +89,7 @@ create table public.fantasy_tiles (
   attempts int not null default 0,
   painted_at timestamptz,
   finished_at timestamptz,
+  cost smallint not null default 1,              -- Tile units charged when queued (z15: 1 + its unpainted children).
   bytes int,
   paint_ms int,
   error text,
@@ -176,6 +182,12 @@ revoke all on function private.fantasy_z16(float8, float8) from public, anon, au
 -- pending: requested tiles waiting to be painted; ready: requested tiles painted;
 -- queued: tiles this call queued; capped/reason: a limit kept some from being
 -- queued; far: tiles refused for being too far from the caller's own ground.
+--
+-- The nearness rule reads public.walk_points (user_id, recorded_at, geom as
+-- longitude/latitude points) and public.claimed_cells (user_id, cell, zoom 21 ids).
+-- A change to either table must keep this function working: without ground every
+-- request comes back "far" and nothing is painted for players
+-- (supabase/tests/fantasy_tiles_test.sql covers both).
 create function public.request_fantasy_tiles(p_tiles jsonb, p_visible int default 0)
 returns jsonb
 language plpgsql
@@ -255,14 +267,17 @@ begin
     insert into public.fantasy_daily (day) values (v_day) on conflict do nothing;
     select d.tiles into v_global from public.fantasy_daily d where d.day = v_day for update;
 
-    select coalesce(sum(case when t.z = 15 then 5 else 1 end), 0)::int into v_depth
+    -- Players' tiles waiting or painting (pre-painting has its own pace and doesn't count).
+    select coalesce(sum(t.cost), 0)::int into v_depth
     from public.fantasy_tiles t
-    where t.version = c.version
+    where t.version = c.version and t.priority < 2
       and (t.status in ('queued', 'painting') or (t.status = 'failed' and t.attempts < c.max_attempts));
 
     -- The caller's own ground, as z16 tiles: claimed cells (a cell id is x * 2^21 + y at
-    -- zoom 21) and the positions they submitted recently.
-    with ground as (
+    -- zoom 21) and the positions they submitted recently. Materialized: read once, not
+    -- once per requested tile (a big territory would otherwise hold the global lock for
+    -- seconds).
+    with ground as materialized (
       select distinct (cc.cell / 2097152)::int >> 5 as gx, (cc.cell % 2097152)::int >> 5 as gy
       from public.claimed_cells cc where cc.user_id = v_uid
       union
@@ -272,11 +287,21 @@ begin
     ),
     req as (
       select q.n, q.z::smallint as z, q.x, q.y,
-        case when q.z = 15 then 5 else 1 end as cost,
-        -- the tile in z16 coordinates, and the reach in z16 tiles at its latitude
+        -- a z15 tile is made from its four z16 children: charge the ones not painted or queued
+        case when q.z = 15 then 1 + (
+          select 4 - count(*) from public.fantasy_tiles k
+          where k.version = c.version and k.z = 16 and k.x in (q.x * 2, q.x * 2 + 1) and k.y in (q.y * 2, q.y * 2 + 1)
+        ) else 1 end::int as cost,
+        -- the tile in z16 coordinates (its corner, and its middle)
         case when q.z = 15 then q.x * 2 else q.x end as x16,
-        case when q.z = 15 then q.y * 2 else q.y end as y16
+        case when q.z = 15 then q.y * 2 else q.y end as y16,
+        case when q.z = 15 then q.x * 2 + 1.0 else q.x + 0.5 end as mx16,
+        case when q.z = 15 then q.y * 2 + 1.0 else q.y + 0.5 end as my16
       from jsonb_to_recordset(v_req) q(n int, z int, x int, y int)
+    ),
+    -- the middle of the screen: of the tiles on screen, or of all if none is
+    mid as (
+      select avg(r.mx16) as mx, avg(r.my16) as my from req r where r.n <= v_visible or v_visible = 0
     ),
     fresh as (
       select r.*,
@@ -293,19 +318,23 @@ begin
         where t.version = c.version and t.z = r.z and t.x = r.x and t.y = r.y
       )
     ),
+    -- on screen first, then nearest the middle of the screen
     near_fresh as (
-      select f.*, sum(f.cost) over (order by f.n) as cum from fresh f where f.near
+      select f.*, sum(f.cost) over (
+        order by f.n > v_visible, (f.mx16 - m.mx) ^ 2 + (f.my16 - m.my) ^ 2, f.n
+        rows unbounded preceding) as cum
+      from fresh f, mid m where f.near
     ),
     limits as (
       select greatest(0, least(c.daily_tiles_per_player - v_used, c.global_daily_tiles - v_global, c.max_queue_depth - v_depth)) as room
     ),
     ins as (
-      insert into public.fantasy_tiles (version, z, x, y, priority, requested_by)
-      select c.version, nf.z, nf.x, nf.y, case when nf.n <= v_visible then 0 else 1 end, v_uid
+      insert into public.fantasy_tiles (version, z, x, y, priority, requested_by, cost)
+      select c.version, nf.z, nf.x, nf.y, case when nf.n <= v_visible then 0 else 1 end, v_uid, nf.cost
       from near_fresh nf, limits l
       where nf.cum <= l.room
       on conflict do nothing
-      returning case when z = 15 then 5 else 1 end as cost
+      returning cost
     )
     select
       (select count(*) from ins)::int,

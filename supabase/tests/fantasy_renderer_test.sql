@@ -5,7 +5,7 @@
 -- Run with: npx supabase test db
 begin;
 
-select plan(36);
+select plan(37);
 
 insert into auth.users (id, aud, role, is_anonymous, raw_app_meta_data)
 values
@@ -95,6 +95,7 @@ select throws_ok(
 
 select pg_temp.as_postgres();
 select is((select count(*)::int from public.fantasy_tiles where priority = 2), 4, 'Pre-painted tiles have priority 2');
+select is((public.fantasy_status() -> 'limits' ->> 'queue_depth')::int, 0, 'Pre-painting doesn''t count toward the players'' queue depth');
 insert into public.fantasy_tiles (version, z, x, y, priority) values (1, 16, 500, 500, 0);
 
 select pg_temp.as_renderer();

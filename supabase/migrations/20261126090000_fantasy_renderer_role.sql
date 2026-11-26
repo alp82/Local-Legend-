@@ -37,8 +37,10 @@ grant execute on function public.is_fantasy_renderer() to authenticated, service
 -- Leases up to p_limit tiles of the current version. Order: on screen, then around,
 -- then pre-painting; within a priority, players take turns (each player's oldest tile,
 -- then each player's second oldest...), oldest first, z16 before z15 (a z15 tile is made
--- from its z16 children). Expired leases come back. A failed tile is tried again after
--- retry_after, up to max_attempts; a tile given up is tried again after failed_cooldown.
+-- from its z16 children). Expired leases come back, up to max_attempts (a tile that
+-- crashes the browser every time would otherwise restart the worker forever). A failed
+-- tile is tried again after retry_after, up to max_attempts; a tile given up is tried
+-- again after failed_cooldown.
 create function public.lease_fantasy_tiles(p_limit int)
 returns table (version int, z smallint, x int, y int, webp_quality real)
 language plpgsql
@@ -50,6 +52,12 @@ begin
   if not public.is_fantasy_renderer() then
     raise exception 'only the fantasy renderer leases tiles' using errcode = '42501';
   end if;
+  -- Leases that expired max_attempts times: given up, like a tile that failed that often.
+  update public.fantasy_tiles t
+  set status = 'failed', finished_at = now(), error = 'lease expired ' || t.attempts || ' times (the worker stopped while painting it)'
+  from public.fantasy_config c
+  where t.version = c.version and t.status = 'painting' and t.lease_until < now() and t.attempts >= c.max_attempts;
+
   return query
   with c as (select * from public.fantasy_config),
   waiting as (
@@ -218,10 +226,11 @@ begin
       'global_daily_tiles', c.global_daily_tiles,
       'global_today', coalesce((select d.tiles from public.fantasy_daily d where d.day = v_day), 0),
       'max_queue_depth', c.max_queue_depth,
+      -- players' tiles waiting or painting, in units (what max_queue_depth limits)
       'queue_depth', (
-        select coalesce(sum(case when t.z = 15 then 5 else 1 end), 0)
+        select coalesce(sum(t.cost), 0)
         from public.fantasy_tiles t
-        where t.version = c.version
+        where t.version = c.version and t.priority < 2
           and (t.status in ('queued', 'painting') or (t.status = 'failed' and t.attempts < c.max_attempts))
       ),
       'near_player_m', c.near_player_m
