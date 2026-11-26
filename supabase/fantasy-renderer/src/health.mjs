@@ -14,7 +14,8 @@ try {
     console.error(`stale heartbeat: ${Math.round(age / 1000)} s old (${beat.state})`);
     process.exit(1);
   }
-  console.log(`ok: ${beat.state}, ${beat.painted} painted, ${beat.failed} failed since ${beat.startedAt}`);
+  const src = beat.source ?? {};
+  console.log(`ok: ${beat.state}, ${beat.painted} painted, ${beat.failed} failed since ${beat.startedAt}; source ${src.mb} of ${src.maxMb} MB, ${src.fetchesToday} of ${src.maxFetchesPerDay} fetches today, ${src.diskFreeMb} MB disk free${src.limited ? `; LIMITED: ${src.limited}` : ''}`);
 } catch (e) {
   console.error(`no heartbeat: ${e.message}`);
   process.exit(1);

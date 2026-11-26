@@ -2,7 +2,7 @@
 // prototype painter in a pool of Web Workers.
 import { chromium } from 'playwright';
 
-import { startServer } from './server.mjs';
+import { SourceLimitError, startServer } from './server.mjs';
 
 export const PAINT_ZOOM = 16;
 
@@ -68,10 +68,14 @@ export async function startRenderer({ sourceDir, workers = 4, recycleAfter = Num
     const jobs = [];
     for (let tx = ofm[0]; tx <= ofm[2]; tx++) for (let ty = ofm[1]; ty <= ofm[3]; ty++) jobs.push(server.ofmTile(14, tx, ty));
     for (let tx = dem[0]; tx <= dem[2]; tx++) for (let ty = dem[1]; ty <= dem[3]; ty++) jobs.push(server.demTile(`14/${tx}/${ty}.png`));
-    await Promise.all(jobs);
+    // A source limit (store full, daily fetches used up) only ends the head start: the paint
+    // finds out whether it needs anything new.
+    for (const r of await Promise.allSettled(jobs)) if (r.status === 'rejected' && !(r.reason instanceof SourceLimitError)) throw r.reason;
   }
 
   return {
+    /** The frozen source store: size, fetches today, limits, free disk. */
+    sourceStatus: () => server.sourceStatus(),
     /** The current page, for checks (test/renderer.test.mjs). */
     get page() {
       return page;
@@ -95,6 +99,7 @@ export async function startRenderer({ sourceDir, workers = 4, recycleAfter = Num
         inflight++;
         paintsOnPage++;
         const errorsBefore = server.stats.errors;
+        server.stats.limited = null;
         let r, err;
         try {
           r = await page.evaluate(([a, b, q, o]) => window.paintTile(a, b, q, o), [x, y, quality, opts]);
@@ -111,6 +116,8 @@ export async function startRenderer({ sourceDir, workers = 4, recycleAfter = Num
           continue;
         }
         if (server.stats.errors === errorsBefore) return { ...r, webp: Buffer.from(r.webp, 'base64') };
+        // New ground behind a source limit: no point in trying again now.
+        if (server.stats.limited) throw new Error(`not painted, needs new source data: ${server.stats.limited}`);
         if (attempt >= 1) throw new Error(`source data failed twice while painting 16/${x}/${y}`);
         log(`source error during 16/${x}/${y}; replacing the painter page and trying again`);
         await replacePage('source error');

@@ -32,7 +32,7 @@ log(`worker ready: Chromium ${renderer.chromium}, ${config.paintWorkers} paint w
 
 const stats = { startedAt: new Date().toISOString(), painted: 0, failed: 0, lastPaintAt: null, lastError: null };
 async function beat(state) {
-  const body = { ...stats, state, at: new Date().toISOString(), source: renderer.stats };
+  const body = { ...stats, state, at: new Date().toISOString(), source: await renderer.sourceStatus() };
   await writeFile(config.heartbeat, JSON.stringify(body)).catch((e) => log(`heartbeat: ${e.message}`));
 }
 

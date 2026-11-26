@@ -9,7 +9,13 @@
 // The store is a directory (SOURCE_CACHE_DIR). It isn't a cache in the sense of being
 // disposable: deleting it lets OpenStreetMap changes in, which can make new tiles disagree
 // with neighbours painted before.
-import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+//
+// Limits, so a flood of requests can't fill the shared disk or hammer the free tile
+// services: the store stops growing at SOURCE_MAX_MB, upstream fetches stop for the rest of
+// the UTC day after SOURCE_FETCHES_PER_DAY, and at most SOURCE_FETCH_CONCURRENCY run at once.
+// A fetch refused by a limit fails with SourceLimitError: paints that need new ground fail
+// with its reason, paints on known ground go on.
+import { mkdir, readFile, readdir, rename, stat, statfs, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { dirname, extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -52,39 +58,111 @@ async function writeAtomic(file, bytes) {
   await rename(tmp, file);
 }
 
-/** A store of frozen upstream files under `dir`; concurrent requests for one key share a fetch. */
-function frozenStore(dir, stats) {
+export class SourceLimitError extends Error {}
+
+const utcDay = () => new Date().toISOString().slice(0, 10);
+
+async function dirBytes(dir) {
+  let total = 0;
+  for (const e of await readdir(dir, { recursive: true, withFileTypes: true }).catch(() => [])) {
+    if (e.isFile()) total += (await stat(join(e.parentPath ?? e.path, e.name)).catch(() => ({ size: 0 }))).size;
+  }
+  return total;
+}
+
+/**
+ * A store of frozen upstream files under `dir`, with its limits; concurrent requests for one
+ * key share a fetch. Returns get(key, fetchUpstream) and status().
+ */
+async function frozenStore(dir, stats, limits) {
+  await mkdir(dir, { recursive: true });
   const inflight = new Map();
-  return async function get(key, fetchUpstream) {
+  const countsFile = join(dir, 'fetches.json');
+  let bytes = await dirBytes(dir);
+  let fetches = await readFile(countsFile, 'utf8').then(JSON.parse).catch(() => ({ day: utcDay(), count: 0 }));
+  let running = 0;
+  const waiters = [];
+  const limitReason = () => {
+    if (bytes >= limits.maxBytes) return `source store full (${Math.round(bytes / 1048576)} MB of ${Math.round(limits.maxBytes / 1048576)} MB)`;
+    if (fetches.day === utcDay() && fetches.count >= limits.maxFetchesPerDay) return `daily source fetch limit reached (${fetches.count})`;
+    return null;
+  };
+  async function slot() {
+    if (running < limits.concurrency) { running++; return; }
+    await new Promise((r) => waiters.push(r));
+    running++;
+  }
+  function release() {
+    running--;
+    waiters.shift()?.();
+  }
+
+  async function get(key, fetchUpstream) {
     const file = join(dir, key);
     try {
-      const bytes = await readFile(file);
+      const data = await readFile(file);
       stats.hit++;
-      return bytes;
+      return data;
     } catch {}
     if (!inflight.has(key)) {
       inflight.set(
         key,
         (async () => {
-          const bytes = await fetchUpstream();
+          const reason = limitReason();
+          if (reason) {
+            stats.limited = reason;
+            throw new SourceLimitError(reason);
+          }
+          await slot();
+          let data;
+          try {
+            if (fetches.day !== utcDay()) fetches = { day: utcDay(), count: 0 };
+            fetches.count++;
+            data = await fetchUpstream();
+          } finally {
+            release();
+          }
           // A missing upstream tile (404) is real data too (open sea, the poles): store it empty.
-          await writeAtomic(file, bytes ?? new Uint8Array());
+          const stored = data ?? new Uint8Array();
+          await writeAtomic(file, stored);
+          bytes += stored.length;
           stats.miss++;
-          return bytes ?? new Uint8Array();
+          if (fetches.count % 20 === 0) await writeAtomic(countsFile, JSON.stringify(fetches)).catch(() => {});
+          return stored;
         })().finally(() => inflight.delete(key)),
       );
     }
     return inflight.get(key);
-  };
+  }
+
+  async function status() {
+    const fs = await statfs(dir).catch(() => null);
+    return {
+      mb: Math.round(bytes / 1048576),
+      maxMb: Math.round(limits.maxBytes / 1048576),
+      fetchesToday: fetches.day === utcDay() ? fetches.count : 0,
+      maxFetchesPerDay: limits.maxFetchesPerDay,
+      limited: limitReason(),
+      diskFreeMb: fs ? Math.round((fs.bavail * fs.bsize) / 1048576) : null,
+    };
+  }
+
+  return { get, status };
 }
 
 /**
- * Starts the server on a free port. Returns { url, close, stats }.
+ * Starts the server on a free port. Returns { url, close, stats, ofmTile, demTile, sourceStatus }.
  * @param {{ sourceDir: string, port?: number }} opts
  */
 export async function startServer({ sourceDir, port = 0 }) {
-  const stats = { hit: 0, miss: 0, errors: 0 };
-  const store = frozenStore(sourceDir, stats);
+  const stats = { hit: 0, miss: 0, errors: 0, limited: null };
+  const limits = {
+    maxBytes: Number(process.env.SOURCE_MAX_MB || 8000) * 1048576,
+    maxFetchesPerDay: Number(process.env.SOURCE_FETCHES_PER_DAY || 20000),
+    concurrency: Number(process.env.SOURCE_FETCH_CONCURRENCY || 6),
+  };
+  const frozen = await frozenStore(sourceDir, stats, limits);
+  const store = frozen.get;
   const pinnedFile = join(sourceDir, 'pinned.json');
   let template = null;
 
@@ -183,5 +261,5 @@ export async function startServer({ sourceDir, port = 0 }) {
   });
   await new Promise((r) => server.listen(port, '127.0.0.1', r));
   const url = `http://127.0.0.1:${server.address().port}`;
-  return { url, stats, ofmTile, demTile, close: () => new Promise((r) => server.close(r)) };
+  return { url, stats, ofmTile, demTile, sourceStatus: frozen.status, close: () => new Promise((r) => server.close(r)) };
 }
