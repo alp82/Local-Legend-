@@ -22,6 +22,7 @@ import { useEconomy } from '@/hooks/use-economy';
 import { useFantasyMap } from '@/hooks/use-fantasy-map';
 import { useFollowCamera } from '@/hooks/use-follow-camera';
 import { useSites } from '@/hooks/use-sites';
+import { useZoomFloor } from '@/hooks/use-zoom-floor';
 import { onQueueEvent } from '@/lib/db';
 import { detoursJson, offerDistance, offerPlace, offerTitle, rewardText } from '@/lib/detours';
 import type { DetourOffer } from '@/lib/detoursApi';
@@ -32,6 +33,7 @@ import { pendingTrack } from '@/lib/queue';
 import type { BBox, Site } from '@/lib/sitesApi';
 import { siteType } from '@/lib/siteTypes';
 import { fetchTerritory, type Territory, type TerritoryGeoJSON } from '@/lib/territoryApi';
+import { clampZoom } from '@/lib/zoomFloor';
 import {
   isTrackingWanted,
   openSettings,
@@ -312,6 +314,14 @@ export default function MapScreen() {
 
   const cam = useFollowCamera(cameraRef, canShowLocation);
   const economy = useEconomy();
+  // While the fantasy map shows, the map can't zoom out past where the painting ends.
+  const fantasyActive = !!fantasy.tiles && fantasy.visible;
+  const minZoom = useZoomFloor(cameraRef, fantasyActive, view?.zoom ?? null);
+  // Opened further out than that with the fantasy map on: start at the floor.
+  const [initialViewState] = useState(() => {
+    const v = cam.initialViewState;
+    return typeof v.zoom === 'number' ? { ...v, zoom: clampZoom(v.zoom, fantasyActive) } : v;
+  });
 
   return (
     <View style={styles.container}>
@@ -333,7 +343,7 @@ export default function MapScreen() {
           setSelected(null);
           setSelectedOffer(null);
         }}>
-        <Camera ref={cameraRef} initialViewState={cam.initialViewState} />
+        <Camera ref={cameraRef} initialViewState={initialViewState} minZoom={minZoom} />
         {/* Bottom to top; see components/map-layers.tsx. */}
         {fantasy.tiles && (
           <FantasyLayer tiles={fantasy.tiles} revision={fantasy.revision} labels={fantasy.labels} visible={fantasy.visible} />
