@@ -1,21 +1,18 @@
--- The fantasy tile renderer without the service key.
+-- The fantasy tile renderer's side of the queue, without the service key.
 --
 -- The renderer (supabase/fantasy-renderer) needs only: lease and finish tiles, queue
--- tiles for pre-painting, read the queue's status, and write to the fantasy-tiles bucket.
--- Instead of the service key, it signs in as one dedicated auth user whose app_metadata
--- has "fantasy_renderer": true. Only the service role can set app_metadata, so a player
--- can't grant it to themselves. The service role keeps every right (local testing, admin).
+-- tiles for pre-painting, read the queue's status, and write tiles to the fantasy-tiles
+-- bucket. Instead of the service key, it signs in as one dedicated auth user whose
+-- app_metadata has "fantasy_renderer": true. Only the service role can set app_metadata,
+-- so a player can't grant it to themselves. The service role keeps every right (local
+-- testing, admin).
 --
--- Set up the renderer user once (docs/fantasy-map-deploy.md):
---   1. Dashboard > Authentication > Users > Add user: an email and a long random
---      password, "Auto Confirm User" on.
---   2. SQL: update auth.users
---             set raw_app_meta_data = raw_app_meta_data || '{"fantasy_renderer": true}'
---           where email = '<that email>';
---
--- Also: queue_fantasy_tiles (pre-painting, priority 2, no daily cap), fantasy_status
--- (queue depth, throughput, storage, last error), finished_at on each tile, and JSON label
--- files in the bucket.
+-- Set up the renderer user once (docs/fantasy-map-deploy.md, step 2): a synthetic email
+-- address, a random password, confirmed, then
+--   update auth.users set raw_app_meta_data = raw_app_meta_data || '{"fantasy_renderer": true}'
+--   where email = '<that address>';
+
+set lock_timeout = '5s';
 
 create function public.is_fantasy_renderer()
 returns boolean
@@ -33,15 +30,15 @@ comment on function public.is_fantasy_renderer() is
 revoke all on function public.is_fantasy_renderer() from public, anon;
 grant execute on function public.is_fantasy_renderer() to authenticated, service_role;
 
-alter table public.fantasy_tiles add column finished_at timestamptz;
-comment on column public.fantasy_tiles.priority is '0: on screen, 1: around it, 2: pre-painting.';
-
 -- ---------------------------------------------------------------------------
 -- Renderer functions: the renderer user or the service role
 -- ---------------------------------------------------------------------------
 
-drop function public.lease_fantasy_tiles(int);
-
+-- Leases up to p_limit tiles of the current version. Order: on screen, then around,
+-- then pre-painting; within a priority, players take turns (each player's oldest tile,
+-- then each player's second oldest...), oldest first, z16 before z15 (a z15 tile is made
+-- from its z16 children). Expired leases come back. A failed tile is tried again after
+-- retry_after, up to max_attempts; a tile given up is tried again after failed_cooldown.
 create function public.lease_fantasy_tiles(p_limit int)
 returns table (version int, z smallint, x int, y int, webp_quality real)
 language plpgsql
@@ -55,14 +52,24 @@ begin
   end if;
   return query
   with c as (select * from public.fantasy_config),
-  picked as (
-    select t.version, t.z, t.x, t.y
+  waiting as (
+    select t.version, t.z, t.x, t.y, t.priority, t.requested_at,
+      row_number() over (
+        partition by t.priority, coalesce(t.requested_by, '00000000-0000-0000-0000-000000000000'::uuid)
+        order by t.requested_at, t.z desc, t.x, t.y
+      ) as turn
     from public.fantasy_tiles t, c
     where t.version = c.version
       and (t.status = 'queued'
         or (t.status = 'painting' and t.lease_until < now())
-        or (t.status = 'failed' and t.attempts < c.max_attempts and t.lease_until < now()))
-    order by t.priority, t.requested_at desc
+        or (t.status = 'failed' and t.lease_until < now()
+          and (t.attempts < c.max_attempts or t.finished_at < now() - c.failed_cooldown)))
+  ),
+  picked as (
+    select t.version, t.z, t.x, t.y
+    from public.fantasy_tiles t
+    join waiting w on w.version = t.version and w.z = t.z and w.x = t.x and w.y = t.y
+    order by w.priority, w.turn, w.requested_at, w.z desc, w.x, w.y
     limit greatest(0, least(p_limit, 64))
     for update of t skip locked
   )
@@ -75,13 +82,13 @@ end;
 $$;
 
 comment on function public.lease_fantasy_tiles(int) is
-  'Renderer only. Leases up to p_limit fantasy tiles to paint (on screen, then around, then pre-painting; newest first).';
+  'Renderer only. Leases up to p_limit fantasy tiles to paint: by priority, players taking turns, oldest first.';
 
 revoke all on function public.lease_fantasy_tiles(int) from public, anon;
 grant execute on function public.lease_fantasy_tiles(int) to authenticated, service_role;
 
-drop function public.finish_fantasy_tile(int, int, int, int, boolean, int, int, text);
-
+-- Records a paint. A tile the renderer painted without a request (the children of a z15
+-- tile) gets its row here.
 create function public.finish_fantasy_tile(
   p_version int, p_z int, p_x int, p_y int, p_ok boolean,
   p_bytes int default null, p_paint_ms int default null, p_error text default null
@@ -114,14 +121,15 @@ end;
 $$;
 
 comment on function public.finish_fantasy_tile(int, int, int, int, boolean, int, int, text) is
-  'Renderer only. Marks a fantasy tile ready (uploaded) or failed (retried after retry_after, up to max_attempts).';
+  'Renderer only. Marks a fantasy tile ready (uploaded) or failed (retried after retry_after, up to max_attempts, then after failed_cooldown).';
 
 revoke all on function public.finish_fantasy_tile(int, int, int, int, boolean, int, int, text) from public, anon;
 grant execute on function public.finish_fantasy_tile(int, int, int, int, boolean, int, int, text) to authenticated, service_role;
 
 -- Pre-painting: queues tiles of the current version that have no row yet, at the lowest
--- priority, outside any player's daily cap. p_tiles: [[z, x, y], ...], at most 5000.
--- Returns {"version", "queued", "existing"}; with p_dry_run only counts (queued = would be).
+-- priority, outside the players' limits (an operator decides). p_tiles: [[z, x, y], ...],
+-- at most 5000. Returns {"version", "queued", "existing"}; with p_dry_run only counts
+-- (queued = would be).
 create function public.queue_fantasy_tiles(p_tiles jsonb, p_dry_run boolean default false)
 returns jsonb
 language plpgsql
@@ -171,7 +179,7 @@ end;
 $$;
 
 comment on function public.queue_fantasy_tiles(jsonb, boolean) is
-  'Renderer only. Queues fantasy tiles for pre-painting (priority 2, no daily cap); returns {version, queued, existing}.';
+  'Renderer only. Queues fantasy tiles for pre-painting (priority 2, outside the players'' limits); returns {version, queued, existing}.';
 
 revoke all on function public.queue_fantasy_tiles(jsonb, boolean) from public, anon;
 grant execute on function public.queue_fantasy_tiles(jsonb, boolean) to authenticated, service_role;
@@ -187,6 +195,7 @@ set search_path = ''
 as $$
 declare
   c public.fantasy_config;
+  v_day date := (now() at time zone 'utc')::date;
 begin
   -- API requests always carry JWT claims; the SQL editor and psql sessions don't.
   if not (public.is_fantasy_renderer() or coalesce(current_setting('request.jwt.claims', true), '') = '') then
@@ -197,7 +206,19 @@ begin
     'enabled', c.enabled,
     'version', c.version,
     'webp_quality', c.webp_quality,
-    'daily_tiles_per_player', c.daily_tiles_per_player,
+    'limits', jsonb_build_object(
+      'daily_tiles_per_player', c.daily_tiles_per_player,
+      'global_daily_tiles', c.global_daily_tiles,
+      'global_today', coalesce((select d.tiles from public.fantasy_daily d where d.day = v_day), 0),
+      'max_queue_depth', c.max_queue_depth,
+      'queue_depth', (
+        select coalesce(sum(case when t.z = 15 then 5 else 1 end), 0)
+        from public.fantasy_tiles t
+        where t.version = c.version
+          and (t.status in ('queued', 'painting') or (t.status = 'failed' and t.attempts < c.max_attempts))
+      ),
+      'near_player_m', c.near_player_m
+    ),
     'queue', (
       select jsonb_build_object(
         'queued', count(*) filter (where t.status = 'queued'),
@@ -232,24 +253,22 @@ begin
     ),
     'players_today', (
       select jsonb_build_object('players', count(*), 'tiles', coalesce(sum(r.tiles), 0), 'max_tiles', coalesce(max(r.tiles), 0))
-      from public.fantasy_requests r where r.day = (now() at time zone 'utc')::date
+      from public.fantasy_requests r where r.day = v_day
     )
   );
 end;
 $$;
 
 comment on function public.fantasy_status() is
-  'Renderer and SQL editor. Queue depth, throughput, storage, the last error and today''s requests, as JSON.';
+  'Renderer and SQL editor. Limits and today''s use, queue depth, throughput, storage, the last error and today''s requests, as JSON.';
 
 revoke all on function public.fantasy_status() from public, anon;
 grant execute on function public.fantasy_status() to authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
--- Storage: the renderer writes the fantasy-tiles bucket (an upsert needs all three)
+-- Storage: the renderer writes tiles and label files to the fantasy-tiles bucket, and
+-- nothing else: v<version>/<15|16>/<x>/<y>.webp|json (an upsert needs all three policies)
 -- ---------------------------------------------------------------------------
-
--- Each tile also gets its live labels (road and water names) as <tile>.json next to the WebP.
-update storage.buckets set allowed_mime_types = array['image/webp', 'application/json'] where id = 'fantasy-tiles';
 
 create policy "fantasy renderer reads tiles" on storage.objects
   for select to authenticated
@@ -257,9 +276,15 @@ create policy "fantasy renderer reads tiles" on storage.objects
 
 create policy "fantasy renderer writes tiles" on storage.objects
   for insert to authenticated
-  with check (bucket_id = 'fantasy-tiles' and public.is_fantasy_renderer());
+  with check (
+    bucket_id = 'fantasy-tiles' and public.is_fantasy_renderer()
+    and name ~ '^v[0-9]{1,6}/1[56]/[0-9]{1,5}/[0-9]{1,5}\.(webp|json)$'
+  );
 
 create policy "fantasy renderer replaces tiles" on storage.objects
   for update to authenticated
   using (bucket_id = 'fantasy-tiles' and public.is_fantasy_renderer())
-  with check (bucket_id = 'fantasy-tiles' and public.is_fantasy_renderer());
+  with check (
+    bucket_id = 'fantasy-tiles' and public.is_fantasy_renderer()
+    and name ~ '^v[0-9]{1,6}/1[56]/[0-9]{1,5}/[0-9]{1,5}\.(webp|json)$'
+  );

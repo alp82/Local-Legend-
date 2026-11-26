@@ -1,10 +1,11 @@
 -- pgTAP tests for the fantasy renderer's own credential: only the user flagged
 -- fantasy_renderer in app_metadata (or the service role) leases, finishes and queues
--- tiles, reads the status, and writes the fantasy-tiles bucket; players can't.
+-- tiles, reads the status, and writes tile and label files to the fantasy-tiles bucket, at
+-- tile paths only; players can't, and the renderer gains nothing through player functions.
 -- Run with: npx supabase test db
 begin;
 
-select plan(23);
+select plan(36);
 
 insert into auth.users (id, aud, role, is_anonymous, raw_app_meta_data)
 values
@@ -33,7 +34,18 @@ create function pg_temp.as_postgres() returns void language sql as $$
 $$;
 
 delete from public.fantasy_tiles;
-update public.fantasy_config set enabled = true, version = 1, max_attempts = 3, retry_after = interval '10 minutes';
+update public.fantasy_config set enabled = true, version = 1, max_attempts = 3, retry_after = interval '10 minutes',
+  min_request_interval = interval '0', daily_tiles_per_player = 300, global_daily_tiles = 2000, max_queue_depth = 500;
+
+-- ---------------------------------------------------------------------------
+-- Grants: none of the renderer functions is callable without signing in
+-- ---------------------------------------------------------------------------
+
+select is(has_function_privilege('anon', 'public.lease_fantasy_tiles(integer)', 'execute'), false, 'Anonymous callers have no grant on lease_fantasy_tiles');
+select is(has_function_privilege('anon', 'public.finish_fantasy_tile(integer, integer, integer, integer, boolean, integer, integer, text)', 'execute'), false, 'Anonymous callers have no grant on finish_fantasy_tile');
+select is(has_function_privilege('anon', 'public.queue_fantasy_tiles(jsonb, boolean)', 'execute'), false, 'Anonymous callers have no grant on queue_fantasy_tiles');
+select is(has_function_privilege('anon', 'public.fantasy_status()', 'execute'), false, 'Anonymous callers have no grant on fantasy_status');
+select is(has_function_privilege('anon', 'public.is_fantasy_renderer()', 'execute'), false, 'Anonymous callers have no grant on is_fantasy_renderer');
 
 -- ---------------------------------------------------------------------------
 -- Players
@@ -98,6 +110,28 @@ select is((public.fantasy_status() -> 'painted' ->> 'total')::int, 1, 'The statu
 select lives_ok(
   $$insert into storage.objects (bucket_id, name) values ('fantasy-tiles', 'v1/16/500/500.webp')$$,
   'The renderer uploads a tile');
+select lives_ok(
+  $$insert into storage.objects (bucket_id, name) values ('fantasy-tiles', 'v12/15/250/250.json')$$,
+  'and a label file, at any version, at z15');
+select throws_ok(
+  $$insert into storage.objects (bucket_id, name) values ('fantasy-tiles', 'index.html')$$,
+  '42501', null, 'The renderer cannot write any other name');
+select throws_ok(
+  $$insert into storage.objects (bucket_id, name) values ('fantasy-tiles', 'v1/14/1/1.webp')$$,
+  '42501', null, 'nor a zoom it doesn''t paint');
+select throws_ok(
+  $$insert into storage.objects (bucket_id, name) values ('fantasy-tiles', 'v1/16/1/1.webp.html')$$,
+  '42501', null, 'nor another file type behind a tile name');
+select throws_ok(
+  $$insert into storage.objects (bucket_id, name) values ('fantasy-tiles', 'v1/16/1/../../x.webp')$$,
+  '42501', null, 'nor a path that climbs out');
+
+-- Through player functions the renderer gains nothing: it has no ground of its own.
+select is(public.request_fantasy_tiles('[[16, 35209, 21490], [16, 40000, 20000]]') - 'pending' - 'ready',
+  '{"enabled": true, "version": 1, "queued": 0, "capped": false, "reason": null, "far": 2}'::jsonb,
+  'Asking like a player queues nothing for the renderer');
+select throws_ok($$select * from public.fantasy_tiles$$, '42501', null, 'The renderer cannot read the tile table directly');
+select is((public.fantasy_status() -> 'limits' ->> 'global_daily_tiles')::int, 2000, 'The status shows the limits');
 
 select * from finish();
 rollback;
