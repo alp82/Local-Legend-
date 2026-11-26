@@ -190,7 +190,7 @@ export default function DebugScreen() {
         {toggle(
           'fantasyMap',
           'Fantasy map',
-          'The painted map over the street map, from zoom 14.5. Where a tile is not painted yet, the street map shows. Kept after a restart.',
+          'The painted map over the street map. While it shows, the map does not zoom out past where the painting ends. Where a tile is not painted yet, the street map shows. Kept after a restart.',
         )}
         {toggle('alignmentGrid', 'Show alignment grid', 'Claim cell outlines (zoom 21 tiles) at map zoom 17+.')}
         {toggle(
