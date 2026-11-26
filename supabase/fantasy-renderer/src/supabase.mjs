@@ -91,6 +91,18 @@ export function createSupabase(url, auth) {
         }),
       );
     },
+    /** Deletes stored files (at most 1000), through the Storage API: the only way Storage allows. */
+    async remove(paths) {
+      if (!paths.length) return;
+      await call(`remove ${paths.length} files`, (h) =>
+        fetch(`${base}/storage/v1/object/${BUCKET}`, {
+          method: 'DELETE',
+          headers: { ...h, 'content-type': 'application/json' },
+          body: JSON.stringify({ prefixes: paths }),
+          signal: AbortSignal.timeout(60_000),
+        }),
+      );
+    },
     /** A stored tile or label file, or null when there is none. Public: no credential needed. */
     async download(path) {
       const res = await fetch(`${base}/storage/v1/object/public/${BUCKET}/${path}`, { signal: AbortSignal.timeout(30_000) });

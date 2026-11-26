@@ -9,11 +9,19 @@
 // After every round the worker writes a heartbeat file (HEARTBEAT_FILE); src/health.mjs
 // reads it for the container health check, src/status.mjs shows it with the queue.
 //
+// At start-up it reports its painter fingerprint (src/fingerprint.mjs, src/release.mjs): the database then
+// carries on, stages a new tile version for this painter, or rolls back to this painter's earlier version.
+// The worker paints only versions painted with its own painter, switches phones to a staged version once it's
+// done, and deletes replaced versions after their grace period.
+//
 // After IDLE_RELEASE_MS with nothing to paint, Chromium is closed to give its memory back to
 // the shared host (state "idle, painter released"); the next lease launches it again.
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
+import { painterFingerprint } from './fingerprint.mjs';
+import { labelJson } from './paint-output.mjs';
+import { createRelease } from './release.mjs';
 import { startRenderer } from './renderer.mjs';
 import { supabaseFromEnv } from './supabase.mjs';
 
@@ -32,27 +40,19 @@ const config = {
 const log = (msg) => console.log(`${new Date().toISOString()} ${msg}`);
 const sb = supabaseFromEnv();
 const renderer = await startRenderer({ sourceDir: config.sourceDir, workers: config.paintWorkers, log });
-log(`worker ready: Chromium ${renderer.chromium}, ${config.paintWorkers} paint workers, ${sb.mode}, source data in ${config.sourceDir}`);
+const fingerprint = painterFingerprint();
+log(`worker ready: painter ${fingerprint}, Chromium ${renderer.chromium}, ${config.paintWorkers} paint workers, ${sb.mode}, source data in ${config.sourceDir}`);
+const release = createRelease(sb, fingerprint, log);
 
-const stats = { startedAt: new Date().toISOString(), painted: 0, failed: 0, lastPaintAt: null, lastError: null, releases: 0 };
+const stats = { startedAt: new Date().toISOString(), painted: 0, failed: 0, lastPaintAt: null, lastError: null, browserReleases: 0 };
 async function beat(state) {
-  const body = { ...stats, state, at: new Date().toISOString(), source: await renderer.sourceStatus() };
+  const r = release.state;
+  const body = { ...stats, state, at: new Date().toISOString(), painter: { fingerprint, action: r.action, version: r.version, staging: r.staging }, source: await renderer.sourceStatus() };
   await writeFile(config.heartbeat, JSON.stringify(body)).catch((e) => log(`heartbeat: ${e.message}`));
 }
 
 const tilePath = (v, z, x, y) => `v${v}/${z}/${x}/${y}.webp`;
 const labelPath = (v, z, x, y) => `v${v}/${z}/${x}/${y}.json`;
-const HALF = 20037508.342789244;
-const lngLat = (mx, my) => [
-  Math.round(((mx / HALF) * 180) * 1e6) / 1e6,
-  Math.round((Math.atan(Math.exp(my / 6378137)) * 2 - Math.PI / 2) * (180 / Math.PI) * 1e6) / 1e6,
-];
-/** The app's live labels for a tile: [{ name, lng, lat, rot, water }]. */
-const labelJson = (labels) => JSON.stringify(labels.map((L) => {
-  const [lng, lat] = lngLat(L.wx, L.wy);
-  return { name: L.name, lng, lat, rot: L.rot, water: L.water };
-}));
-
 /** Paints, uploads and records one z16 tile; returns { webp, labels } (labels as JSON text). */
 async function paint16(v, x, y, quality) {
   const t = await renderer.paint(x, y, quality);
@@ -104,11 +104,12 @@ let stopping = false;
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { stopping = true; });
 
 await beat('starting');
+await release.begin();
 let lastWork = Date.now();
 while (!stopping) {
   let leased;
   try {
-    leased = await sb.rpc('lease_fantasy_tiles', { p_limit: config.batch });
+    leased = await sb.rpc('lease_fantasy_tiles', release.leaseArgs(config.batch));
   } catch (e) {
     log(`lease failed: ${e.message}`);
     stats.lastError = { tile: null, error: `lease: ${e.message}`, at: new Date().toISOString() };
@@ -118,9 +119,10 @@ while (!stopping) {
   }
   if (!leased.length) {
     if (renderer.awake && Date.now() - lastWork >= config.releaseAfterMs && (await renderer.release())) {
-      stats.releases++;
+      stats.browserReleases++;
       log(`painter released after ${Math.round((Date.now() - lastWork) / 1000)} s idle`);
     }
+    await release.tick().catch((e) => log(`release: ${e.message}`));
     await beat(renderer.awake ? 'idle' : 'idle, painter released');
     if (config.once) break;
     await new Promise((r) => setTimeout(r, config.idleMs));

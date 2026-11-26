@@ -41,7 +41,7 @@ update public.fantasy_config set enabled = true, version = 1, max_attempts = 3, 
 -- Grants: none of the renderer functions is callable without signing in
 -- ---------------------------------------------------------------------------
 
-select is(has_function_privilege('anon', 'public.lease_fantasy_tiles(integer)', 'execute'), false, 'Anonymous callers have no grant on lease_fantasy_tiles');
+select is(has_function_privilege('anon', 'public.lease_fantasy_tiles(integer, text)', 'execute'), false, 'Anonymous callers have no grant on lease_fantasy_tiles');
 select is(has_function_privilege('anon', 'public.finish_fantasy_tile(integer, integer, integer, integer, boolean, integer, integer, text)', 'execute'), false, 'Anonymous callers have no grant on finish_fantasy_tile');
 select is(has_function_privilege('anon', 'public.queue_fantasy_tiles(jsonb, boolean)', 'execute'), false, 'Anonymous callers have no grant on queue_fantasy_tiles');
 select is(has_function_privilege('anon', 'public.fantasy_status()', 'execute'), false, 'Anonymous callers have no grant on fantasy_status');

@@ -33,7 +33,7 @@ fresh16 as (
   select t.x, t.y from tiles t
   where not exists (
     select 1 from public.fantasy_tiles f, public.fantasy_config c
-    where f.version = c.version and f.z = 16 and f.x = t.x and f.y = t.y
+    where f.version = coalesce(c.staging_version, c.version) and f.z = 16 and f.x = t.x and f.y = t.y
   )
 ),
 parents as (select distinct x >> 1 as x, y >> 1 as y from tiles),
@@ -41,7 +41,7 @@ fresh15 as (
   select p.x, p.y from parents p
   where not exists (
     select 1 from public.fantasy_tiles f, public.fantasy_config c
-    where f.version = c.version and f.z = 15 and f.x = p.x and f.y = p.y
+    where f.version = coalesce(c.staging_version, c.version) and f.z = 15 and f.x = p.x and f.y = p.y
   )
 ),
 -- every z16 tile the worker paints: the new ones, and the missing children of new parents
@@ -51,7 +51,7 @@ painted16 as (
   select p.x * 2 + dx, p.y * 2 + dy from fresh15 p, generate_series(0, 1) dx, generate_series(0, 1) dy
   where not exists (
     select 1 from public.fantasy_tiles f, public.fantasy_config c
-    where f.version = c.version and f.z = 16 and f.x = p.x * 2 + dx and f.y = p.y * 2 + dy
+    where f.version = coalesce(c.staging_version, c.version) and f.z = 16 and f.x = p.x * 2 + dx and f.y = p.y * 2 + dy
   )
 )
 select

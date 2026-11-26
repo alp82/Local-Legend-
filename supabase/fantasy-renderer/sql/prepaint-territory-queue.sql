@@ -9,7 +9,7 @@
 -- The worker leases in arrival order and, at the same time, z16 before z15, so the children
 -- are painted before their parents, which then only need scaling down.
 with buffer as (select 1000.0 as metres),
-cfg as (select version from public.fantasy_config),
+cfg as (select coalesce(staging_version, version) as version from public.fantasy_config), -- the staged version during a release
 cells as (
   select distinct (cell / 2097152) >> 5 as tx, (cell % 2097152) >> 5 as ty
   from public.claimed_cells
