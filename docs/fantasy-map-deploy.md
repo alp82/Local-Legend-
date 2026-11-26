@@ -497,13 +497,28 @@ container. The worker would get a route round the egress proxy, and the proxy th
 password. Raw mode ("deploy file as-is") runs the compose file unchanged; Coolify then only
 pulls the images and runs `docker compose up`.
 
-**Trade-offs to accept first.** Coolify always starts its `coolify-sentinel` container on a
-server it manages, with the Docker socket, the host's process namespace and a restart policy;
-with root SSH that gives the Coolify instance root on the worker host, which is shared with the
-analytics and Windmill stacks. Coolify's deploy token (step D10) is broader than its name: on
-4.5.3 it can stop, start and restart every application, database and service of its team,
-restart any server's proxy, run application rollbacks and deploy previews. Keep the worker host
-and this application in a Coolify team of their own, so a leaked token reaches nothing else.
+**Trade-offs, accepted by the owner (November 26, 2026).**
+
+- **Coolify gets root on the worker host.** Coolify always starts its `coolify-sentinel`
+  container on a server it manages, with the Docker socket, the host's process namespace and a
+  restart policy. With root SSH, the Coolify instance has root on the worker host, which is
+  shared with the analytics and Windmill stacks.
+- **No approval anywhere.** Releases go out on merge with no reviewer and no approval click.
+  What protects them is that nothing reaches `main` or the deploy branch without a pull request
+  (step A2) or the environment's deploy key (step A6).
+- **The Coolify token in GitHub has broad reach.** The owner kept the existing Coolify team and
+  the existing API token, with the **write** and **deploy** permissions (not root). Stored as the
+  GitHub environment secret `COOLIFY_DEPLOY_TOKEN`, it can do anything in that team except root
+  actions:
+  - create, change, delete, deploy, stop and restart every application, database and service
+    in the team, on every server the team has;
+  - change those servers' settings and proxies, and run rollbacks and preview deploys.
+  Coolify's documentation says the write permission "has root access to every server that runs
+  a resource inside its scope". So a leak of that GitHub secret is root on every server of the
+  owner's Coolify team, not only the worker host. Only jobs in the `fantasy-release`
+  environment, on `main`, can read it. A token with only **deploy** ticked would narrow this
+  (start, stop, restart and deploy, no changes); creating one takes a minute under **Keys &
+  Tokens > API tokens**.
 
 ### A. GitHub settings (repository admin)
 
@@ -516,21 +531,24 @@ needed either way.
 2. **Settings > Rules > Rulesets > New branch ruleset**, named `main`:
    - Enforcement: **Active**. Target: the default branch.
    - **Restrict deletions**, **Block force pushes**, and **Require a pull request before merging**
-     (with **Required approvals: 1** if the owner wants a second person on every change).
+     with **Required approvals: 0** (the owner's decision: no approval at all; a pull request is
+     still the only way onto `main`).
    - Bypass list: empty.
 3. **Settings > Environments > New environment** `fantasy-release`:
    - **Deployment branches and tags:** **Selected branches and tags**, add `main`.
-   - **Required reviewers:** the owner's decision. With reviewers, tick **Prevent self-review**
-     and untick **Allow administrators to bypass configured protection rules**.
+   - No required reviewers (the owner's decision), no wait timer.
 4. **The package token.** Create a classic personal access token on the account that owns the
    repository (**Settings > Developer settings > Personal access tokens > Tokens (classic)**)
    with only **write:packages** ticked (untick **repo**, which GitHub ticks with it) and an
    expiry. GitHub's registry accepts no fine-grained or GitHub App token. Save it as the
    `fantasy-release` environment secret `FANTASY_PACKAGES_TOKEN`. It acts as that account, so
    rotate it before it expires.
-5. **The deploy key.** `ssh-keygen -t ed25519 -N '' -C fantasy-renderer-deploy -f deploy_key`.
-   Add `deploy_key.pub` under **Settings > Deploy keys** with **Allow write access**. Save
-   `deploy_key` as the environment secret `FANTASY_DEPLOY_KEY`, then delete both files.
+5. **The deploy key.** The operator generates it
+   (`ssh-keygen -t ed25519 -N '' -C fantasy-renderer-deploy -f deploy_key`) and gives the admin
+   only the public half. The admin adds it under **Settings > Deploy keys** with **Allow write
+   access**, and sets the private half as the environment secret `FANTASY_DEPLOY_KEY` straight
+   from the file (`gh secret set FANTASY_DEPLOY_KEY --env fantasy-release < deploy_key`), never
+   through chat. Then the file is deleted.
 6. **Settings > Rules > Rulesets > New branch ruleset**, named `fantasy-renderer-deploy`:
    - Target: branch name `fantasy-renderer-deploy`.
    - **Restrict creations**, **Restrict updates**, **Restrict deletions**, **Block force pushes**.
@@ -592,7 +610,7 @@ needed either way.
 
 ### D. Coolify
 
-1. In Coolify, create a team for the worker host (**Teams > Create**) and switch to it.
+1. Use the owner's existing team (the owner's decision; see the trade-offs).
 2. **Keys & Tokens > Private Keys > Generate ED25519**, named for the worker host. Add the public
    key to `root`'s `~/.ssh/authorized_keys` on the worker host, limited to the Coolify host:
    `from="<Coolify host address>" ssh-ed25519 AAAA… coolify`.
@@ -624,10 +642,10 @@ needed either way.
    name `fantasy-renderer`, so this replaces the manually started containers in place, with the
    same volume and network names.
 10. **Webhooks:** copy **Deploy Webhook (auth required)**
-    (`https://<coolify>/api/v1/deploy?uuid=<application uuid>&force=false`). Under **Keys &
-    Tokens > API tokens** (still in the new team), create a token. The form starts with
-    **read** ticked: untick it so only **deploy** is ticked. Save both as the `fantasy-release`
-    environment secrets `COOLIFY_DEPLOY_URL` and `COOLIFY_DEPLOY_TOKEN`.
+    (`https://<coolify>/api/v1/deploy?uuid=<application uuid>&force=false`). Save it and the
+    API token as the `fantasy-release` environment secrets `COOLIFY_DEPLOY_URL` and
+    `COOLIFY_DEPLOY_TOKEN` (the existing write and deploy token, per the owner; a deploy-only
+    token narrows it, see the trade-offs).
 
 From the next merge on, releases are automatic.
 
