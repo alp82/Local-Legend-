@@ -72,12 +72,19 @@ begin
     order by w.priority, w.turn, w.requested_at, w.z desc, w.x, w.y
     limit greatest(0, least(p_limit, 64))
     for update of t skip locked
+  ),
+  leased as (
+    update public.fantasy_tiles t
+    set status = 'painting', lease_until = now() + c.lease, attempts = t.attempts + 1
+    from picked p, c
+    where t.version = p.version and t.z = p.z and t.x = p.x and t.y = p.y
+    returning t.version, t.z, t.x, t.y, c.webp_quality
   )
-  update public.fantasy_tiles t
-  set status = 'painting', lease_until = now() + c.lease, attempts = t.attempts + 1
-  from picked p, c
-  where t.version = p.version and t.z = p.z and t.x = p.x and t.y = p.y
-  returning t.version, t.z, t.x, t.y, c.webp_quality;
+  -- in lease order (an update returns its rows in no particular order)
+  select l.version, l.z, l.x, l.y, l.webp_quality
+  from leased l
+  join waiting w on w.version = l.version and w.z = l.z and w.x = l.x and w.y = l.y
+  order by w.priority, w.turn, w.requested_at, w.z desc, w.x, w.y;
 end;
 $$;
 
