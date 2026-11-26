@@ -29,7 +29,11 @@ There is no store build and no `production` channel. How the pieces fit is descr
 
 The worker host is shared with an analytics stack and a Windmill worker. Its compose file
 caps it at 2 CPUs and 3 GB of memory (swap included), with no published ports and rotated
-logs. It runs one painter, which measured about 1.8 GB at its peak on dense Berlin at those limits.
+logs. It runs one painter. With the round 11 painter that peaked at about 3.2 GB in dense
+Manhattan, so 3 GB is not enough: Chromium was killed about once per 100 tiles (the tile is
+painted again, so nothing wrong is stored, but each restart costs time). 4 GB had no kills.
+The limit is `FANTASY_RENDERER_MEMORY` in `/opt/fantasy-renderer/.env` (default `3g`); set it
+to `4g` if the host can spare it.
 
 ## Go live
 
@@ -144,14 +148,15 @@ For each tester, take a point near home and a radius, and print the estimate fir
 ssh "$WORKER" 'cd /opt/fantasy-renderer && docker compose exec -T worker node src/prepaint.mjs --at 13.4140,52.5005 --radius-km 2'
 ```
 
-The estimate gives the tile count, the painting time at 1.5 s per tile, and the storage. A
-2 km radius is about 120 to 170 z16 tiles plus 30 to 40 z15 tiles, 3 to 5 minutes and 15 to
-25 MB. If the numbers are acceptable, run it again with `--yes`. `--bbox west,south,east,north` works instead of
+The estimate gives the tile count, the painting time at 2 s per tile, and the storage. A
+2 km radius is about 120 to 170 z16 tiles plus 30 to 40 z15 tiles, 4 to 6 minutes and 20 to
+30 MB. If the numbers are acceptable, run it again with `--yes`. `--bbox west,south,east,north` works instead of
 `--at` and `--radius-km`.
 
-Pre-paint every tester's home area before step 8. Ground nobody has painted yet takes about
-13 s to fill a phone screen with one painter (the first tile of a new area takes 6 to 10 s);
-painted ground loads in well under a second.
+Pre-paint every tester's home area before step 8. Ground nobody has painted yet took about
+25 s to fill a phone screen with one painter on a fast desktop, and will take longer on the
+host. The first tile of a new area takes 4 to 17 s there (countryside to Manhattan), the ones
+next to it about 1 s. Painted ground loads in well under a second.
 
 Run pre-painting on the worker host only. Every tile must come from the worker's frozen
 source data, or tiles painted elsewhere can disagree with their neighbours at the edges.
@@ -281,11 +286,11 @@ These were measured on 27 z16 tiles in Berlin, Manhattan and Innsbruck:
 
 | `webp_quality` | Mean z16 tile |
 | --- | --- |
-| 0.7 | 109 KB |
-| 0.75 | 118 KB |
-| 0.8 | 149 KB |
+| 0.7 | 131 KB |
+| 0.75 | 143 KB |
+| 0.8 | 180 KB |
 
-At twice the pixel size, 0.75 and 0.8 look the same. A z15 tile is about 25% larger than a
+At twice the pixel size, 0.75 and 0.8 look the same. A z15 tile is about 15% larger than a
 z16 tile.
 
 How the costs work out:
@@ -294,18 +299,18 @@ How the costs work out:
   and each phone keeps it in its 200 MB MapLibre cache. A tester walking new streets needs
   roughly 15 new tiles per km, and a first visit to an area asks for about 30.
 - **The daily cap bounds a player who pans across the world.** At 600 tiles that's at most
-  71 MB of new storage and 15 minutes of worker time per player per day. Walking never comes
+  86 MB of new storage and 20 minutes of worker time per player per day. Walking never comes
   near it.
-- **Storage for 10 testers:** pre-painted home areas of 15 to 25 MB each (2 km radius), plus about 20 MB a
-  day each while they explore. That's roughly 1.5 to 3 GB in the first month, then slower
+- **Storage for 10 testers:** pre-painted home areas of 20 to 30 MB each (2 km radius), plus about 25 MB a
+  day each while they explore. That's roughly 2 to 4 GB in the first month, then slower
   growth as home areas fill in.
   - Free (1 GB) runs out within one to two weeks, whatever the values.
   - Pro (100 GB included, then $0.0213 per GB) doesn't notice it.
-- **Egress for 10 testers:** about 200 tile loads a day each at 118 KB is roughly 7 GB a
+- **Egress for 10 testers:** about 200 tile loads a day each at 143 KB is roughly 9 GB a
   month of cached egress.
   - Free includes 5 GB.
   - Pro includes 250 GB, then $0.03 per GB.
-- **Worker time** is the host's own: 600 new tiles take about 15 minutes at 1.5 s each.
+- **Worker time** is the host's own: 600 new tiles take about 20 minutes at 2 s each.
 
 On Pro, 0.75 and 600 cost nothing extra at tester scale. On Free, 0.7 and 300 stretch the
 quotas, but storage still runs out within weeks. The fantasy map needs Pro beyond a short

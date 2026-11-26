@@ -57,11 +57,12 @@ export async function startRenderer({ sourceDir, workers = 4, recycleAfter = Num
   // request is thrown away and the page reloaded.
   async function prefetch(x, y) {
     const [x0, y0, x1, y1] = tileBounds(x, y, PAINT_ZOOM);
-    // The world plan reads wide windows (map metres, 1.4 mercator units each; the painter's README,
-    // round 11): roads joined along real streets up to 2 km from an entrance, names within 2 km,
-    // the valley floor within 1.5 km. Prefetching is only a head start: anything else is fetched
-    // on demand through the same frozen store.
-    const reach = 3000 * 1.4, near = 1600 * 1.4;
+    // The world plan reads wide windows (the painter's README, round 11): a cold tile read 114 to
+    // 260 vector tiles reaching about 17 km (mercator), one round after another as the plan found
+    // what it needed. Fetching them in parallel first halves a cold tile in the country and saves
+    // about 3 s in Manhattan for about the same data. SOURCE_PREFETCH_KM is in map kilometres
+    // (1.4 mercator units each). Anything else is still fetched on demand through the same store.
+    const reach = Number(process.env.SOURCE_PREFETCH_KM || 12) * 1000 * 1.4, near = 1600 * 1.4;
     const ofm = rangeOf([x0 - reach, y0 - reach, x1 + reach, y1 + reach], 14);
     const dem = rangeOf([x0 - near, y0 - near, x1 + near, y1 + near], 14);
     const jobs = [];

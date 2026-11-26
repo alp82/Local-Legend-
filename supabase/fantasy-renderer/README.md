@@ -60,6 +60,7 @@ The worker reads only environment variables:
 | `SUPABASE_SECRET_KEY` | | Instead of the renderer user: a secret key (`sb_secret_…`) or the legacy `service_role` JWT (local stack, admin) |
 | `SOURCE_CACHE_DIR` | `.source` (`/data/source` in Docker) | Frozen source tiles |
 | `PAINT_WORKERS` | `4` | Painter Web Workers. Each needs about 1.5 GB in a dense city; production runs 1 |
+| `SOURCE_PREFETCH_KM` | `12` | Radius (map km) of vector tiles fetched in parallel before a paint |
 | `RECYCLE_TILES` | `300` | Tiles per painter page; the page is then replaced (the painter's caches only grow). Production: 100 |
 | `LEASE_BATCH` | `8` | Tiles leased per round |
 | `IDLE_POLL_MS` | `1000` | Wait between empty polls |
@@ -121,17 +122,26 @@ python3 scripts/phone-view.py out/berlin <mercator x> <mercator y> view.png [app
 
 ## Speed and size
 
-The final painter loads wider windows (the world plan looks up to 2 km round a tile) and
-keeps its caches for good:
+Measured with the round 11 painter in Docker at 2 CPUs, one painter, on a fast desktop core
+(the production host's cores are likely slower):
 
-- Docker at the production limits (2 CPUs, 3 GB), dense Berlin, one painter: about 0.8 s per
-  tile on a fast desktop core, 1.8 GB peak. Two painters hit the 3 GB limit and gain little.
-- The first tile of a new area takes 6 to 10 s (cold caches and source data); with one
-  painter, a phone screen of never-painted ground filled in about 13 s.
-- A painter page is replaced every `RECYCLE_TILES` tiles. A page that crashes is replaced
-  and its tiles painted again.
-- Mean z16 tile by WebP quality (27 tiles, Berlin, Manhattan, Innsbruck): 0.7: 109 KB,
-  0.75: 118 KB, 0.8: 149 KB. A z15 tile is about 25% larger.
+- **Cold tile** (fresh page, no source data yet): 4 to 6 s in the Bavarian countryside, 12 to
+  17 s in Manhattan. A cold tile reads 114 to 260 vector tiles (5 to 50 MB) up to about 17 km
+  away, and builds the world plan for that whole area. With its data already on disk, the same
+  country tile took 4.8 s instead of 11.6 s. The 12 km prefetch (`SOURCE_PREFETCH_KM`) fetches
+  most of it in parallel first.
+- **Warm tile** next to painted ones: median 0.7 s, 90th percentile 1.7 s (Manhattan).
+- **Throughput** over 100 Manhattan tiles: 0.77 s per tile at a 4 GB limit, 1.0 to 1.1 s at 3 GB
+  (including Chromium restarts).
+- **Memory:** the painter's page alone peaks at about 2.4 GB in Manhattan, and the container at
+  about 3.2 GB. At a 3 GB limit Chromium was killed about once per 100 tiles: the tile is painted
+  again, so nothing wrong is stored. At 4 GB there were no kills.
+- **Never-painted ground:** a phone screen took about 25 s to fill (Vienna, with one painter and
+  empty source data).
+- **Source data:** the first tile of a new area adds 5 MB (countryside) to 50 MB (Manhattan) to
+  the frozen store; 340 Manhattan tiles came to 69 MB.
+- **Mean z16 tile by WebP quality** (27 tiles, Berlin, Manhattan, Innsbruck): 0.7: 131 KB,
+  0.75: 143 KB, 0.8: 180 KB. A z15 tile is about 15% larger.
 
 ## Tests
 
@@ -156,22 +166,17 @@ histories. It checks that they share plans, that sprites across the edge have on
 that no two set pieces stand on the same ground, and that pixels change no more across the
 edge than inside a tile. Run it on every re-sync.
 
-### Known issues in the final painter (November 26, 2026)
+### Known issues (round 11, November 26, 2026)
 
-Compared with the round 8 look the owner approved:
+The round 8 look is restored: roads to every heart, woods and mountain scenery before
+fillers, sharp landmark trees and hamlets (no sprite is drawn above its atlas size), and every
+heart named. What remains:
 
-- **Roads in dense districts.** Around Berlin's Luisenstadt the approved view had dirt roads
-  leading to the town; the final painter draws none there (its own round 10 shot shows the
-  same).
-- **Mountain detail.** North of Innsbruck's Sankt Nikolaus the pine groups, rock outcrop and
-  winding roads of the approved view are gone; small fillers stand in their place.
-- **Faded landmark trees.** `landmark-sweet-chestnut`, `landmark-silver-birch`,
-  `landmark-lombardy-poplar` and `landmark-mountain-rowan` are packed into the atlas only
-  40 px wide and drawn up to 2.6 times larger, so they look blurred and half transparent. The
-  hamlet set pieces are drawn up to 2 times their atlas size. This is fixed in the
-  prototype's art build (`tools/sprites5.py` sizes), followed by a re-sync and a version
-  bump.
-- From the painter's own report: fillers can overlap at a tile edge, some hearts get no
-  name, and fields can appear on high open slopes.
+- **A tree avenue can run into a set piece.** Roads run solid up to a set piece's walls (round
+  10), and the avenue along such a road can put its last trees over the wall (Berlin, the
+  Kreuzberg walled town's north side).
+- **Composition differs from round 8 by design:** hearts are decided per fixed world cell, so
+  some sit at other spots, and some names differ (Berlin's camera heart is Kreuzberg; Luisenstadt
+  names its neighbour).
 - Church and landmark names aren't shown; only village names (painted in) and road and
   water names (live) are.
