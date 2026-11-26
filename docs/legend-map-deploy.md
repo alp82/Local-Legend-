@@ -753,6 +753,13 @@ Do the steps in order. Steps 4 to 7 are the pause: do them in one sitting.
    old bucket to the new one before it paints (`old bucket copied and checked: <n> files` in its
    log, with `n` from step 1), then logs `painter <fingerprint>: current version 1` and paints
    the queue. **Pause ends.** Run [Check a deploy](#check-a-deploy).
+
+   **Known limitation of the copy check:** the database counts a file as copied when the new
+   bucket has it with the same size, content type and cache control. It doesn't compare
+   contents or the eTag. The local backend's server-side copy keeps the eTag, but nobody has
+   checked whether the hosted backend's does, and a check that could never pass there would
+   leave painting paused. A file with the same size but different bytes would only come from
+   a copy interrupted and redone with other contents, which the steps here don't produce.
 8. **Automatic releases:** save the Coolify deploy webhook
    (`https://<coolify>/api/v1/deploy?uuid=<application uuid>&force=false`) and the API token as the
    `legend-map-release` environment secrets `COOLIFY_DEPLOY_URL` and `COOLIFY_DEPLOY_TOKEN`.
