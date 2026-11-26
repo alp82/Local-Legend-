@@ -9,8 +9,10 @@
 --
 -- A claim cell id is x * 2^21 + y at zoom 21 (supabase/README.md, Cells), so its z16 tile is
 -- (x >> 5, y >> 5). The 1 km buffer is a disc of tiles whose radius is 1 km over the tile's
--- ground width at its latitude. The estimate uses 2 s per tile on the worker host and the mean
--- tile sizes at WebP quality 0.75 (143 KB at z16, 165 KB at z15).
+-- ground width at its latitude. A z15 parent also needs its children outside the disc, which
+-- the worker paints first (z16_painted). The estimate uses 4 s per z16 paint and 0.3 s per
+-- z15 tile, measured on the worker host (November 26, 2026: 362 tiles queued, 445 painted,
+-- 24 minutes), and the mean tile sizes at WebP quality 0.75 (143 KB at z16, 165 KB at z15).
 with buffer as (select 1000.0 as metres),
 cells as (
   select distinct (cell / 2097152) >> 5 as tx, (cell % 2097152) >> 5 as ty
@@ -41,11 +43,22 @@ fresh15 as (
     select 1 from public.fantasy_tiles f, public.fantasy_config c
     where f.version = c.version and f.z = 15 and f.x = p.x and f.y = p.y
   )
+),
+-- every z16 tile the worker paints: the new ones, and the missing children of new parents
+painted16 as (
+  select x, y from fresh16
+  union
+  select p.x * 2 + dx, p.y * 2 + dy from fresh15 p, generate_series(0, 1) dx, generate_series(0, 1) dy
+  where not exists (
+    select 1 from public.fantasy_tiles f, public.fantasy_config c
+    where f.version = c.version and f.z = 16 and f.x = p.x * 2 + dx and f.y = p.y * 2 + dy
+  )
 )
 select
   (select count(*) from tiles) as z16_tiles,
   (select count(*) from fresh16) as z16_new,
   (select count(*) from parents) as z15_tiles,
   (select count(*) from fresh15) as z15_new,
-  round(((select count(*) from fresh16) * 2 + (select count(*) from fresh15) * 0.3) / 60.0, 1) as painting_minutes,
-  round(((select count(*) from fresh16) * 143 + (select count(*) from fresh15) * 165) / 1024.0) as storage_mb;
+  (select count(*) from painted16) as z16_painted,
+  round(((select count(*) from painted16) * 4 + (select count(*) from fresh15) * 0.3) / 60.0, 1) as painting_minutes,
+  round(((select count(*) from painted16) * 143 + (select count(*) from fresh15) * 165) / 1024.0) as storage_mb;

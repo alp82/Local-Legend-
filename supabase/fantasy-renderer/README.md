@@ -258,6 +258,12 @@ Measured with the round 11 painter in Docker at 2 CPUs, one painter, on a fast d
   empty source data).
 - **Source data:** the first tile of a new area adds 5 MB (countryside) to 50 MB (Manhattan) to
   the frozen store; 340 Manhattan tiles came to 69 MB.
+- **On the worker host** (November 26, 2026, 4 cores shared with other stacks, one painter at a
+  3 GB limit): the testers' pre-paint (362 tiles queued, 445 painted with the missing z15
+  children) took 24 minutes, about 4 s per z16 paint, with no failures or Chromium restarts. The
+  container peaked at 2.4 GB, and the host's available memory went no lower than 1.6 GB. Idle,
+  the worker keeps about 2.1 GB until its page is recycled. The 445 tiles came to 50 MB (113 KB
+  per z16 tile, 120 KB per z15 tile on average) and 61 MB of source data from 1,134 fetches.
 - **Mean z16 tile by WebP quality** (27 tiles, Berlin, Manhattan, Innsbruck): 0.7: 131 KB,
   0.75: 143 KB, 0.8: 180 KB. A z15 tile is about 15% larger.
 

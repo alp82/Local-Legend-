@@ -233,8 +233,9 @@ estimate first:
 ssh "$WORKER" 'cd /opt/fantasy-renderer && docker compose exec -T worker node src/prepaint.mjs --at 13.4140,52.5005 --radius-km 2'
 ```
 
-The estimate gives the tile count, the painting time at 2 s per tile, and the storage. A
-2 km radius is about 120 to 170 z16 tiles plus 30 to 40 z15 tiles, 4 to 6 minutes and 20 to
+The estimate gives the tile count, the painting time at 4 s per tile (measured on the worker
+host), and the storage. A 2 km radius is about 120 to 170 z16 tiles plus 30 to 40 z15 tiles,
+8 to 12 minutes and 20 to
 30 MB. If the numbers are acceptable, run it again with `--yes`. `--bbox west,south,east,north` works instead of
 `--at` and `--radius-km`.
 
@@ -422,8 +423,8 @@ The migrations set these launch values (November 26, 2026), with the map switche
 | --- | --- | --- |
 | `webp_quality` | 0.75 | Looks the same as 0.8 at twice the pixel size, 20% smaller |
 | `daily_tiles_per_player` | 300 units | Bounds one player who pans across the world |
-| `global_daily_tiles` | 2000 units | About 5 testers exploring use about 150 units a day each, 750 together: 2.5 times headroom, and at most about 67 minutes of worker time a day |
-| `max_queue_depth` | 500 units | About 17 minutes of work at 2 s per tile. A deeper queue only means tiles painted long after the player has walked on |
+| `global_daily_tiles` | 2000 units | About 5 testers exploring use about 150 units a day each, 750 together: 2.5 times headroom, and at most about 2 hours 15 minutes of worker time a day |
+| `max_queue_depth` | 500 units | About 33 minutes of work at 4 s per tile. A deeper queue only means tiles painted long after the player has walked on |
 | `near_player_m` | 2000 m | A screen and its ring at walking zoom fit well inside it |
 
 All limits count cost units: a z16 tile is 1 unit, a z15 tile 1 plus each of its four z16
@@ -451,10 +452,10 @@ How the costs work out:
 - **The limits bound the worst case**, in units (z15 costs up to 5 units for up to 5 tiles' worth
   of storage and painting, so a unit is about one z16 tile either way):
 
-  | Limit | Units a day | New storage | Worker time at 2 s per unit |
+  | Limit | Units a day | New storage | Worker time at 4 s per unit |
   | --- | --- | --- | --- |
-  | One player (`daily_tiles_per_player`) | 300 | about 42 MB | about 10 minutes |
-  | Everyone (`global_daily_tiles`) | 2000 | about 280 MB | about 67 minutes |
+  | One player (`daily_tiles_per_player`) | 300 | about 42 MB | about 20 minutes |
+  | Everyone (`global_daily_tiles`) | 2000 | about 280 MB | about 2 hours 15 minutes |
 
   Walking never comes near the player limit. The distance rule keeps a player from spending
   it far from their own ground.
@@ -467,7 +468,7 @@ How the costs work out:
   month of cached egress.
   - Free includes 5 GB.
   - Pro includes 250 GB, then $0.03 per GB.
-- **Worker time** is the host's own: the global limit caps it at about 67 minutes a day,
+- **Worker time** is the host's own: the global limit caps it at about 2 hours 15 minutes a day,
   plus pre-painting.
 - **Host disk:** the frozen source store stops at 8 GB (`SOURCE_MAX_MB`), and upstream
   fetches at 20,000 a day (`SOURCE_FETCHES_PER_DAY`).

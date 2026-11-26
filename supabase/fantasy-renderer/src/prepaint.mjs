@@ -6,8 +6,8 @@
 //   node src/prepaint.mjs --bbox 13.38,52.49,13.45,52.52 [--yes]
 //
 // Without --yes it only prints the estimate. Options: --no-z15 (skip zoom 15),
-// --seconds-per-tile (painting time per tile on the worker host, default 2: one painter on
-// the worker host; 0.8 to 1.1 s was measured over 100 tiles on a fast desktop core),
+// --seconds-per-tile (painting time per tile on the worker host, default 4: measured there on
+// November 26, 2026, one painter; 0.8 to 1.1 s on a fast desktop core),
 // --kb-z16 / --kb-z15 (tile sizes; default: the averages measured so far, from fantasy_status).
 //
 // The worker paints the queued tiles itself. Don't paint an area on another machine and
@@ -27,7 +27,7 @@ const { values: a } = parseArgs({
     bbox: { type: 'string' },
     yes: { type: 'boolean', default: false },
     'no-z15': { type: 'boolean', default: false },
-    'seconds-per-tile': { type: 'string', default: '2' },
+    'seconds-per-tile': { type: 'string', default: '4' },
     'kb-z16': { type: 'string' },
     'kb-z15': { type: 'string' },
   },
