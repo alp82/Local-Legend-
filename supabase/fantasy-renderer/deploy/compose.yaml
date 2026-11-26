@@ -1,8 +1,11 @@
 # The fantasy tile worker in production: one container on a shared host, with hard limits
-# so it can't starve the host's other stacks. Runbook: docs/fantasy-map-deploy.md.
+# so it can't starve the host's other stacks, and no way out but an allow-list proxy.
+# Runbook: docs/fantasy-map-deploy.md.
 #
 # Files next to this one on the host (/opt/fantasy-renderer):
-#   .env        FANTASY_RENDERER_TAG=<image tag>, written by deploy/ship.sh
+#   .env        FANTASY_RENDERER_TAG=<image tag> (written by deploy/ship.sh),
+#               FANTASY_SUPABASE_HOST=<project ref>.supabase.co, and optionally
+#               FANTASY_RENDERER_MEMORY
 #   worker.env  the worker's credentials (chmod 600), from deploy/worker.env.example
 name: fantasy-renderer
 
@@ -22,15 +25,28 @@ services:
       RECYCLE_TILES: "100"
       LEASE_BATCH: "4"
       IDLE_POLL_MS: "1000"
+      # The frozen source store stops growing at 8 GB, and upstream fetches stop for the day
+      # after 20,000 (a new area costs about 150 to 300), at most 6 at a time.
+      SOURCE_MAX_MB: "8000"
+      SOURCE_FETCHES_PER_DAY: "20000"
+      SOURCE_FETCH_CONCURRENCY: "6"
+      # Every outbound request goes through the egress proxy; the painter's own page talks
+      # only to its local server.
+      NODE_USE_ENV_PROXY: "1"
+      HTTPS_PROXY: http://egress:3128
+      NO_PROXY: 127.0.0.1,localhost
     volumes:
       # Frozen OpenFreeMap and terrain tiles. Keep this volume: deleting it lets map changes
       # in, and new tiles can then disagree with older neighbours at their edges.
       - source:/data
-    # No ports: the worker only makes outbound requests (Supabase, OpenFreeMap, AWS terrain).
+    networks:
+      - inside
+    depends_on:
+      - egress
+    # No ports.
     cpus: 2
-    # 3 GB is too little for the round 11 painter in dense cities: Chromium was killed about
-    # once per 100 Manhattan tiles (the tile is then painted again, so nothing wrong is stored,
-    # but each restart costs about 10 s). 4 GB had no kills. Set FANTASY_RENDERER_MEMORY in .env.
+    # 3 GB (the default, the owner's choice for this shared host): Chromium is restarted about
+    # once per 100 dense-city tiles and the tile painted again. 4 GB had no restarts.
     mem_limit: ${FANTASY_RENDERER_MEMORY:-3g}
     memswap_limit: ${FANTASY_RENDERER_MEMORY:-3g}
     pids_limit: 1024
@@ -52,6 +68,39 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+
+  # The worker's only way out (src/egress-proxy.mjs): CONNECT to these hosts on 443, never to
+  # a private, loopback or link-local address, so the worker can't reach the other machines
+  # on the host's private network.
+  egress:
+    image: fantasy-renderer:${FANTASY_RENDERER_TAG:?set FANTASY_RENDERER_TAG in .env}
+    command: ["node", "src/egress-proxy.mjs"]
+    restart: unless-stopped
+    environment:
+      EGRESS_ALLOW: ${FANTASY_SUPABASE_HOST:?set FANTASY_SUPABASE_HOST in .env},tiles.openfreemap.org,elevation-tiles-prod.s3.amazonaws.com
+    networks:
+      - inside
+      - outside
+    cpus: 0.25
+    mem_limit: 128m
+    memswap_limit: 128m
+    pids_limit: 64
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+networks:
+  # No route out of this network: the worker reaches only the egress proxy.
+  inside:
+    internal: true
+  outside: {}
 
 volumes:
   source:
