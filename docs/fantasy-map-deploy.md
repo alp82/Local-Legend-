@@ -30,10 +30,11 @@ There is no store build and no `production` channel. How the pieces fit is descr
 The worker host is shared with an analytics stack and a Windmill worker. Its compose file
 caps it at 2 CPUs and 3 GB of memory (swap included), with no published ports and rotated
 logs. It runs one painter. With the round 11 painter that peaked at about 3.2 GB in dense
-Manhattan, so 3 GB is not enough: Chromium was killed about once per 100 tiles (the tile is
-painted again, so nothing wrong is stored, but each restart costs time). 4 GB had no kills.
-The limit is `FANTASY_RENDERER_MEMORY` in `/opt/fantasy-renderer/.env` (default `3g`); set it
-to `4g` if the host can spare it.
+Manhattan: at 3 GB Chromium was killed about once per 100 tiles (the tile is painted again,
+so nothing wrong is stored, but each restart costs time); at 4 GB there were no kills.
+The limit is `FANTASY_RENDERER_MEMORY` in `/opt/fantasy-renderer/.env` (default `3g`). The owner
+kept 3 GB (November 26, 2026): the host's memory is shared with an analytics database, and a
+restart about once per 100 dense-city tiles is acceptable because the tile is painted again.
 
 ## Go live
 
