@@ -52,7 +52,7 @@ npx supabase db query --remote --read-only "select max(n) from (select count(*) 
 Then, from the repository root:
 
 ```sh
-npx supabase db push --dry-run   # lists exactly the four Legend map migrations
+npx supabase db push --dry-run   # lists the Legend map migrations the project doesn't have yet
 npx supabase db push
 ```
 
@@ -645,22 +645,36 @@ What keeps running through it:
 - **Installed apps** (calling `get_fantasy_config` and `request_fantasy_tiles`) keep working
   through thin wrappers in `20261126200000_legend_map_rename.sql`. Until the copy is checked they
   read tiles from the old bucket `fantasy-tiles`; after it, from `legend-map-tiles`. The tiles
-  they see never go away.
-- **Painting pauses** from step 4 (the database refuses the pre-release worker) until the new
+  they see never go away. Until the compatibility removal (step 10) the new worker writes every
+  new file to both buckets, so an app that stays open through the switch, still on the old
+  bucket, keeps seeing new tiles. Testers need do nothing.
+- **An early app update** is safe too: until the copy is checked, `get_legend_map_config` also
+  names the old bucket.
+- **Painting pauses** from step 6 (the database refuses the pre-release worker) until the new
   worker has copied the old bucket (step 7). Players' requests queue meanwhile and are painted
   afterwards. Expect about 5 minutes plus the copy: step 1 measures the number of files; Storage
   copies roughly 50 to 100 files per second with 8 in parallel.
 
 Do the steps in order. Steps 4 to 7 are the pause: do them in one sitting.
 
-1. **Measure, read-only.** The number of files and bytes to copy, and any name the new bucket's
-   policies would refuse (expect 0):
+1. **Measure and look, read-only.** Stop at any unexpected answer.
 
    ```sh
-   npx supabase db query --remote --read-only "select count(*), pg_size_pretty(sum((metadata->>'size')::bigint)), count(*) filter (where name !~ '^v[0-9]{1,6}/1[56]/[0-9]{1,5}/[0-9]{1,5}\.(webp|json)$') as odd from storage.objects where bucket_id = 'fantasy-tiles'"
+   q() { npx supabase db query --remote --read-only "$1"; }
+   # files and bytes to copy, and names the new bucket's policies would refuse (expect odd = 0)
+   q "select count(*), pg_size_pretty(sum((metadata->>'size')::bigint)), count(*) filter (where name !~ '^v[0-9]{1,6}/1[56]/[0-9]{1,5}/[0-9]{1,5}\.(webp|json)$') as odd from storage.objects where bucket_id = 'fantasy-tiles'"
+   # users with either renderer flag (expect exactly one: fantasy-renderer@renderer.invalid)
+   q "select email from auth.users where raw_app_meta_data ?| array['fantasy_renderer', 'legend_map_renderer']"
+   # things outside the migrations that name the fantasy map (expect no rows from each)
+   q "select jobname, command from cron.job where command ilike '%fantasy%'"
+   q "select pubname, tablename from pg_publication_tables where tablename ilike '%fantasy%'"
+   q "select tgrelid::regclass, tgname from pg_trigger where not tgisinternal and (tgname ilike '%fantasy%' or encode(tgargs, 'escape') ilike '%fantasy%')"
+   q "select p.oid::regprocedure from pg_proc p where p.prosrc ilike '%fantasy%' and p.proname not ilike '%fantasy%'"
    ```
 
-   If `odd` isn't 0, stop: the copy would stop at those files.
+   The copy would stop at an odd file, the rename would leave a second flagged user, and a cron
+   job, publication, webhook trigger or other function naming a `fantasy_*` object would break
+   at the rename. **Database > Webhooks** in the Dashboard lists the same triggers.
 2. **GitHub (repository admin),** before the merge: steps A1 to A6 under the new names. The
    environment is `legend-map-release`; its secrets are `LEGEND_MAP_PACKAGES_TOKEN` and
    `LEGEND_MAP_DEPLOY_KEY`; the deploy branch ruleset protects `legend-map-deploy`.
@@ -697,6 +711,11 @@ Do the steps in order. Steps 4 to 7 are the pause: do them in one sitting.
    golden tiles and `git diff --stat 9f70638 main` over `painter`, `assets`, `src/page`,
    `package-lock.json` and `Dockerfile` of the renderer show no pixel-relevant change. From here
    the old worker gets no tiles; installed apps are unaffected.
+
+   The rename waits at most 3 seconds for its locks (it locks `storage.objects`, which every
+   bucket's reads use, until it commits). **On a lock timeout or a deadlock, run
+   `npx supabase db push` again:** a failed attempt applies nothing of that migration, and the
+   earlier names keep answering.
 7. **Stop the old worker, move its source store, the renderer's new name, deploy.**
 
    ```sh
@@ -723,7 +742,14 @@ Do the steps in order. Steps 4 to 7 are the pause: do them in one sitting.
    ```
 
    Expect `200`, then the sign-in check of Go live step 2.3 from `/opt/legend-map-renderer`.
-   Then **Deploy** the application once from Coolify. The new worker copies every file of the
+   Check that the old worker is stopped: the copy relies on nothing writing the old bucket
+   without also writing the new one.
+
+   ```sh
+   ssh "$WORKER" 'docker ps --filter label=com.docker.compose.project=fantasy-renderer --format "{{.Names}} {{.Status}}"'
+   ```
+
+   Expect no output. Then **Deploy** the application once from Coolify. The new worker copies every file of the
    old bucket to the new one before it paints (`old bucket copied and checked: <n> files` in its
    log, with `n` from step 1), then logs `painter <fingerprint>: current version 1` and paints
    the queue. **Pause ends.** Run [Check a deploy](#check-a-deploy).
@@ -733,31 +759,45 @@ Do the steps in order. Steps 4 to 7 are the pause: do them in one sitting.
 9. **The app update** with the new names: [8. Publish the OTA update](#8-publish-the-ota-update),
    once `select old_app_bucket from public.legend_map_config` says `legend-map-tiles`.
 10. **Later, the compatibility removal** (no sooner than two weeks after step 9, and only when
-    the API logs show no more calls to `get_fantasy_config`): one pull request that
-    - drops the wrappers, the old bucket's three policies, `old_app_bucket` and the two copy
-      functions, and takes `fantasy_renderer` out of `is_legend_map_renderer` (a migration);
-    - removes `src/old-bucket.mjs` and its call, and the app's fallbacks to the earlier storage
-      keys (`fantasyMapOff`, `fantasyConfig`);
-    - then, by hand: removes the earlier flag from the renderer user (admin API), empties and
-      deletes the `fantasy-tiles` bucket (Storage API, after a last count against
-      `legend-map-tiles`), and on the host removes `/opt/fantasy-renderer`, the stopped
-      `fantasy-renderer` containers and the `fantasy-renderer-source` volume.
+    the API logs show no more calls to `get_fantasy_config`), in this order:
+    1. A worker release without the compatibility code: `src/old-bucket.mjs` and its call, and
+       `ALSO_WRITTEN_TO` in `src/supabase.mjs` (the second write). Also the app's fallbacks to
+       the earlier storage keys (`fantasyMapOff`, `fantasyConfig`).
+    2. Then a migration that drops the wrappers, the old bucket's three policies,
+       `old_app_bucket` and the two copy functions, gives `get_legend_map_config` its constant
+       bucket back, and takes `fantasy_renderer` out of `is_legend_map_renderer`. (Before step 1
+       is deployed, the running worker's second write would fail without those policies.)
+    3. By hand: remove the earlier flag from the renderer user (admin API), empty and delete the
+       `fantasy-tiles` bucket (Storage API, after a last count against `legend-map-tiles`), and
+       on the host remove `/opt/fantasy-renderer`, the stopped `fantasy-renderer` containers and
+       the `fantasy-renderer-source` volume.
 
 ### Undo the rename cut-over
 
-The database part stays: the wrappers make undoing it unnecessary.
+The database part stays: the wrappers make undoing it unnecessary. On day one there is no
+earlier digest to roll back to: the first image under the new names is the only one, so the
+way back is the old worker, which these steps bring back. They work before and after the copy
+has switched `old_app_bucket`, because the new worker writes every file to both buckets.
 
-- **Before step 7's copy has switched `old_app_bucket`:** in Coolify, stop the application.
-  Clear the recorded painter (`update public.legend_map_config set fingerprint = null where id`
-  and `delete from public.legend_map_versions`), and start the old worker again
-  (`cd /opt/fantasy-renderer && docker compose start`). It paints through the earlier names
-  into the old bucket, which installed apps read. If step 7 already moved the renderer user,
-  move its address back with the same admin API call first (the earlier flag never left).
-- **After the switch:** installed apps read the new bucket, so the old worker would paint where
-  they no longer look. Roll back by digest ([Releases > Roll back](#roll-back-1)) or fix
-  forward. Only as a last resort, set `old_app_bucket` back to `fantasy-tiles` and start the
-  old worker: tiles painted since the switch are then missing for installed apps until
-  repainted.
+1. In Coolify, stop the application.
+2. Only if nothing was staged or switched (`select version, staging_version from
+   public.legend_map_config` shows `1` and null, and `public.legend_map_versions` has only
+   version 1): clear the recorded painter, so the database lets the old worker lease again.
+
+   ```sql
+   update public.legend_map_config set fingerprint = null, old_app_bucket = 'fantasy-tiles' where id;
+   delete from public.legend_map_versions;
+   ```
+
+   Setting `old_app_bucket` back points installed apps at the bucket the old worker writes. If a
+   release was staged or phones switched, don't undo this way: fix forward.
+3. If step 7 moved the renderer user, move its address back to
+   `fantasy-renderer@renderer.invalid` with the same admin API call (the earlier flag never
+   left), so the old worker's `worker.env` signs in again.
+4. Start the old worker: `ssh "$WORKER" 'cd /opt/fantasy-renderer && docker compose start'`.
+   It paints through the earlier names into the old bucket.
+
+Once later images exist, roll back by digest instead ([Releases > Roll back](#roll-back-1)).
 
 ### Undo the release setup
 

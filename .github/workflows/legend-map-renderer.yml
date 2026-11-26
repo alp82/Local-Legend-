@@ -92,11 +92,10 @@ jobs:
       - name: Queue and release API tests
         working-directory: supabase/legend-map-renderer
         run: node --test test/queue.test.mjs
-      - name: Upgrade from the hosted project's state (earlier names, rename, bucket copy)
-        working-directory: supabase/legend-map-renderer
-        env:
-          UPGRADE_TEST: "on" # resets the local database to the hosted migrations, then to all of them
-        run: node --test test/upgrade.test.mjs
+      - name: Stop the stack (the upgrade rehearsal starts a throwaway one of its own)
+        run: supabase stop --no-backup
+      - name: Upgrade from the hosted project's state (earlier names, held lock, rename, bucket copy)
+        run: bash supabase/legend-map-renderer/test/upgrade-throwaway.sh
 
   golden:
     name: Golden tiles in the worker image

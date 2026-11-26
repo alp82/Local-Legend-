@@ -12,7 +12,8 @@ queue is in `supabase/migrations/20261125210000_fantasy_tiles.sql`, releases in
 The layer was first called the fantasy map. `supabase/migrations/20261126200000_legend_map_rename.sql`
 renamed everything and keeps the earlier names working for installed apps until the rename is
 adopted. At start-up, before painting, the worker copies the earlier bucket `fantasy-tiles`
-into `legend-map-tiles` once (`src/old-bucket.mjs`). Both go when the compatibility layer is
+into `legend-map-tiles` once (`src/old-bucket.mjs`), and it writes every new file to both
+buckets (`ALSO_WRITTEN_TO` in `src/supabase.mjs`). All of it goes when the compatibility layer is
 removed ([docs/legend-map-deploy.md](../../docs/legend-map-deploy.md), "Rename cut-over").
 
 This folder is the source of truth for everything the renderer paints with:
@@ -301,11 +302,13 @@ npm test   # tile arithmetic, determinism, z15, neighbours agreeing at edges, go
 itself when the stack isn't running. The database rules are also covered by pgTAP:
 `npx supabase test db`.
 
-`test/upgrade.test.mjs` rehearses the hosted project's upgrade on the local stack: it resets
-the database to the migrations the hosted project had, fills it through the earlier names,
-applies the release and rename migrations, and checks installed apps, the new app, the old and
-new worker, and the bucket copy (same bytes and headers). It resets the local database, so it
-runs only with `UPGRADE_TEST=on` (CI's database job sets it).
+`test/upgrade.test.mjs` rehearses the hosted project's upgrade: the migrations the hosted
+project had, data written through the earlier names, the release migration, the rename against
+a held lock (it must give up and change nothing) and again, then installed apps, the new app,
+the old and new worker, the bucket copy over several pages (including a file it can't copy)
+and the second write. It resets the database it runs on, so it refuses anything but a
+throwaway project. Run it with `bash test/upgrade-throwaway.sh`, which starts a stack of its own
+(project `ll-upgrade`, ports 643xx) and deletes it afterwards; CI's database job does the same.
 
 `test/neighbours.test.mjs` paints adjacent tiles in separate browsers, from different
 histories. It checks that they share plans, that sprites across the edge have one owner,
