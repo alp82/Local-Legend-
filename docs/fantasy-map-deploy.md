@@ -93,31 +93,49 @@ worker. Its password is made on the worker host and never leaves it.
    } > worker.env && echo written'
    ```
 
-2. Sign the user up from the host, with the publishable key. Only the HTTP status and any
-   error message are printed:
+2. Create the user with one call to the auth admin API, the call behind the Dashboard's
+   **Create new user** with **Auto Confirm User**: confirmed, with the flag in
+   `app_metadata`. A plain sign-up doesn't work: the hosted project refuses `.invalid`
+   addresses there (`email_address_invalid`); the admin API accepts them.
+
+   The call needs the project's secret key once. It's fetched with the signed-in Supabase
+   CLI into a shell variable, handed to curl as headers through a file descriptor (never on
+   a command line, so not in the process list), and unset afterwards. It's never printed,
+   stored, or sent to the worker host. The password streams from the host's `worker.env`
+   over ssh straight into the request body, so it never touches this machine's disk or
+   output.
 
    ```sh
-   ssh "$WORKER" 'cd /opt/fantasy-renderer && set -a && . ./worker.env && set +a &&
-     curl -sS -o /tmp/signup.json -w "%{http_code}\n" "$SUPABASE_URL/auth/v1/signup" \
-       -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "content-type: application/json" \
-       -d "{\"email\":\"$FANTASY_RENDERER_EMAIL\",\"password\":\"$FANTASY_RENDERER_PASSWORD\"}";
-     grep -o "\"\(msg\|error_code\)\":\"[^\"]*\"" /tmp/signup.json; rm -f /tmp/signup.json'
+   (
+     SK=$(npx supabase projects api-keys --remote --reveal -o json 2>/dev/null | python3 -c 'import sys, json; print(next(k["api_key"] for k in json.load(sys.stdin) if k["type"] == "secret"), end="")')
+     ssh "$WORKER" 'cd /opt/fantasy-renderer && . ./worker.env && printf "{\"email\":\"%s\",\"password\":\"%s\",\"email_confirm\":true,\"app_metadata\":{\"fantasy_renderer\":true}}" "$FANTASY_RENDERER_EMAIL" "$FANTASY_RENDERER_PASSWORD"' \
+       | curl -sS -o /dev/null -w '%{http_code}\n' -X POST https://bvnlepwccygdkgsezgka.supabase.co/auth/v1/admin/users \
+           -H @<(printf 'apikey: %s\nAuthorization: Bearer %s\ncontent-type: application/json\n' "$SK" "$SK") --data-binary @-
+     unset SK
+   )
    ```
 
-   If the project refuses the address, stop and report it. Don't use a real address
-   instead. With the owner at hand, the fallback is the Dashboard: **Authentication > Users >
-   Add user > Create new user** with the same address, the password from `worker.env`, and
-   **Auto Confirm User** on (this sends no mail).
+   Expect `200`. If the admin API refuses the address too, stop: remove `worker.env` and let
+   the owner choose an address. Never insert into the auth tables directly.
 
-3. Confirm and flag the user, in one statement from your machine:
+3. Check from the host that the renderer signs in with the publishable key and is flagged.
+   This prints `true`:
 
    ```sh
-   npx supabase db query --remote "update auth.users set email_confirmed_at = coalesce(email_confirmed_at, now()), raw_app_meta_data = raw_app_meta_data || '{\"fantasy_renderer\": true}' where email = 'fantasy-renderer@renderer.invalid' returning email_confirmed_at is not null as confirmed, raw_app_meta_data -> 'fantasy_renderer' as renderer"
+   ssh "$WORKER" 'cd /opt/fantasy-renderer && . ./worker.env &&
+     TOK=$(printf "{\"email\":\"%s\",\"password\":\"%s\"}" "$FANTASY_RENDERER_EMAIL" "$FANTASY_RENDERER_PASSWORD" |
+       curl -sS -X POST "$SUPABASE_URL/auth/v1/token?grant_type=password" -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "content-type: application/json" --data-binary @- |
+       python3 -c "import sys, json; print(json.load(sys.stdin)[\"access_token\"])") &&
+     curl -sS -X POST "$SUPABASE_URL/rest/v1/rpc/is_fantasy_renderer" -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "authorization: Bearer $TOK" -H "content-type: application/json" -d "{}"'
    ```
 
-Check: the statement returns one row, confirmed and `renderer: true`.
-**Authentication > Sign In / Providers > Email** is enabled (the worker signs in with email
-and password).
+   An ordinary sign-up can't gain the flag: it lands in `user_metadata`, which
+   `is_fantasy_renderer()` ignores (checked on November 26, 2026 with a throwaway anonymous
+   user, deleted afterwards).
+
+Check: **Authentication > Sign In / Providers > Email** is enabled (the worker signs in with
+email and password), and
+`select count(*) from auth.users where raw_app_meta_data ? 'fantasy_renderer'` is 1.
 
 To undo: `delete from auth.users where email = 'fantasy-renderer@renderer.invalid';` and
 remove `/opt/fantasy-renderer/worker.env`.
@@ -464,7 +482,8 @@ weeks whatever the values. The fantasy map needs Pro beyond a short test.
 | Renderer user password | `/opt/fantasy-renderer/worker.env` on the worker host (mode 600) and your password manager | Lease, finish and queue fantasy tiles; read their status; write the `fantasy-tiles` bucket. Players can't gain these: the flag is in `app_metadata`, which only the service role can set. |
 | Publishable key | Same file | Public; the app ships with it |
 
-The service key is not needed anywhere in this deployment. To rotate the password, set a
+The worker never has the service key. The project's secret key is used once, transiently,
+to create the renderer user (step 2), and is stored nowhere. To rotate the password, set a
 new one under **Authentication > Users**, update `worker.env`, then run
 `docker compose up -d`. A new password doesn't end tokens already issued; to cut the renderer
 off, see [Revoke the renderer](#revoke-the-renderer).
