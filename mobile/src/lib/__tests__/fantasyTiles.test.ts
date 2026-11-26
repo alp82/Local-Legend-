@@ -1,6 +1,19 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { fantasyLabelUrl, fantasyTileUrl, labelsGeoJSON, MAX_TILES_PER_REQUEST, tileKey, tileZoomFor, tilesForView } from '../fantasyTiles';
+import {
+  fantasyLabelUrl,
+  fantasyTileUrl,
+  labelsGeoJSON,
+  MAX_TILES_PER_REQUEST,
+  nextPoll,
+  PENDING_LIMIT_MS,
+  tileKey,
+  tileSetKey,
+  tilesOfSetKey,
+  tileZoomFor,
+  tilesForView,
+  type PollState,
+} from '../fantasyTiles';
 import type { BBox } from '../sitesApi';
 
 // A phone screen at z16 over Berlin Kreuzberg (390 x 844 CSS px).
@@ -77,5 +90,54 @@ describe('labels', () => {
       geometry: { type: 'Point', coordinates: [13.42, 52.5] },
     });
     expect(fc.features[1].properties.water).toBe(1);
+  });
+});
+
+describe('polling', () => {
+  it('backs off 1.5, 3, 6 ... up to 60 s while tiles on screen are being painted', () => {
+    let state: PollState | null = null;
+    const delays: (number | null)[] = [];
+    let now = 0;
+    for (let i = 0; i < 6; i++) {
+      const r = nextPoll(state, now, true);
+      delays.push(r.delayMs);
+      state = r.state;
+      now += r.delayMs ?? 0;
+    }
+    expect(delays).toEqual([1500, 3000, 6000, 12000, 24000, 48000]);
+    expect(nextPoll({ attempt: 9, since: 0 }, 1000, true).delayMs).toBe(60000);
+  });
+
+  it('stops when nothing on screen is pending, and after the time limit', () => {
+    expect(nextPoll({ attempt: 2, since: 0 }, 5000, false)).toEqual({ delayMs: null, state: null });
+    expect(nextPoll({ attempt: 3, since: 0 }, PENDING_LIMIT_MS, true).delayMs).toBeNull();
+  });
+
+  it('keeps its time limit as long as the tile set is the same', () => {
+    // a camera move inside the same tiles keeps the state, so the limit still runs from the first poll
+    const first = nextPoll(null, 10_000, true).state!;
+    expect(first).toEqual({ attempt: 1, since: 10_000 });
+    expect(nextPoll(first, 10_000 + PENDING_LIMIT_MS, true).delayMs).toBeNull();
+  });
+});
+
+describe('tile set keys', () => {
+  it('ignore the order a camera move puts the tiles in', () => {
+    const a = tilesForView(berlin, 16);
+    const shuffled = { tiles: [...a.tiles.slice(0, a.visible).reverse(), ...a.tiles.slice(a.visible).reverse()], visible: a.visible };
+    expect(tileSetKey(shuffled.tiles, shuffled.visible)).toBe(tileSetKey(a.tiles, a.visible));
+  });
+
+  it('change when a tile enters or leaves the screen', () => {
+    const a = tilesForView(berlin, 16);
+    expect(tileSetKey(a.tiles, a.visible - 1)).not.toBe(tileSetKey(a.tiles, a.visible));
+  });
+
+  it('give back the same tiles, visible first', () => {
+    const a = tilesForView(berlin, 16);
+    const b = tilesOfSetKey(tileSetKey(a.tiles, a.visible));
+    expect(b.visible).toBe(a.visible);
+    expect(new Set(b.tiles.slice(0, b.visible).map(tileKey))).toEqual(new Set(a.tiles.slice(0, a.visible).map(tileKey)));
+    expect(new Set(b.tiles.map(tileKey))).toEqual(new Set(a.tiles.map(tileKey)));
   });
 });

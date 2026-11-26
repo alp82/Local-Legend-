@@ -79,3 +79,36 @@ export function labelsGeoJSON(files: FantasyLabel[][]): string {
   }
   return JSON.stringify({ type: 'FeatureCollection', features });
 }
+
+/** How long to keep asking for tiles on screen that are being painted, per tile set. */
+export const PENDING_LIMIT_MS = 120_000;
+const POLL_STEPS_MS = [1500, 3000, 6000, 12_000, 24_000, 48_000, 60_000];
+
+/** Polling for one set of tiles: how many polls so far, since when. */
+export type PollState = { attempt: number; since: number };
+
+/**
+ * When to ask again: only while tiles on screen are being painted, backing off 1.5, 3, 6 ...
+ * up to 60 s, until PENDING_LIMIT_MS after the first poll for this tile set. The caller starts
+ * a new PollState (null) only when the set of tiles changes, never on a mere camera move.
+ * Returns the delay (null: stop) and the state to keep.
+ */
+export function nextPoll(state: PollState | null, now: number, onScreenPending: boolean): { delayMs: number | null; state: PollState | null } {
+  if (!onScreenPending) return { delayMs: null, state: null };
+  const s = state ?? { attempt: 0, since: now };
+  if (now - s.since >= PENDING_LIMIT_MS) return { delayMs: null, state: s };
+  const delayMs = POLL_STEPS_MS[Math.min(s.attempt, POLL_STEPS_MS.length - 1)];
+  return { delayMs, state: { attempt: s.attempt + 1, since: s.since } };
+}
+
+/** An order-free key for the tiles a view needs: the same set gives the same key. */
+export function tileSetKey(tiles: TileZXY[], visible: number): string {
+  const sorted = (list: TileZXY[]) => list.map(tileKey).sort().join(',');
+  return `${sorted(tiles.slice(0, visible))}|${sorted(tiles.slice(visible))}`;
+}
+
+/** The tiles of a tileSetKey: the visible ones first. */
+export function tilesOfSetKey(key: string): { tiles: TileZXY[]; visible: number } {
+  const [vis, around] = key.split('|').map((part) => (part ? part.split(',').map((k) => k.split('/').map(Number) as TileZXY) : []));
+  return { tiles: [...vis, ...around], visible: vis.length };
+}

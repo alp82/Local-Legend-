@@ -13,10 +13,15 @@ export type FantasyRequest = {
   version: number;
   /** Requested tiles still waiting to be painted. */
   pending: TileZXY[];
+  /** Requested tiles painted (their label files exist). */
+  ready: TileZXY[];
   /** Tiles this call queued. */
   queued: number;
-  /** The player's daily cap kept some tiles from being queued. */
+  /** A limit kept some tiles from being queued; reason says which. */
   capped: boolean;
+  reason: 'throttled' | 'player' | 'global' | 'queue' | null;
+  /** Requested tiles refused for lying too far from the player's own ground. */
+  far: number;
 };
 
 function client() {
