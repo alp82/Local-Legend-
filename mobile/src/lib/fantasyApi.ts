@@ -29,7 +29,9 @@ function client() {
   return supabase;
 }
 
+/** The server's switches. Signed-out callers are refused, so this waits for the (anonymous) sign-in on a fresh install. */
 export async function fetchFantasyConfig(): Promise<FantasyConfig> {
+  await ensureSession();
   const { data, error } = await client().rpc('get_fantasy_config');
   if (error) throw error;
   return data as FantasyConfig;
