@@ -1,0 +1,18 @@
+{
+  "name": "fantasy-renderer",
+  "private": true,
+  "type": "module",
+  "description": "Paints fantasy map tiles with the vendored prototype painter in headless Chromium.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "sync": "node scripts/sync-prototype.mjs",
+    "paint": "node src/cli.mjs",
+    "worker": "node src/worker.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.65.1"
+  }
+}

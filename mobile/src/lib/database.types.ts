@@ -887,11 +887,25 @@ export type Database = {
       fail_detour_area: { Args: { p_area: number; p_error: string }; Returns: undefined };
       fail_site_area: { Args: { p_area: number; p_error: string }; Returns: undefined };
       fail_terrain_area: { Args: { p_area: number; p_error: string }; Returns: undefined };
+      finish_fantasy_tile: {
+        Args: {
+          p_bytes?: number;
+          p_error?: string;
+          p_ok: boolean;
+          p_paint_ms?: number;
+          p_version: number;
+          p_x: number;
+          p_y: number;
+          p_z: number;
+        };
+        Returns: undefined;
+      };
       get_detour_offers: {
         Args: { p_lat?: number; p_lng?: number; p_time_zone?: string };
         Returns: Json;
       };
       get_economy: { Args: { p_time_zone?: string }; Returns: Json };
+      get_fantasy_config: { Args: Record<PropertyKey, never>; Returns: Json };
       get_kingdom: { Args: { p_time_zone?: string }; Returns: Json };
       get_sites: {
         Args: { east: number; north: number; south: number; west: number };
@@ -909,11 +923,22 @@ export type Database = {
       ingest_detour_area: { Args: { p_area: number; p_data: Json }; Returns: Json };
       ingest_site_area: { Args: { p_area: number; p_data: Json }; Returns: Json };
       ingest_terrain_area: { Args: { p_area: number; p_grid: string }; Returns: Json };
+      lease_fantasy_tiles: {
+        Args: { p_limit: number };
+        Returns: {
+          version: number;
+          webp_quality: number;
+          x: number;
+          y: number;
+          z: number;
+        }[];
+      };
       record_app_open: { Args: { p_open_id: string; p_time_zone?: string }; Returns: Json };
       recruit_units: {
         Args: { p_count: number; p_request_id: string; p_unit: string };
         Returns: Json;
       };
+      request_fantasy_tiles: { Args: { p_tiles: Json; p_visible?: number }; Returns: Json };
       set_rest: { Args: { p_on: boolean }; Returns: Json };
       submit_location_batch: {
         Args: { p_batch_id: string; p_points: Json; p_session_id: string };

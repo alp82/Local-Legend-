@@ -187,6 +187,11 @@ export default function DebugScreen() {
         </Text>
 
         <Text style={[styles.heading, text]}>Map overlays</Text>
+        {toggle(
+          'fantasyMap',
+          'Fantasy map',
+          'The painted map over the street map, from zoom 14.5. Where a tile is not painted yet, the street map shows. Kept after a restart.',
+        )}
         {toggle('alignmentGrid', 'Show alignment grid', 'Claim cell outlines (zoom 21 tiles) at map zoom 17+.')}
         {toggle(
           'fakeTerritory',

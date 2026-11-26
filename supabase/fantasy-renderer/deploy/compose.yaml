@@ -1,0 +1,117 @@
+# The fantasy tile worker in production: one container on a shared host, with hard limits
+# so it can't starve the host's other stacks, and no way out but an allow-list proxy.
+# Runbook: docs/fantasy-map-deploy.md.
+#
+# Files next to this one on the host (/opt/fantasy-renderer):
+#   .env        FANTASY_RENDERER_TAG=<image tag> (written by deploy/ship.sh),
+#               FANTASY_SUPABASE_HOST=<project ref>.supabase.co, and optionally
+#               FANTASY_RENDERER_MEMORY
+#   worker.env  the worker's credentials (chmod 600), from deploy/worker.env.example
+name: fantasy-renderer
+
+services:
+  worker:
+    image: fantasy-renderer:${FANTASY_RENDERER_TAG:?set FANTASY_RENDERER_TAG in .env}
+    restart: unless-stopped
+    env_file: worker.env
+    environment:
+      SOURCE_CACHE_DIR: /data/source
+      HEARTBEAT_FILE: /tmp/fantasy-worker-heartbeat.json
+      # One painter. Measured with the round 11 painter on dense Manhattan (100 tiles, 2 CPUs):
+      # its page alone peaks at about 2.4 GB and the container at about 3.2 GB; 0.8 to 1.1 s per
+      # tile on a fast desktop core. A second painter doesn't fit.
+      PAINT_WORKERS: "1"
+      # The painter's caches only grow: replace the page every 100 tiles.
+      RECYCLE_TILES: "100"
+      LEASE_BATCH: "4"
+      IDLE_POLL_MS: "1000"
+      # Close Chromium after a minute with nothing to paint: idle, it would keep about 2 GB of
+      # this shared host's memory. The next lease launches it again (a few seconds).
+      IDLE_RELEASE_MS: "60000"
+      # The frozen source store stops growing at 8 GB, and upstream fetches stop for the day
+      # after 20,000 (a new area costs about 150 to 300), at most 6 at a time.
+      SOURCE_MAX_MB: "8000"
+      SOURCE_FETCHES_PER_DAY: "20000"
+      SOURCE_FETCH_CONCURRENCY: "6"
+      # Every outbound request goes through the egress proxy; the painter's own page talks
+      # only to its local server.
+      NODE_USE_ENV_PROXY: "1"
+      HTTPS_PROXY: http://egress:3128
+      NO_PROXY: 127.0.0.1,localhost
+    volumes:
+      # Frozen OpenFreeMap and terrain tiles. Keep this volume: deleting it lets map changes
+      # in, and new tiles can then disagree with older neighbours at their edges.
+      - source:/data
+    networks:
+      - inside
+    depends_on:
+      - egress
+    # No ports.
+    cpus: 2
+    # 3 GB (the default, the owner's choice for this shared host): Chromium is restarted about
+    # once per 100 dense-city tiles and the tile painted again. 4 GB had no restarts.
+    mem_limit: ${FANTASY_RENDERER_MEMORY:-3g}
+    memswap_limit: ${FANTASY_RENDERER_MEMORY:-3g}
+    pids_limit: 1024
+    shm_size: 1gb # Chromium's shared memory
+    init: true
+    stop_grace_period: 30s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+    healthcheck:
+      test: ["CMD", "node", "src/health.mjs", "180"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # The worker's only way out (src/egress-proxy.mjs): CONNECT to these hosts on 443, never to
+  # a private, loopback or link-local address, so the worker can't reach the other machines
+  # on the host's private network.
+  egress:
+    image: fantasy-renderer:${FANTASY_RENDERER_TAG:?set FANTASY_RENDERER_TAG in .env}
+    command: ["node", "src/egress-proxy.mjs"]
+    restart: unless-stopped
+    environment:
+      EGRESS_ALLOW: ${FANTASY_SUPABASE_HOST:?set FANTASY_SUPABASE_HOST in .env},tiles.openfreemap.org,elevation-tiles-prod.s3.amazonaws.com
+    networks:
+      - inside
+      - outside
+    cpus: 0.25
+    mem_limit: 128m
+    memswap_limit: 128m
+    pids_limit: 64
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+networks:
+  # No route out of this network: the worker reaches only the egress proxy. "isolated" also
+  # leaves the bridge without an address on the host, so the worker can't reach services
+  # listening on the host itself (an internal network otherwise gets one: Docker 28.0
+  # release notes). Needs Docker 28.0 or later; older engines ignore it, so the runbook
+  # checks the version and src/egress-check.mjs proves it from inside after every deploy.
+  inside:
+    internal: true
+    driver_opts:
+      com.docker.network.bridge.gateway_mode_ipv4: isolated
+      com.docker.network.bridge.gateway_mode_ipv6: isolated
+  outside: {}
+
+volumes:
+  source:
+    name: fantasy-renderer-source

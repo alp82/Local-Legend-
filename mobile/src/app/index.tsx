@@ -14,10 +14,12 @@ import {
   TerritoryLayer,
   TrackLayer,
 } from '@/components/map-layers';
+import { FantasyLayer } from '@/components/fantasy-layer';
 import { PerfReadout, type PerfStats } from '@/components/perf-readout';
 import { ResourceBar } from '@/components/resource-bar';
 import { useDetours } from '@/hooks/use-detours';
 import { useEconomy } from '@/hooks/use-economy';
+import { useFantasyMap } from '@/hooks/use-fantasy-map';
 import { useFollowCamera } from '@/hooks/use-follow-camera';
 import { useSites } from '@/hooks/use-sites';
 import { onQueueEvent } from '@/lib/db';
@@ -149,6 +151,7 @@ export default function MapScreen() {
   const sitesData = useMemo(() => sitesJson(sites), [sites]);
 
   const detoursState = useDetours(!debug.fakeTerritory);
+  const fantasy = useFantasyMap(view, debug.fantasyMap, process.env.EXPO_PUBLIC_SUPABASE_URL);
   const offers = useMemo(() => (fakeOn ? [] : (detoursState.detours?.offers ?? [])), [fakeOn, detoursState.detours]);
   const detoursData = useMemo(() => detoursJson(offers), [offers]);
   const offer: DetourOffer | null = offers.find((o) => o.id === selectedOffer) ?? null;
@@ -332,6 +335,9 @@ export default function MapScreen() {
         }}>
         <Camera ref={cameraRef} initialViewState={cam.initialViewState} />
         {/* Bottom to top; see components/map-layers.tsx. */}
+        {fantasy.tiles && (
+          <FantasyLayer tiles={fantasy.tiles} revision={fantasy.revision} labels={fantasy.labels} visible={fantasy.visible} />
+        )}
         <ParchmentLayer />
         <FogLayer data={prepared.fogJson} visible={showMist} />
         <RevealLayer data={revealJson} k={showMist ? revealK : 0} />
@@ -380,6 +386,12 @@ export default function MapScreen() {
             <View style={styles.loadingPill}>
               <ActivityIndicator size="small" color="#fff" />
               <Text style={styles.statusText}>Loading sites…</Text>
+            </View>
+          )}
+          {fantasy.tiles && fantasy.visible && fantasy.pendingOnScreen > 0 && (
+            <View style={styles.loadingPill}>
+              <ActivityIndicator size="small" color="#fff" />
+              <Text style={styles.statusText}>Painting the map…</Text>
             </View>
           )}
           {offers.length > 0 && (
