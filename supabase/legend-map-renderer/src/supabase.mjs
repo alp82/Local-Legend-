@@ -1,5 +1,5 @@
 // The few Supabase calls the worker makes, over plain HTTP: RPCs, and uploads to and
-// downloads from the public legend-map-tiles bucket.
+// downloads from the public legend-map-tiles bucket (uploads also go to the old bucket for now).
 //
 // Two ways to authenticate (see README.md):
 //   - The renderer user (production): the publishable key plus the email and password of
@@ -7,6 +7,12 @@
 //     read the status and write the legend-map-tiles bucket.
 //   - A secret key (local stack, admin): sb_secret_... or the legacy service_role JWT.
 const BUCKET = 'legend-map-tiles';
+/**
+ * Compatibility with the layer's earlier name, removed with the compatibility section of
+ * supabase/migrations/20261126200000_legend_map_rename.sql: every new file is also written to
+ * the old bucket, so an installed app that stays open on it keeps seeing new tiles.
+ */
+const ALSO_WRITTEN_TO = ['fantasy-tiles'];
 /** Tiles never change once painted (a new painter is a new version path). */
 const CACHE_CONTROL = 'public, max-age=31536000, immutable';
 /** Refresh the renderer's session this long before it expires. */
@@ -81,15 +87,18 @@ export function createSupabase(url, auth) {
       const text = await res.text();
       return text ? JSON.parse(text) : null;
     },
+    /** Stores a file in the bucket (and, for now, the old one too: ALSO_WRITTEN_TO). A failed write fails the upload. */
     async upload(path, bytes, contentType = 'image/webp') {
-      await call(`upload ${path}`, (h) =>
-        fetch(`${base}/storage/v1/object/${BUCKET}/${path}`, {
-          method: 'POST',
-          headers: { ...h, 'content-type': contentType, 'cache-control': CACHE_CONTROL, 'x-upsert': 'true' },
-          body: bytes,
-          signal: AbortSignal.timeout(60_000),
-        }),
-      );
+      for (const bucket of [BUCKET, ...ALSO_WRITTEN_TO]) {
+        await call(`upload ${bucket}/${path}`, (h) =>
+          fetch(`${base}/storage/v1/object/${bucket}/${path}`, {
+            method: 'POST',
+            headers: { ...h, 'content-type': contentType, 'cache-control': CACHE_CONTROL, 'x-upsert': 'true' },
+            body: bytes,
+            signal: AbortSignal.timeout(60_000),
+          }),
+        );
+      }
     },
     /** Copies a file from another bucket to the same path in this one, server-side (no download). */
     async copyFrom(bucket, path) {
