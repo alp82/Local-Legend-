@@ -6,9 +6,8 @@
 --
 --   npx supabase db query --remote -f supabase/fantasy-renderer/sql/prepaint-territory-queue.sql
 --
--- The z15 parents are queued a minute "earlier" than the z16 tiles: the worker leases the
--- newest requests first, so children are painted before their parents, which then only need
--- scaling down.
+-- The worker leases in arrival order and, at the same time, z16 before z15, so the children
+-- are painted before their parents, which then only need scaling down.
 with buffer as (select 1000.0 as metres),
 cfg as (select version from public.fantasy_config),
 cells as (
@@ -27,8 +26,8 @@ tiles as (
   where dx * dx + dy * dy <= n * n
 ),
 q15 as (
-  insert into public.fantasy_tiles (version, z, x, y, priority, requested_at)
-  select distinct cfg.version, 15::smallint, t.x >> 1, t.y >> 1, 2::smallint, now() - interval '1 minute'
+  insert into public.fantasy_tiles (version, z, x, y, priority)
+  select distinct cfg.version, 15::smallint, t.x >> 1, t.y >> 1, 2::smallint
   from tiles t, cfg
   on conflict do nothing
   returning 1

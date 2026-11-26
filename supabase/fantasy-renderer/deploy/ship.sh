@@ -34,6 +34,7 @@ docker save "$IMAGE" | gzip -1 | ssh "$HOST" 'gunzip | docker load'
 
 ssh "$HOST" "mkdir -p $DIR && test -f $DIR/worker.env || echo 'note: $DIR/worker.env is missing (see worker.env.example)'"
 scp "$HERE/deploy/compose.yaml" "$HERE/deploy/worker.env.example" "$HOST:$DIR/"
-ssh "$HOST" "cd $DIR && { grep -s '^FANTASY_RENDERER_TAG=' .env || true; } > .env.previous && echo FANTASY_RENDERER_TAG=$TAG > .env && { docker compose config --quiet || echo 'compose check failed: is worker.env there?'; }"
-echo "shipped $IMAGE; previous tag saved in $DIR/.env.previous. Start or restart with:"
+# Only the tag line changes; the other settings in .env (host, memory) stay.
+ssh "$HOST" "cd $DIR && touch .env && cp .env .env.previous && { grep -v '^FANTASY_RENDERER_TAG=' .env.previous; echo FANTASY_RENDERER_TAG=$TAG; } > .env && { docker compose config --quiet || echo 'compose check failed: are worker.env and FANTASY_SUPABASE_HOST in .env there?'; }"
+echo "shipped $IMAGE; the previous .env is saved as $DIR/.env.previous. Start or restart with:"
 echo "  ssh $HOST 'cd $DIR && docker compose up -d'"

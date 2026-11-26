@@ -92,8 +92,8 @@ if (!a.yes) {
   console.log('Dry run: nothing queued. Add --yes to queue these tiles.');
   process.exit(0);
 }
-// z15 first: the worker leases the newest requests first, so the z16 tiles queued after them
-// are painted before their parents, which then only need scaling down.
-const q15 = await count(z15, false);
+// z16 first: the worker leases in arrival order, so the children are painted before their
+// z15 parents, which then only need scaling down.
 const q16 = await count(z16, false);
+const q15 = await count(z15, false);
 console.log(`Queued ${q16.queued} z16 and ${q15.queued} z15 tiles. Watch progress with: node src/status.mjs`);
