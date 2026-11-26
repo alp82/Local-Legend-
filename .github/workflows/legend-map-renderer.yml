@@ -1,0 +1,214 @@
+# The Legend map renderer: tests on every pull request that touches it, and a release on every merge to main.
+#
+#   pull request  → renderer tests in the pinned Chromium, database tests on a local Supabase stack, and the
+#                   golden tiles painted in the worker image itself
+#   push to main  → the same, then the image is pushed to GitHub's container registry as sha-<commit>, its
+#                   digest gets a build provenance attestation, the legend-map-deploy branch is pointed at
+#                   that digest, and Coolify deploys the branch. No deploy ever goes through a tag. The worker
+#                   reports its painter fingerprint when it starts; a new one paints a new tile version in the
+#                   background and switches phones when it's done (docs/legend-map-deploy.md, "Releases").
+#
+# Security: the repository is public.
+# - Permissions are empty by default and granted per job: read-only everywhere except the release job, which
+#   may write packages.
+# - pull_request only (never pull_request_target): a fork's pull request runs with a read-only token and no
+#   secrets, and the release job never runs for pull requests.
+# - The release job runs only for pushes to main in this repository, in the "legend-map-release" environment
+#   (deployment branch main, set by an admin). Everything that can publish is that environment's secret: the
+#   classic token that pushes the image (the repository's own Actions access to the package is Read, so a
+#   workflow on another branch can't push), the deploy key that alone may update the deploy branch (a ruleset),
+#   and the Coolify webhook URL and deploy token. Without them the job publishes nothing.
+# - Actions are pinned by commit; the Playwright and base images by digest.
+# - Nothing from an event's free text (titles, branch names) is put into a shell command.
+name: Legend map renderer
+
+on:
+  pull_request:
+    paths:
+      - supabase/legend-map-renderer/**
+      - supabase/migrations/**
+      - supabase/tests/**
+      - .github/workflows/legend-map-renderer.yml
+  push:
+    branches: [main]
+    paths:
+      - supabase/legend-map-renderer/**
+      - supabase/migrations/**
+      - supabase/tests/**
+      - .github/workflows/legend-map-renderer.yml
+
+permissions: {}
+
+concurrency:
+  group: legend-map-renderer-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  renderer:
+    name: Renderer tests (pinned Chromium)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    permissions:
+      contents: read
+    # the same image the worker is built on: the Chromium build every tile is painted with
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.1-noble@sha256:1507cbfc550a63a6b7396791ca4f00df17beb56342d2447b3f106c306f525579
+      options: --shm-size=1g
+    defaults:
+      run:
+        working-directory: supabase/legend-map-renderer
+    env:
+      QUEUE_TEST: "off" # the database job runs it against a local stack
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - run: npm ci
+      - name: Painter fingerprint
+        run: node src/fingerprint.mjs --list
+      - name: Tests (determinism, neighbours, golden tiles, source limits, egress proxy)
+        run: npm test
+
+  database:
+    name: Database tests (local Supabase stack)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: 3.4.0
+      - name: Start the local stack
+        run: supabase start -x studio,imgproxy,mailpit,logflare,vector,supavisor,edge-runtime
+      - name: pgTAP (every migration, from scratch)
+        run: supabase test db
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: Queue and release API tests
+        working-directory: supabase/legend-map-renderer
+        run: node --test test/queue.test.mjs
+      - name: Upgrade from the hosted project's state (earlier names, rename, bucket copy)
+        working-directory: supabase/legend-map-renderer
+        env:
+          UPGRADE_TEST: "on" # resets the local database to the hosted migrations, then to all of them
+        run: node --test test/upgrade.test.mjs
+
+  golden:
+    name: Golden tiles in the worker image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build the image
+        run: docker build -t legend-map-renderer:ci supabase/legend-map-renderer
+      - name: Golden tiles, painted by the image from frozen source data
+        run: |
+          docker run --rm --shm-size=1g -v "$PWD/supabase/legend-map-renderer/test:/app/test:ro" legend-map-renderer:ci \
+            node --test test/golden.test.mjs
+
+  release:
+    name: Release (image by digest, deploy branch, Coolify)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'process-roman/Local-Legend-'
+    needs: [renderer, database, golden]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: legend-map-release
+    # GITHUB_TOKEN can't push the image (the repository's Actions access to the package is Read): the
+    # environment's classic token does. It only signs the build provenance.
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - name: Credentials
+        id: creds
+        env:
+          PACKAGES_TOKEN: ${{ secrets.LEGEND_MAP_PACKAGES_TOKEN }}
+          DEPLOY_KEY: ${{ secrets.LEGEND_MAP_DEPLOY_KEY }}
+          COOLIFY_DEPLOY_URL: ${{ secrets.COOLIFY_DEPLOY_URL }}
+        run: |
+          if [ -n "$PACKAGES_TOKEN" ]; then echo "publish=yes" >> "$GITHUB_OUTPUT"; else echo "::notice::LEGEND_MAP_PACKAGES_TOKEN isn't set: nothing is published (docs/legend-map-deploy.md, Set up automatic releases)."; fi
+          if [ -n "$DEPLOY_KEY" ]; then echo "deploy_branch=yes" >> "$GITHUB_OUTPUT"; fi
+          if [ -n "$COOLIFY_DEPLOY_URL" ]; then echo "coolify=yes" >> "$GITHUB_OUTPUT"; fi
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.creds.outputs.publish == 'yes'
+        with:
+          persist-credentials: false
+      - name: Build
+        id: build
+        if: steps.creds.outputs.publish == 'yes'
+        env:
+          OWNER: ${{ github.repository_owner }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          image="ghcr.io/${OWNER,,}/local-legend-map-renderer"
+          docker build -t legend-map-renderer:release supabase/legend-map-renderer
+          fp=$(docker run --rm legend-map-renderer:release node src/fingerprint.mjs)
+          echo "Painter fingerprint: $fp"
+          # the labels on top of the tested build: no layer changes
+          printf 'FROM legend-map-renderer:release\n' | docker build -t "$image:sha-${SHA:0:12}" \
+            --label "org.opencontainers.image.source=https://github.com/$REPO" \
+            --label "org.opencontainers.image.revision=$SHA" \
+            --label "local-legend.painter-fingerprint=$fp" -
+          echo "image=$image" >> "$GITHUB_OUTPUT"
+          echo "fingerprint=$fp" >> "$GITHUB_OUTPUT"
+      - name: Golden tiles in the image about to be pushed
+        if: steps.creds.outputs.publish == 'yes'
+        run: |
+          docker run --rm --shm-size=1g -v "$PWD/supabase/legend-map-renderer/test:/app/test:ro" legend-map-renderer:release \
+            node --test test/golden.test.mjs
+      - name: Push
+        id: push
+        if: steps.creds.outputs.publish == 'yes'
+        env:
+          IMAGE: ${{ steps.build.outputs.image }}
+          SHA: ${{ github.sha }}
+          OWNER: ${{ github.repository_owner }}
+          PACKAGES_TOKEN: ${{ secrets.LEGEND_MAP_PACKAGES_TOKEN }}
+        run: |
+          printf '%s' "$PACKAGES_TOKEN" | docker login ghcr.io -u "$OWNER" --password-stdin
+          docker push "$IMAGE:sha-${SHA:0:12}"
+          docker logout ghcr.io
+          ref=$(docker inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$IMAGE:sha-${SHA:0:12}" | grep -m1 "^$IMAGE@sha256:")
+          digest="${ref#*@}"
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::no registry digest for the pushed image"; exit 1; }
+          echo "Pushed $IMAGE@$digest"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+      - name: Build provenance (what the rollback workflow checks)
+        if: steps.creds.outputs.publish == 'yes'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ steps.build.outputs.image }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: false
+      - name: Point the deploy branch at the new digest
+        if: steps.creds.outputs.publish == 'yes' && steps.creds.outputs.deploy_branch == 'yes'
+        env:
+          DEPLOY_KEY: ${{ secrets.LEGEND_MAP_DEPLOY_KEY }}
+          REPO: ${{ github.repository }}
+          IMAGE: ${{ steps.build.outputs.image }}
+          DIGEST: ${{ steps.push.outputs.digest }}
+          FINGERPRINT: ${{ steps.build.outputs.fingerprint }}
+          SHA: ${{ github.sha }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          bash supabase/legend-map-renderer/deploy/push-deploy-branch.sh --record
+      - name: Tell Coolify to deploy
+        if: steps.creds.outputs.publish == 'yes' && steps.creds.outputs.deploy_branch == 'yes' && steps.creds.outputs.coolify == 'yes'
+        env:
+          COOLIFY_DEPLOY_URL: ${{ secrets.COOLIFY_DEPLOY_URL }}
+          COOLIFY_DEPLOY_TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
+        run: |
+          # the token goes to curl on stdin, not on its command line
+          printf 'Authorization: Bearer %s\n' "$COOLIFY_DEPLOY_TOKEN" |
+            curl --fail-with-body --silent --show-error --max-time 60 -X POST -H @- "$COOLIFY_DEPLOY_URL"
