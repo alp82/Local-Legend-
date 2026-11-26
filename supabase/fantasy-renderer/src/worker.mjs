@@ -8,6 +8,9 @@
 //
 // After every round the worker writes a heartbeat file (HEARTBEAT_FILE); src/health.mjs
 // reads it for the container health check, src/status.mjs shows it with the queue.
+//
+// After IDLE_RELEASE_MS with nothing to paint, Chromium is closed to give its memory back to
+// the shared host (state "idle, painter released"); the next lease launches it again.
 import { writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
@@ -21,6 +24,7 @@ const config = {
   paintWorkers: Number(env('PAINT_WORKERS', '4')),
   batch: Number(env('LEASE_BATCH', '8')),
   idleMs: Number(env('IDLE_POLL_MS', '1000')),
+  releaseAfterMs: Number(env('IDLE_RELEASE_MS', '60000')),
   once: env('EXIT_WHEN_IDLE', '') === '1',
   heartbeat: env('HEARTBEAT_FILE', '/tmp/fantasy-worker-heartbeat.json'),
 };
@@ -30,7 +34,7 @@ const sb = supabaseFromEnv();
 const renderer = await startRenderer({ sourceDir: config.sourceDir, workers: config.paintWorkers, log });
 log(`worker ready: Chromium ${renderer.chromium}, ${config.paintWorkers} paint workers, ${sb.mode}, source data in ${config.sourceDir}`);
 
-const stats = { startedAt: new Date().toISOString(), painted: 0, failed: 0, lastPaintAt: null, lastError: null };
+const stats = { startedAt: new Date().toISOString(), painted: 0, failed: 0, lastPaintAt: null, lastError: null, releases: 0 };
 async function beat(state) {
   const body = { ...stats, state, at: new Date().toISOString(), source: await renderer.sourceStatus() };
   await writeFile(config.heartbeat, JSON.stringify(body)).catch((e) => log(`heartbeat: ${e.message}`));
@@ -100,6 +104,7 @@ let stopping = false;
 for (const sig of ['SIGINT', 'SIGTERM']) process.on(sig, () => { stopping = true; });
 
 await beat('starting');
+let lastWork = Date.now();
 while (!stopping) {
   let leased;
   try {
@@ -112,7 +117,11 @@ while (!stopping) {
     continue;
   }
   if (!leased.length) {
-    await beat('idle');
+    if (renderer.awake && Date.now() - lastWork >= config.releaseAfterMs && (await renderer.release())) {
+      stats.releases++;
+      log(`painter released after ${Math.round((Date.now() - lastWork) / 1000)} s idle`);
+    }
+    await beat(renderer.awake ? 'idle' : 'idle, painter released');
     if (config.once) break;
     await new Promise((r) => setTimeout(r, config.idleMs));
     continue;
@@ -121,6 +130,7 @@ while (!stopping) {
   // z16 first: a z15 job in the same batch can then reuse its children
   await Promise.all(leased.filter((t) => t.z === 16).map(job));
   await Promise.all(leased.filter((t) => t.z === 15).map(job));
+  lastWork = Date.now();
 }
 await beat('stopped');
 await renderer.close();

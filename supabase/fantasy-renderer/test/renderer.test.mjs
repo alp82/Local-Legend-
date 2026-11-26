@@ -45,3 +45,24 @@ test('a tile is a 1024 px WebP of plausible size, and z15 is made from four chil
   }, z15.toString('base64'));
   assert.deepEqual(size, [1024, 1024]);
 });
+
+test('after release() the browser is gone, and the next paint brings it back with the same pixels', async () => {
+  const r = await startRenderer({ sourceDir, workers: 1 });
+  try {
+    const before = await r.paint(35209, 21498, 0.8);
+    const pid = r.page.context().browser().process?.()?.pid;
+    assert.equal(await r.release(), true);
+    assert.equal(r.awake, false);
+    if (pid) assert.throws(() => process.kill(pid, 0), 'the Chromium process has exited');
+    const after = await r.paint(35209, 21498, 0.8);
+    assert.equal(r.awake, true);
+    assert.equal(after.rgbaHash, before.rgbaHash);
+    assert.equal(md5(after.webp), md5(before.webp));
+    // a z15 job right after a release also wakes it
+    assert.equal(await r.release(), true);
+    const z15 = await r.downsample([before.webp, after.webp, null, null], 0.8);
+    assert.equal(z15.subarray(8, 12).toString(), 'WEBP');
+  } finally {
+    await r.close();
+  }
+});

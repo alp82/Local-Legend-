@@ -84,6 +84,7 @@ The worker reads only environment variables:
 | `RECYCLE_TILES` | `300` | Tiles per painter page; the page is then replaced (the painter's caches only grow). Production: 100 |
 | `LEASE_BATCH` | `8` | Tiles leased per round |
 | `IDLE_POLL_MS` | `1000` | Wait between empty polls |
+| `IDLE_RELEASE_MS` | `60000` | Idle time after which Chromium is closed to give its memory back; the next lease launches it again |
 | `EXIT_WHEN_IDLE` | (unset) | `1`: stop when the queue is empty, for batch runs |
 | `HEARTBEAT_FILE` | `/tmp/fantasy-worker-heartbeat.json` | Written after every round, for `src/health.mjs` and `src/status.mjs` |
 
@@ -262,7 +263,8 @@ Measured with the round 11 painter in Docker at 2 CPUs, one painter, on a fast d
   3 GB limit): the testers' pre-paint (362 tiles queued, 445 painted with the missing z15
   children) took 24 minutes, about 4 s per z16 paint, with no failures or Chromium restarts. The
   container peaked at 2.4 GB, and the host's available memory went no lower than 1.6 GB. Idle,
-  the worker keeps about 2.1 GB until its page is recycled. The 445 tiles came to 50 MB (113 KB
+  the worker held about 2.1 GB until its page was recycled; since then it closes Chromium after
+  a minute idle (`IDLE_RELEASE_MS`). The 445 tiles came to 50 MB (113 KB
   per z16 tile, 120 KB per z15 tile on average) and 61 MB of source data from 1,134 fetches.
 - **Mean z16 tile by WebP quality** (27 tiles, Berlin, Manhattan, Innsbruck): 0.7: 131 KB,
   0.75: 143 KB, 0.8: 180 KB. A z15 tile is about 15% larger.

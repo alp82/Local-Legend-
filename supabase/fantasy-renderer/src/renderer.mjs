@@ -1,5 +1,10 @@
 // A tile painter: the local server plus one headless Chromium page that runs the vendored
 // prototype painter in a pool of Web Workers.
+//
+// release() closes Chromium altogether (the painter's page alone holds about 2 GB after a few
+// tiles in a city), and the next paint launches it again: the same pinned build with the same
+// arguments, the same page, the same paint path. A fresh browser paints the same pixels as a
+// long-running one (test/renderer.test.mjs, test/neighbours.test.mjs).
 import { chromium } from 'playwright';
 
 import { SourceLimitError, startServer } from './server.mjs';
@@ -13,15 +18,26 @@ export const PAINT_ZOOM = 16;
  */
 export async function startRenderer({ sourceDir, workers = 4, recycleAfter = Number(process.env.RECYCLE_TILES || 300), log = () => {} }) {
   const server = await startServer({ sourceDir });
-  // Software rendering only: the same Chromium build gives the same pixels on any machine.
-  const browser = await chromium.launch({ args: ['--disable-gpu', '--use-angle=swiftshader'] });
-  let closing = false;
-  // If Chromium itself goes, nothing here can recover: exit, and let the container restart.
-  browser.on('disconnected', () => {
-    if (closing) return;
-    log('Chromium exited; stopping');
-    process.exit(1);
-  });
+  let browser = null;
+  let launching = null;
+  /** Launches Chromium (and its painter page) if it isn't running. */
+  function ensureBrowser() {
+    launching ??= (async () => {
+      // Software rendering only: the same Chromium build gives the same pixels on any machine.
+      const b = await chromium.launch({ args: ['--disable-gpu', '--use-angle=swiftshader'] });
+      // If Chromium goes by itself, nothing here can recover: exit, and let the container restart.
+      b.on('disconnected', () => {
+        if (b.released) return;
+        log('Chromium exited; stopping');
+        process.exit(1);
+      });
+      browser = b;
+      await freshPage();
+    })().finally(() => {
+      launching = null;
+    });
+    return launching;
+  }
 
   let page = null;
   let paintsOnPage = 0;
@@ -50,7 +66,8 @@ export async function startRenderer({ sourceDir, workers = 4, recycleAfter = Num
     });
     return gate;
   }
-  await freshPage();
+  await ensureBrowser();
+  const chromiumVersion = browser.version();
 
   // After three failed fetches the painter treats a data tile as empty. So the source tiles a
   // paint is likely to read are fetched first, and a paint during which the server failed any
@@ -81,7 +98,25 @@ export async function startRenderer({ sourceDir, workers = 4, recycleAfter = Num
       return page;
     },
     stats: server.stats,
-    chromium: browser.version(),
+    chromium: chromiumVersion,
+    /** Whether Chromium is running (false after release(), until the next paint). */
+    get awake() {
+      return browser !== null;
+    },
+    /**
+     * Closes Chromium to give its memory back while there is nothing to paint. Waits for paints
+     * in progress; the next paint or downsample launches it again.
+     */
+    async release() {
+      while (gate || launching) await (gate ?? launching);
+      if (!browser || inflight > 0) return false;
+      const b = browser;
+      browser = null;
+      page = null;
+      b.released = true;
+      await b.close().catch(() => {});
+      return true;
+    },
     /**
      * Paints z16 tile x/y; returns { webp: Buffer, rgbaHash, labels, names, dropped, ms }.
      * labels: the tile's road and water names for the app; names: its village names (painted in);
@@ -91,7 +126,11 @@ export async function startRenderer({ sourceDir, workers = 4, recycleAfter = Num
     async paint(x, y, quality, opts = {}) {
       await prefetch(x, y);
       for (let attempt = 0; ; attempt++) {
-        while (gate) await gate;
+        while (gate || launching) await (gate ?? launching);
+        if (!browser) {
+          await ensureBrowser();
+          continue;
+        }
         if (paintsOnPage >= recycleAfter) {
           await replacePage(`after ${paintsOnPage} tiles`);
           continue;
@@ -126,13 +165,16 @@ export async function startRenderer({ sourceDir, workers = 4, recycleAfter = Num
     /** One z15 tile from its four z16 children (Buffers or null; order NW, NE, SW, SE). */
     async downsample(children, quality) {
       const b64 = children.map((c) => (c ? c.toString('base64') : null));
-      while (gate) await gate;
+      while (gate || launching) await (gate ?? launching);
+      if (!browser) await ensureBrowser();
       const r = await page.evaluate(([c, q]) => window.downsample(c, q), [b64, quality]);
       return Buffer.from(r, 'base64');
     },
     async close() {
-      closing = true;
-      await browser.close();
+      if (browser) {
+        browser.released = true;
+        await browser.close();
+      }
       await server.close();
     },
   };

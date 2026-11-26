@@ -25,6 +25,9 @@ services:
       RECYCLE_TILES: "100"
       LEASE_BATCH: "4"
       IDLE_POLL_MS: "1000"
+      # Close Chromium after a minute with nothing to paint: idle, it would keep about 2 GB of
+      # this shared host's memory. The next lease launches it again (a few seconds).
+      IDLE_RELEASE_MS: "60000"
       # The frozen source store stops growing at 8 GB, and upstream fetches stop for the day
       # after 20,000 (a new area costs about 150 to 300), at most 6 at a time.
       SOURCE_MAX_MB: "8000"
