@@ -9,7 +9,7 @@
 --     while phones keep the live version. When nothing is left to paint, advance_fantasy_release switches
 --     fantasy_config.version, and phones pick up the new version at their next configuration check;
 --   - the fingerprint of a version released before whose tiles still exist (a rollback): phones switch back to it
---     at once, and the tiles it misses are queued;
+--     at once, and what players viewed on the version being left is queued for it;
 --   - the fingerprint of a staged version never released (an abandoned release, deployed again): its staging
 --     resumes where it stopped.
 --
@@ -20,6 +20,12 @@
 --
 -- While a release stages, players' new tiles go to the staged version (the running worker can only paint with
 -- its own painter); the live version gets no new tiles until the switch.
+--
+-- The switch is held ("blocked" in fantasy_status) while the staged version has no ready tile, or more tiles
+-- were given up than release_max_given_up / release_max_given_up_share allow: a painter that fails at run time
+-- never replaces a working version. Each version keeps the WebP quality it was started with, so a change of
+-- fantasy_config.webp_quality applies from the next release on, never within a version. Once a fingerprint is
+-- recorded, a worker that reports none (an image from before releases) gets no tiles.
 
 set lock_timeout = '5s';
 
@@ -35,6 +41,8 @@ alter table public.fantasy_config
   add column release_buffer_m int not null default 1000 check (release_buffer_m >= 0), -- painted round claimed land for a release
   add column release_recent interval not null default '30 days', -- live tiles requested this recently are painted for a release
   add column version_grace interval not null default '7 days',   -- a replaced version's files are deleted after this
+  add column release_max_given_up int not null default 10 check (release_max_given_up >= 0),            -- tiles given up that still allow a switch
+  add column release_max_given_up_share real not null default 0.01 check (release_max_given_up_share between 0 and 1), -- and as a share of the staged tiles
   add constraint fantasy_config_staging check ((staging_version is null) = (staging_fingerprint is null));
 
 create table public.fantasy_versions (
@@ -43,6 +51,8 @@ create table public.fantasy_versions (
   created_at timestamptz not null default now(),
   released_at timestamptz,                               -- last time phones were switched to it
   retired_at timestamptz,                                -- last time another version replaced it
+  webp_quality real not null default 0.75,               -- the quality every tile of this version is painted at
+  purge_started_at timestamptz,                          -- deleting its files has begun: never rolled back to again
   deleted_at timestamptz                                 -- its files and rows are gone; the number is never reused
 );
 
@@ -65,7 +75,8 @@ drop function public.lease_fantasy_tiles(int);
 
 -- Leases up to p_limit tiles of the versions this painter may paint: the live version if p_fingerprint is its
 -- fingerprint (or none is recorded yet), and the staged version if p_fingerprint is the staged one. Without a
--- fingerprint (a worker from before releases) only the live version. Order as before: on screen, around, then
+-- fingerprint (a worker from before releases) only the live version, and only until a fingerprint is recorded.
+-- Each tile comes with its version's WebP quality. Order as before: on screen, around, then
 -- pre-painting and release staging; within a priority players take turns, oldest first, z16 before z15.
 create function public.lease_fantasy_tiles(p_limit int, p_fingerprint text default null)
 returns table (version int, z smallint, x int, y int, webp_quality real)
@@ -82,8 +93,12 @@ begin
     raise exception 'only the fantasy renderer leases tiles' using errcode = '42501';
   end if;
   select * into c from public.fantasy_config;
+  if p_fingerprint is null and c.fingerprint is not null then
+    raise exception 'this worker reports no painter fingerprint: it predates releases and may not paint version % (deploy a current image)', c.version
+      using errcode = '42501';
+  end if;
   v_versions := array_remove(array[
-    case when p_fingerprint is null or c.fingerprint is null or c.fingerprint = p_fingerprint then c.version end,
+    case when c.fingerprint is null or c.fingerprint = p_fingerprint then c.version end,
     case when p_fingerprint is not null and c.staging_fingerprint = p_fingerprint then c.staging_version end
   ], null);
 
@@ -121,9 +136,10 @@ begin
     where t.version = p.version and t.z = p.z and t.x = p.x and t.y = p.y
     returning t.version, t.z, t.x, t.y
   )
-  select l.version, l.z, l.x, l.y, c.webp_quality
+  select l.version, l.z, l.x, l.y, coalesce(fv.webp_quality, c.webp_quality)
   from leased l
   join waiting w on w.version = l.version and w.z = l.z and w.x = l.x and w.y = l.y
+  left join public.fantasy_versions fv on fv.version = l.version
   order by w.priority, w.turn, w.requested_at, w.z desc, w.x, w.y;
 end;
 $$;
@@ -139,9 +155,10 @@ grant execute on function public.lease_fantasy_tiles(int, text) to authenticated
 -- ---------------------------------------------------------------------------
 
 -- Queues for version p_version every known area: z16 tiles within release_buffer_m of claimed land and their
--- z15 parents, and every tile of the live version requested within release_recent. Tiles the version already
--- has are left alone. Returns how many were queued. Positions never leave the database.
-create function private.fantasy_queue_known(p_version int, p_priority smallint)
+-- z15 parents, and every tile of version p_viewed (the version phones have been looking at) requested within
+-- release_recent. Tiles the version already has are left alone. Returns how many were queued. Positions never
+-- leave the database.
+create function private.fantasy_queue_known(p_version int, p_priority smallint, p_viewed int)
 returns int
 language sql
 volatile
@@ -165,7 +182,7 @@ as $$
     union select 15::smallint, g.x >> 1, g.y >> 1 from ground g
     union
     select t.z, t.x, t.y from public.fantasy_tiles t, c
-    where t.version = c.version and t.status = 'ready'
+    where t.version = p_viewed and t.status = 'ready'
       and coalesce(t.last_requested_at, t.requested_at) > now() - c.release_recent
   ),
   ins as (
@@ -178,7 +195,7 @@ as $$
   select count(*)::int from ins
 $$;
 
-revoke all on function private.fantasy_queue_known(int, smallint) from public, anon, authenticated;
+revoke all on function private.fantasy_queue_known(int, smallint, int) from public, anon, authenticated;
 
 -- Called by the worker when it starts, with its painter fingerprint. Returns
 --   {"action": "adopted" | "current" | "staging" | "rolled_back", "version", "queued"?, "abandoned"?}
@@ -209,7 +226,7 @@ begin
 
   if c.fingerprint is null then
     update public.fantasy_config set fingerprint = p_fingerprint where id;
-    insert into public.fantasy_versions (version, fingerprint, released_at) values (c.version, p_fingerprint, now())
+    insert into public.fantasy_versions (version, fingerprint, released_at, webp_quality) values (c.version, p_fingerprint, now(), c.webp_quality)
     on conflict (version) do update set fingerprint = excluded.fingerprint, released_at = coalesce(public.fantasy_versions.released_at, now());
     return jsonb_build_object('action', 'adopted', 'version', c.version);
   end if;
@@ -226,27 +243,29 @@ begin
     return jsonb_build_object('action', 'staging', 'version', c.staging_version, 'resumed', true);
   end if;
 
-  select * into v from public.fantasy_versions where fingerprint = p_fingerprint and deleted_at is null
+  -- (a version whose files are being deleted doesn't count: its painter gets a fresh version instead)
+  select * into v from public.fantasy_versions where fingerprint = p_fingerprint and deleted_at is null and purge_started_at is null
   order by version desc limit 1;
 
   if v.version is not null and v.released_at is not null then
-    -- a rollback: phones switch back now; the areas it misses (explored since) are queued
+    -- a rollback: phones switch back now; what they viewed on the version being left, and the land, is queued
+    -- (behind players' own requests, so a large backlog doesn't fill the queue for them)
+    v_queued := private.fantasy_queue_known(v.version, 2::smallint, c.version);
     update public.fantasy_versions set retired_at = now() where version = c.version;
     update public.fantasy_versions set released_at = now(), retired_at = null where version = v.version;
     update public.fantasy_config
       set version = v.version, fingerprint = p_fingerprint, staging_version = null, staging_fingerprint = null, staging_started_at = null
     where id;
-    v_queued := private.fantasy_queue_known(v.version, 1::smallint);
     return jsonb_build_object('action', 'rolled_back', 'version', v.version, 'from', c.version, 'queued', v_queued);
   end if;
 
   if v.version is null then
-    insert into public.fantasy_versions (version, fingerprint)
-    values (greatest(c.version, (select coalesce(max(version), 0) from public.fantasy_versions)) + 1, p_fingerprint)
+    insert into public.fantasy_versions (version, fingerprint, webp_quality)
+    values (greatest(c.version, (select coalesce(max(version), 0) from public.fantasy_versions)) + 1, p_fingerprint, c.webp_quality)
     returning * into v;
   end if;
   update public.fantasy_config set staging_version = v.version, staging_fingerprint = p_fingerprint, staging_started_at = now() where id;
-  v_queued := private.fantasy_queue_known(v.version, 2::smallint);
+  v_queued := private.fantasy_queue_known(v.version, 2::smallint, c.version);
   return jsonb_build_object('action', 'staging', 'version', v.version, 'queued', v_queued, 'replaced', c.staging_version);
 end;
 $$;
@@ -257,9 +276,41 @@ comment on function public.begin_fantasy_release(text) is
 revoke all on function public.begin_fantasy_release(text) from public, anon;
 grant execute on function public.begin_fantasy_release(text) to authenticated, service_role;
 
--- Called by the worker while idle. When the staged version has nothing left to paint (tiles given up after
--- max_attempts don't hold it back), phones are switched to it. Returns {"staging": false} without a release,
--- {"staging": true, "version", "remaining"} while one is painted, {"switched": true, "from", "to"} at the switch.
+-- The staged version's progress: {"version", "remaining", "ready", "given_up", "blocked", "reason"}, or null
+-- without a release. Blocked: nothing left to paint, but no tile is ready, or more were given up than allowed.
+create function private.fantasy_release_state()
+returns jsonb
+language sql
+stable
+set search_path = ''
+as $$
+  select case when c.staging_version is null then null else (
+    select jsonb_build_object(
+      'version', c.staging_version, 'remaining', s.remaining, 'ready', s.ready, 'given_up', s.given_up,
+      'blocked', s.remaining = 0 and b.reason is not null, 'reason', case when s.remaining = 0 then b.reason end)
+    from (
+      select
+        count(*) filter (where t.status in ('queued', 'painting') or (t.status = 'failed' and t.attempts < c.max_attempts)) as remaining,
+        count(*) filter (where t.status = 'ready') as ready,
+        count(*) filter (where t.status = 'failed' and t.attempts >= c.max_attempts) as given_up,
+        count(*) as total
+      from public.fantasy_tiles t where t.version = c.staging_version
+    ) s
+    cross join lateral (select case
+      when s.total > 0 and s.ready = 0 then 'no staged tile was painted (' || s.given_up || ' given up)'
+      when s.given_up > c.release_max_given_up then s.given_up || ' tiles given up, more than release_max_given_up (' || c.release_max_given_up || ')'
+      when s.total > 0 and s.given_up > c.release_max_given_up_share * s.total then s.given_up || ' of ' || s.total || ' tiles given up, more than release_max_given_up_share (' || c.release_max_given_up_share || ')'
+    end as reason) b
+  ) end
+  from public.fantasy_config c
+$$;
+
+revoke all on function private.fantasy_release_state() from public, anon, authenticated;
+
+-- Called by the worker while idle. When the staged version has nothing left to paint, and enough of it painted
+-- (see private.fantasy_release_state), phones are switched to it. Returns {"staging": false} without a release,
+-- {"staging": true, "version", "remaining", "blocked", "reason"} while one is painted or held,
+-- {"switched": true, "from", "to"} at the switch.
 create function public.advance_fantasy_release()
 returns jsonb
 language plpgsql
@@ -269,7 +320,7 @@ set search_path = ''
 as $$
 declare
   c public.fantasy_config;
-  v_remaining int;
+  v_state jsonb;
 begin
   if not public.is_fantasy_renderer() then
     raise exception 'only the fantasy renderer advances releases' using errcode = '42501';
@@ -278,11 +329,10 @@ begin
   if c.staging_version is null then
     return jsonb_build_object('staging', false);
   end if;
-  select count(*) into v_remaining from public.fantasy_tiles t
-  where t.version = c.staging_version
-    and (t.status in ('queued', 'painting') or (t.status = 'failed' and t.attempts < c.max_attempts));
-  if v_remaining > 0 then
-    return jsonb_build_object('staging', true, 'version', c.staging_version, 'remaining', v_remaining);
+  v_state := private.fantasy_release_state();
+  if (v_state ->> 'remaining')::int > 0 or (v_state ->> 'blocked')::boolean then
+    return jsonb_build_object('staging', true, 'version', c.staging_version, 'remaining', (v_state ->> 'remaining')::int,
+      'blocked', (v_state ->> 'blocked')::boolean, 'reason', v_state ->> 'reason');
   end if;
   update public.fantasy_versions set retired_at = now() where version = c.version;
   update public.fantasy_versions set released_at = now(), retired_at = null where version = c.staging_version;
@@ -321,7 +371,8 @@ $$;
 
 revoke all on function private.fantasy_deletable_versions() from public, anon, authenticated;
 
--- Whether a Storage object in fantasy-tiles belongs to a deletable version (for the delete policy below).
+-- Whether a Storage object in fantasy-tiles is a tile or label file of a deletable version (for the delete policy
+-- below; the path anchored like the insert policy's).
 create function public.fantasy_object_deletable(p_name text)
 returns boolean
 language sql
@@ -329,17 +380,21 @@ stable
 security definer
 set search_path = ''
 as $$
-  select coalesce(substring(p_name from '^v([0-9]{1,6})/')::int in (select private.fantasy_deletable_versions()), false)
+  select coalesce(
+    p_name ~ '^v[0-9]{1,6}/1[56]/[0-9]{1,5}/[0-9]{1,5}\.(webp|json)$'
+      and substring(p_name from '^v([0-9]{1,6})/')::int in (select private.fantasy_deletable_versions()),
+    false)
 $$;
 
 revoke all on function public.fantasy_object_deletable(text) from public, anon;
 grant execute on function public.fantasy_object_deletable(text) to authenticated, service_role;
 
--- Up to p_limit files of deletable versions, for the worker to delete through the Storage API.
+-- Up to p_limit files of deletable versions, for the worker to delete through the Storage API. Each such version
+-- is marked first (purge_started_at), so no rollback goes back to a version with files missing.
 create function public.fantasy_cleanup_candidates(p_limit int default 500)
 returns setof text
 language plpgsql
-stable
+volatile
 security definer
 set search_path = ''
 as $$
@@ -347,6 +402,8 @@ begin
   if not public.is_fantasy_renderer() then
     raise exception 'only the fantasy renderer cleans up tiles' using errcode = '42501';
   end if;
+  update public.fantasy_versions set purge_started_at = now()
+  where purge_started_at is null and version in (select private.fantasy_deletable_versions());
   return query
   select o.name from storage.objects o
   where o.bucket_id = 'fantasy-tiles'
@@ -657,16 +714,11 @@ begin
     'enabled', c.enabled,
     'version', c.version,
     'fingerprint', c.fingerprint,
-    'staging', case when c.staging_version is null then null else jsonb_build_object(
-      'version', c.staging_version,
-      'fingerprint', c.staging_fingerprint,
-      'started_at', c.staging_started_at,
-      'remaining', (select count(*) from public.fantasy_tiles t where t.version = c.staging_version
-        and (t.status in ('queued', 'painting') or (t.status = 'failed' and t.attempts < c.max_attempts))),
-      'ready', (select count(*) from public.fantasy_tiles t where t.version = c.staging_version and t.status = 'ready')
-    ) end,
+    'staging', case when c.staging_version is null then null else private.fantasy_release_state()
+      || jsonb_build_object('fingerprint', c.staging_fingerprint, 'started_at', c.staging_started_at) end,
     'versions', (select coalesce(jsonb_agg(jsonb_build_object('version', v.version, 'fingerprint', v.fingerprint,
-        'released_at', v.released_at, 'retired_at', v.retired_at, 'deleted_at', v.deleted_at) order by v.version), '[]'::jsonb)
+        'webp_quality', v.webp_quality, 'released_at', v.released_at, 'retired_at', v.retired_at,
+        'purge_started_at', v.purge_started_at, 'deleted_at', v.deleted_at) order by v.version), '[]'::jsonb)
       from public.fantasy_versions v),
     'webp_quality', c.webp_quality,
     'limits', jsonb_build_object(

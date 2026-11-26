@@ -1,11 +1,13 @@
 -- pgTAP tests for fantasy map releases (20261126150000_fantasy_releases.sql): the worker's start-up call adopts,
 -- carries on, stages a new version for every known area, rolls back, resumes or abandons a release; leasing
--- follows the painter fingerprint; the switch waits for the staged version; replaced versions are cleaned up
--- after the grace period, through the Storage API only; players can't touch any of it.
+-- follows the painter fingerprint (and refuses workers without one once it's recorded); the switch waits for
+-- the staged version and is held when too little of it painted; each version keeps its WebP quality; a rollback
+-- queues what players viewed on the version being left; replaced versions are marked, then cleaned up after the
+-- grace period, through the Storage API only, and never rolled back to; players can't touch any of it.
 -- Run with: npx supabase test db
 begin;
 
-select plan(44);
+select plan(52);
 
 insert into auth.users (id, aud, role, is_anonymous, raw_app_meta_data)
 values
@@ -58,7 +60,7 @@ select is(has_function_privilege('anon', 'public.begin_fantasy_release(text)', '
 select is(has_function_privilege('anon', 'public.advance_fantasy_release()', 'execute'), false, 'nor on advance_fantasy_release');
 select is(has_function_privilege('anon', 'public.fantasy_cleanup_candidates(integer)', 'execute'), false, 'nor on fantasy_cleanup_candidates');
 select is(has_function_privilege('anon', 'public.fantasy_forget_versions()', 'execute'), false, 'nor on fantasy_forget_versions');
-select is(has_function_privilege('authenticated', 'private.fantasy_queue_known(integer, smallint)', 'execute'), false, 'The queueing helper is private');
+select is(has_function_privilege('authenticated', 'private.fantasy_queue_known(integer, smallint, integer)', 'execute'), false, 'The queueing helper is private');
 select pg_temp.as_player();
 select throws_ok($$select public.begin_fantasy_release('aaaaaaaaaaaaaaaa')$$, '42501', null, 'A player cannot start a release');
 select throws_ok($$select public.advance_fantasy_release()$$, '42501', null, 'nor switch versions');
@@ -74,6 +76,7 @@ select pg_temp.as_renderer();
 select throws_ok($$select public.begin_fantasy_release('not-a-fingerprint')$$, '22023', null, 'A fingerprint is 16 hex digits');
 select is(public.begin_fantasy_release('aaaaaaaaaaaaaaaa') ->> 'action', 'adopted', 'The first worker adopts the live version as its own');
 select is(public.begin_fantasy_release('aaaaaaaaaaaaaaaa') - 'abandoned', '{"action": "current", "version": 1}'::jsonb, 'The same painter again: nothing to do');
+select throws_ok($$select * from public.lease_fantasy_tiles(1)$$, '42501', null, 'Once a fingerprint is recorded, a worker without one gets no tiles');
 
 select is(public.begin_fantasy_release('bbbbbbbbbbbbbbbb') - 'replaced', '{"action": "staging", "version": 2, "queued": 3}'::jsonb,
   'A new painter stages version 2 for every known area');
@@ -91,9 +94,13 @@ select pg_temp.as_renderer();
 select is((select count(*)::int from public.lease_fantasy_tiles(64, 'cccccccccccccccc')), 0, 'A painter that painted neither version leases nothing');
 select results_eq($$select version, x from public.lease_fantasy_tiles(64, 'aaaaaaaaaaaaaaaa')$$, $$values (1, 50000)$$,
   'The live painter leases only live tiles');
-select results_eq($$select version from public.lease_fantasy_tiles(64, 'bbbbbbbbbbbbbbbb')$$, $$values (2), (2), (2)$$,
-  'The staged painter leases the staged tiles');
 select pg_temp.as_postgres();
+update public.fantasy_config set webp_quality = 0.9 where id;
+select pg_temp.as_renderer();
+select results_eq($$select version, webp_quality from public.lease_fantasy_tiles(64, 'bbbbbbbbbbbbbbbb')$$, $$values (2, 0.75::real), (2, 0.75::real), (2, 0.75::real)$$,
+  'The staged painter leases the staged tiles, at the quality the version started with');
+select pg_temp.as_postgres();
+update public.fantasy_config set webp_quality = 0.75 where id;
 update public.fantasy_tiles set status = 'queued', lease_until = null, attempts = 0 where version in (1, 2);
 
 -- players' new tiles go to the staged version
@@ -110,12 +117,24 @@ select is((select last_requested_at > now() - interval '1 minute' from public.fa
 -- ---------------------------------------------------------------------------
 
 select pg_temp.as_renderer();
-select is(public.advance_fantasy_release(), '{"staging": true, "version": 2, "remaining": 4}'::jsonb, 'No switch while tiles remain');
+select is(public.advance_fantasy_release(), '{"staging": true, "version": 2, "remaining": 4, "blocked": false, "reason": null}'::jsonb, 'No switch while tiles remain');
 select pg_temp.as_postgres();
-update public.fantasy_tiles set status = 'ready' where version = 2 and x <> 40001;
-update public.fantasy_tiles set status = 'failed', attempts = 3 where version = 2 and x = 40001;
+-- the reviewer's case: a painter that fails every tile at run time
+update public.fantasy_tiles set status = 'failed', attempts = 3 where version = 2;
 select pg_temp.as_renderer();
-select is(public.advance_fantasy_release(), '{"switched": true, "from": 1, "to": 2}'::jsonb, 'Switched once nothing is left (a tile given up doesn''t hold it back)');
+select is(public.advance_fantasy_release() - 'reason', '{"staging": true, "version": 2, "remaining": 0, "blocked": true}'::jsonb,
+  'A painter that failed every tile never switches phones');
+select pg_temp.as_postgres();
+select is(public.fantasy_status() -> 'staging' ->> 'reason', 'no staged tile was painted (4 given up)', 'The status says why the release is held');
+-- one of four given up: more than release_max_given_up_share (1%)
+update public.fantasy_tiles set status = 'ready' where version = 2 and x <> 40001;
+select pg_temp.as_renderer();
+select is((public.advance_fantasy_release() ->> 'blocked')::boolean, true, 'Too many tiles given up (1 of 4) still holds it');
+select pg_temp.as_postgres();
+select matches(public.fantasy_status() -> 'staging' ->> 'reason', 'release_max_given_up_share', 'naming the limit');
+update public.fantasy_config set release_max_given_up_share = 0.5 where id;
+select pg_temp.as_renderer();
+select is(public.advance_fantasy_release(), '{"switched": true, "from": 1, "to": 2}'::jsonb, 'Within the limits it switches once nothing is left');
 select is(public.advance_fantasy_release(), '{"staging": false}'::jsonb, 'Then no release');
 select pg_temp.as_postgres();
 select results_eq($$select version, fingerprint, staging_version from public.fantasy_config$$, $$values (2, 'bbbbbbbbbbbbbbbb', null::int)$$,
@@ -132,8 +151,9 @@ select is(public.begin_fantasy_release('aaaaaaaaaaaaaaaa') - 'queued', '{"action
   'The previous image again: phones go straight back to version 1');
 select pg_temp.as_postgres();
 select results_eq($$select version, fingerprint from public.fantasy_config$$, $$values (1, 'aaaaaaaaaaaaaaaa')$$, 'Version 1 is live again');
-select results_eq($$select priority from public.fantasy_tiles where version = 1 and z = 15$$, $$values (1::smallint)$$,
-  'and what it misses is queued at once');
+select results_eq($$select z, x, priority from public.fantasy_tiles where version = 1 and priority = 2 and status = 'queued' order by z desc, x$$,
+  $$values (16::smallint, 35210, 2::smallint), (15::smallint, 17604, 2::smallint)$$,
+  'and what players viewed on version 2 that version 1 lacks is queued, behind players'' own requests');
 select pg_temp.as_renderer();
 select is(public.begin_fantasy_release('bbbbbbbbbbbbbbbb') ->> 'action', 'rolled_back', 'The newer image again: straight back to version 2');
 select is(public.begin_fantasy_release('cccccccccccccccc') ->> 'version', '3', 'A third painter stages version 3');
@@ -152,9 +172,13 @@ select is(public.fantasy_object_deletable('v1/16/1/1.webp'), true, 'A version re
 select is(public.fantasy_object_deletable('v2/16/1/1.webp'), false, 'The live version may not');
 select is(public.fantasy_object_deletable('v3/16/1/1.webp'), false, 'nor the staged one');
 select is(public.fantasy_object_deletable('index.html'), false, 'nor anything else');
+select is(public.fantasy_object_deletable('v1/../v2/16/1/1.webp'), false, 'nor a path that only starts like a deletable one');
 select pg_temp.as_renderer();
 select results_eq($$select * from public.fantasy_cleanup_candidates()$$, $$values ('v1/16/1/1.webp'::text)$$, 'The worker is told to delete version 1''s files');
 select is(public.fantasy_forget_versions(), '{}'::int[], 'A version is forgotten only once its files are gone');
+select is(public.begin_fantasy_release('aaaaaaaaaaaaaaaa') - 'queued' - 'replaced', '{"action": "staging", "version": 4}'::jsonb,
+  'Its painter deployed again while its files are being deleted: a fresh version, not a rollback into holes');
+select is(public.begin_fantasy_release('cccccccccccccccc') ->> 'version', '3', '(and back to the release under test)');
 -- the Storage API's delete (it sets storage.allow_delete_query), as the renderer: only deletable files go
 select set_config('storage.allow_delete_query', 'true', true);
 delete from storage.objects where bucket_id = 'fantasy-tiles' and name in ('v1/16/1/1.webp', 'v2/16/1/1.webp');
