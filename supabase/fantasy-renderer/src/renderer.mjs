@@ -7,6 +7,7 @@
 // long-running one (test/renderer.test.mjs, test/neighbours.test.mjs).
 import { chromium } from 'playwright';
 
+import { CHROMIUM_ARGS } from './paint-output.mjs';
 import { SourceLimitError, startServer } from './server.mjs';
 
 export const PAINT_ZOOM = 16;
@@ -23,8 +24,7 @@ export async function startRenderer({ sourceDir, workers = 4, recycleAfter = Num
   /** Launches Chromium (and its painter page) if it isn't running. */
   function ensureBrowser() {
     launching ??= (async () => {
-      // Software rendering only: the same Chromium build gives the same pixels on any machine.
-      const b = await chromium.launch({ args: ['--disable-gpu', '--use-angle=swiftshader'] });
+      const b = await chromium.launch({ args: CHROMIUM_ARGS });
       // If Chromium goes by itself, nothing here can recover: exit, and let the container restart.
       b.on('disconnected', () => {
         if (b.released) return;

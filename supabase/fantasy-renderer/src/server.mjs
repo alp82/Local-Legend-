@@ -20,6 +20,8 @@ import { createServer } from 'node:http';
 import { dirname, extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { MISSING_SOURCE_STATUS, ofmTileJson } from './paint-output.mjs';
+
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const OFM_TILEJSON = 'https://tiles.openfreemap.org/planet';
 const DEM = 'https://elevation-tiles-prod.s3.amazonaws.com/terrarium/';
@@ -213,17 +215,16 @@ export async function startServer({ sourceDir, port = 0 }) {
     const path = new URL(req.url, 'http://x').pathname;
     try {
       if (path === '/ofm/planet') {
-        // The painter reads tiles[0] and fills in z/x/y; it always asks for z14.
-        const origin = `http://${req.headers.host}`;
+        // what the painter reads is in paint-output.mjs (a painter fingerprint input)
         res.writeHead(200, { 'content-type': 'application/json' });
-        res.end(JSON.stringify({ tiles: [`${origin}/ofm/frozen/{z}/{x}/{y}.pbf`] }));
+        res.end(JSON.stringify(ofmTileJson(`http://${req.headers.host}`)));
         return;
       }
       let m = path.match(/^\/ofm\/frozen\/(\d+)\/(\d+)\/(\d+)\.pbf$/);
       if (m) {
         const bytes = await ofmTile(m[1], m[2], m[3]);
         if (!bytes.length) {
-          res.writeHead(404).end();
+          res.writeHead(MISSING_SOURCE_STATUS).end();
           return;
         }
         res.writeHead(200, { 'content-type': TYPES['.pbf'] }).end(bytes);
@@ -233,7 +234,7 @@ export async function startServer({ sourceDir, port = 0 }) {
       if (m) {
         const bytes = await demTile(m[1]);
         if (!bytes.length) {
-          res.writeHead(404).end();
+          res.writeHead(MISSING_SOURCE_STATUS).end();
           return;
         }
         res.writeHead(200, { 'content-type': TYPES['.png'] }).end(bytes);

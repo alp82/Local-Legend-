@@ -1,0 +1,2099 @@
+{
+  "basis": "North-up sprite coordinates. Origin is top-left of final PNG. Coordinates are visually measured on the published art after trimming.",
+  "placement": "Place the anchor on the intended yard, green or civic point. Keep entrances at their recorded ground-level point and meet the fading art with the runtime road. Fuse on the painted path center. UVs use the full PNG including clear padding.",
+  "ground_dimensions": "Approximate east–west and north–south footprint in metres; independent of projected building height and transparent fringe.",
+  "set_pieces": {
+    "hamlet-well-yard": {
+      "file": "setpieces/hamlet-well-yard.png",
+      "ground_footprint_m": [
+        57,
+        46
+      ],
+      "image_size_px": [
+        1566,
+        1104
+      ],
+      "anchor": {
+        "feature": "well in fork yard",
+        "uv": [
+          0.53,
+          0.54
+        ],
+        "px": [
+          829,
+          596
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "S",
+          "role": "main",
+          "uv": [
+            0.47,
+            0.92
+          ],
+          "px": [
+            736,
+            1015
+          ]
+        },
+        {
+          "direction": "W",
+          "role": "secondary",
+          "uv": [
+            0.045,
+            0.515
+          ],
+          "px": [
+            70,
+            568
+          ]
+        }
+      ]
+    },
+    "hamlet-red-barn": {
+      "file": "setpieces/hamlet-red-barn.png",
+      "ground_footprint_m": [
+        61,
+        48
+      ],
+      "image_size_px": [
+        1576,
+        1086
+      ],
+      "anchor": {
+        "feature": "shared dirt yard",
+        "uv": [
+          0.47,
+          0.49
+        ],
+        "px": [
+          740,
+          532
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "SE",
+          "role": "main",
+          "uv": [
+            0.82,
+            0.92
+          ],
+          "px": [
+            1292,
+            998
+          ]
+        },
+        {
+          "direction": "N",
+          "role": "secondary",
+          "uv": [
+            0.35,
+            0.08
+          ],
+          "px": [
+            551,
+            87
+          ]
+        }
+      ]
+    },
+    "hamlet-orchard-crossing": {
+      "file": "setpieces/hamlet-orchard-crossing.png",
+      "ground_footprint_m": [
+        62,
+        52
+      ],
+      "image_size_px": [
+        1617,
+        1106
+      ],
+      "anchor": {
+        "feature": "orchard-yard well",
+        "uv": [
+          0.49,
+          0.52
+        ],
+        "px": [
+          792,
+          575
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "S",
+          "role": "main",
+          "uv": [
+            0.415,
+            0.89
+          ],
+          "px": [
+            671,
+            983
+          ]
+        },
+        {
+          "direction": "E",
+          "role": "secondary",
+          "uv": [
+            0.95,
+            0.48
+          ],
+          "px": [
+            1535,
+            530
+          ]
+        }
+      ]
+    },
+    "hamlet-limewashed": {
+      "file": "setpieces/hamlet-limewashed.png",
+      "ground_footprint_m": [
+        53,
+        47
+      ],
+      "image_size_px": [
+        1552,
+        1083
+      ],
+      "anchor": {
+        "feature": "green at lane fork",
+        "uv": [
+          0.49,
+          0.54
+        ],
+        "px": [
+          760,
+          584
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "SW",
+          "role": "main",
+          "uv": [
+            0.07,
+            0.92
+          ],
+          "px": [
+            109,
+            995
+          ]
+        },
+        {
+          "direction": "NE",
+          "role": "secondary",
+          "uv": [
+            0.93,
+            0.24
+          ],
+          "px": [
+            1442,
+            260
+          ]
+        }
+      ]
+    },
+    "town-market-limestone": {
+      "file": "setpieces/town-market-limestone.png",
+      "ground_footprint_m": [
+        222,
+        146
+      ],
+      "image_size_px": [
+        1493,
+        1162
+      ],
+      "anchor": {
+        "feature": "well in upper market court",
+        "uv": [
+          0.485,
+          0.435
+        ],
+        "px": [
+          724,
+          505
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "W",
+          "role": "main",
+          "uv": [
+            0.052,
+            0.479
+          ],
+          "px": [
+            78,
+            556
+          ]
+        },
+        {
+          "direction": "SW",
+          "role": "secondary",
+          "uv": [
+            0.132,
+            0.938
+          ],
+          "px": [
+            197,
+            1089
+          ]
+        },
+        {
+          "direction": "E",
+          "role": "secondary",
+          "uv": [
+            0.947,
+            0.386
+          ],
+          "px": [
+            1413,
+            448
+          ]
+        }
+      ]
+    },
+    "town-red-gables": {
+      "file": "setpieces/town-red-gables.png",
+      "ground_footprint_m": [
+        164,
+        135
+      ],
+      "image_size_px": [
+        1443,
+        1202
+      ],
+      "anchor": {
+        "feature": "square fountain",
+        "uv": [
+          0.47,
+          0.52
+        ],
+        "px": [
+          678,
+          625
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "SW",
+          "role": "main",
+          "uv": [
+            0.14,
+            0.93
+          ],
+          "px": [
+            202,
+            1117
+          ]
+        },
+        {
+          "direction": "NE",
+          "role": "secondary",
+          "uv": [
+            0.9,
+            0.18
+          ],
+          "px": [
+            1298,
+            216
+          ]
+        }
+      ]
+    },
+    "town-cobbled-cross": {
+      "file": "setpieces/town-cobbled-cross.png",
+      "ground_footprint_m": [
+        171,
+        132
+      ],
+      "image_size_px": [
+        1618,
+        1098
+      ],
+      "anchor": {
+        "feature": "cobbled market well",
+        "uv": [
+          0.47,
+          0.54
+        ],
+        "px": [
+          760,
+          592
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "S",
+          "role": "main",
+          "uv": [
+            0.49,
+            0.92
+          ],
+          "px": [
+            792,
+            1009
+          ]
+        },
+        {
+          "direction": "E",
+          "role": "secondary",
+          "uv": [
+            0.92,
+            0.42
+          ],
+          "px": [
+            1488,
+            461
+          ]
+        }
+      ]
+    },
+    "town-golden-thatch": {
+      "file": "setpieces/town-golden-thatch.png",
+      "ground_footprint_m": [
+        159,
+        132
+      ],
+      "image_size_px": [
+        1586,
+        1070
+      ],
+      "anchor": {
+        "feature": "market well",
+        "uv": [
+          0.55,
+          0.6
+        ],
+        "px": [
+          872,
+          641
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "SE",
+          "role": "main",
+          "uv": [
+            0.83,
+            0.92
+          ],
+          "px": [
+            1316,
+            983
+          ]
+        },
+        {
+          "direction": "W",
+          "role": "secondary",
+          "uv": [
+            0.045,
+            0.58
+          ],
+          "px": [
+            71,
+            620
+          ]
+        }
+      ]
+    },
+    "town-orchard-market": {
+      "file": "setpieces/town-orchard-market.png",
+      "ground_footprint_m": [
+        172,
+        141
+      ],
+      "image_size_px": [
+        1467,
+        1189
+      ],
+      "anchor": {
+        "feature": "market-court well",
+        "uv": [
+          0.49,
+          0.54
+        ],
+        "px": [
+          718,
+          642
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "S",
+          "role": "main",
+          "uv": [
+            0.53,
+            0.92
+          ],
+          "px": [
+            777,
+            1093
+          ]
+        },
+        {
+          "direction": "NW",
+          "role": "secondary",
+          "uv": [
+            0.12,
+            0.165
+          ],
+          "px": [
+            176,
+            196
+          ]
+        }
+      ]
+    },
+    "village-red-square": {
+      "file": "setpieces/village-red-square.png",
+      "ground_footprint_m": [
+        104,
+        87
+      ],
+      "image_size_px": [
+        1560,
+        1086
+      ],
+      "anchor": {
+        "feature": "small-square well",
+        "uv": [
+          0.48,
+          0.57
+        ],
+        "px": [
+          748,
+          618
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "SW",
+          "role": "main",
+          "uv": [
+            0.14,
+            0.92
+          ],
+          "px": [
+            218,
+            998
+          ]
+        },
+        {
+          "direction": "NE",
+          "role": "secondary",
+          "uv": [
+            0.88,
+            0.24
+          ],
+          "px": [
+            1372,
+            260
+          ]
+        }
+      ]
+    },
+    "market-quay-water-south": {
+      "file": "setpieces/market-quay-water-south.png",
+      "ground_footprint_m": [
+        116,
+        107
+      ],
+      "image_size_px": [
+        1597,
+        1047
+      ],
+      "anchor": {
+        "feature": "inland market court",
+        "uv": [
+          0.53,
+          0.48
+        ],
+        "px": [
+          846,
+          502
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "N",
+          "role": "main",
+          "uv": [
+            0.5,
+            0.07
+          ],
+          "px": [
+            798,
+            73
+          ]
+        },
+        {
+          "direction": "E",
+          "role": "secondary",
+          "uv": [
+            0.95,
+            0.58
+          ],
+          "px": [
+            1516,
+            607
+          ]
+        }
+      ],
+      "water_side": "south",
+      "quay_landline": [
+        {
+          "uv": [
+            0.13,
+            0.895
+          ],
+          "px": [
+            207,
+            936
+          ]
+        },
+        {
+          "uv": [
+            0.86,
+            0.895
+          ],
+          "px": [
+            1373,
+            936
+          ]
+        }
+      ]
+    },
+    "village-chapel-green": {
+      "file": "setpieces/village-chapel-green.png",
+      "ground_footprint_m": [
+        103,
+        84
+      ],
+      "image_size_px": [
+        1432,
+        1135
+      ],
+      "anchor": {
+        "feature": "green-side well",
+        "uv": [
+          0.435,
+          0.529
+        ],
+        "px": [
+          622,
+          600
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "S",
+          "role": "main",
+          "uv": [
+            0.49,
+            0.94
+          ],
+          "px": [
+            701,
+            1066
+          ]
+        },
+        {
+          "direction": "E",
+          "role": "secondary",
+          "uv": [
+            0.955,
+            0.55
+          ],
+          "px": [
+            1367,
+            624
+          ]
+        }
+      ]
+    },
+    "farmstead-blue-yard": {
+      "file": "setpieces/farmstead-blue-yard.png",
+      "ground_footprint_m": [
+        72,
+        56
+      ],
+      "image_size_px": [
+        1417,
+        1182
+      ],
+      "anchor": {
+        "feature": "cart in the shared yard",
+        "uv": [
+          0.55,
+          0.53
+        ],
+        "px": [
+          779,
+          626
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "S",
+          "role": "main",
+          "uv": [
+            0.42,
+            0.94
+          ],
+          "px": [
+            595,
+            1110
+          ]
+        },
+        {
+          "direction": "W",
+          "role": "secondary",
+          "uv": [
+            0.055,
+            0.54
+          ],
+          "px": [
+            78,
+            638
+          ]
+        }
+      ]
+    },
+    "monastery-cloister-garden": {
+      "file": "setpieces/monastery-cloister-garden.png",
+      "ground_footprint_m": [
+        135,
+        112
+      ],
+      "image_size_px": [
+        1609,
+        1106
+      ],
+      "anchor": {
+        "feature": "cloister garden center",
+        "uv": [
+          0.54,
+          0.51
+        ],
+        "px": [
+          868,
+          564
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "S",
+          "role": "main",
+          "uv": [
+            0.46,
+            0.94
+          ],
+          "px": [
+            740,
+            1039
+          ]
+        }
+      ]
+    },
+    "fishing-hamlet-jetties": {
+      "file": "setpieces/fishing-hamlet-jetties.png",
+      "ground_footprint_m": [
+        110,
+        88
+      ],
+      "image_size_px": [
+        1544,
+        1069
+      ],
+      "anchor": {
+        "feature": "shared well",
+        "uv": [
+          0.435,
+          0.565
+        ],
+        "px": [
+          671,
+          603
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "E",
+          "role": "main",
+          "uv": [
+            0.945,
+            0.69
+          ],
+          "px": [
+            1458,
+            737
+          ]
+        },
+        {
+          "direction": "NE",
+          "role": "secondary",
+          "uv": [
+            0.83,
+            0.245
+          ],
+          "px": [
+            1281,
+            262
+          ]
+        }
+      ]
+    },
+    "market-fairground": {
+      "file": "setpieces/market-fairground.png",
+      "ground_footprint_m": [
+        107,
+        89
+      ],
+      "image_size_px": [
+        1408,
+        1137
+      ],
+      "anchor": {
+        "feature": "fairground well",
+        "uv": [
+          0.49,
+          0.5
+        ],
+        "px": [
+          689,
+          568
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "S",
+          "role": "main",
+          "uv": [
+            0.46,
+            0.92
+          ],
+          "px": [
+            647,
+            1045
+          ]
+        },
+        {
+          "direction": "N",
+          "role": "secondary",
+          "uv": [
+            0.53,
+            0.075
+          ],
+          "px": [
+            746,
+            85
+          ]
+        }
+      ]
+    },
+    "graveyard-chapel": {
+      "file": "setpieces/graveyard-chapel.png",
+      "ground_footprint_m": [
+        77,
+        66
+      ],
+      "image_size_px": [
+        1501,
+        1129
+      ],
+      "anchor": {
+        "feature": "chapel threshold",
+        "uv": [
+          0.55,
+          0.46
+        ],
+        "px": [
+          825,
+          519
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "S",
+          "role": "main",
+          "uv": [
+            0.48,
+            0.91
+          ],
+          "px": [
+            720,
+            1026
+          ]
+        },
+        {
+          "direction": "E",
+          "role": "secondary",
+          "uv": [
+            0.925,
+            0.55
+          ],
+          "px": [
+            1388,
+            620
+          ]
+        }
+      ]
+    },
+    "market-quay-water-west": {
+      "file": "setpieces/market-quay-water-west.png",
+      "ground_footprint_m": [
+        116,
+        107
+      ],
+      "image_size_px": [
+        1390,
+        1226
+      ],
+      "anchor": {
+        "feature": "canal-market well",
+        "uv": [
+          0.43,
+          0.535
+        ],
+        "px": [
+          597,
+          655
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "E",
+          "role": "main",
+          "uv": [
+            0.945,
+            0.47
+          ],
+          "px": [
+            1313,
+            576
+          ]
+        },
+        {
+          "direction": "S",
+          "role": "secondary",
+          "uv": [
+            0.32,
+            0.92
+          ],
+          "px": [
+            444,
+            1127
+          ]
+        }
+      ],
+      "water_side": "west",
+      "quay_landline": [
+        {
+          "uv": [
+            0.079,
+            0.09
+          ],
+          "px": [
+            110,
+            110
+          ]
+        },
+        {
+          "uv": [
+            0.078,
+            0.862
+          ],
+          "px": [
+            108,
+            1056
+          ]
+        }
+      ]
+    },
+    "alpine-stone-terrace": {
+      "file": "setpieces/alpine-stone-terrace.png",
+      "ground_footprint_m": [
+        131,
+        101
+      ],
+      "image_size_px": [
+        1434,
+        1219
+      ],
+      "anchor": {
+        "feature": "well on the stepped market court",
+        "uv": [
+          0.5,
+          0.665
+        ],
+        "px": [
+          716,
+          810
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "SE",
+          "role": "main",
+          "uv": [
+            0.77,
+            0.94
+          ],
+          "px": [
+            1103,
+            1145
+          ]
+        },
+        {
+          "direction": "W",
+          "role": "secondary",
+          "uv": [
+            0.06,
+            0.6
+          ],
+          "px": [
+            86,
+            731
+          ]
+        }
+      ]
+    },
+    "farmstead-longhouse": {
+      "file": "setpieces/farmstead-longhouse.png",
+      "ground_footprint_m": [
+        78,
+        55
+      ],
+      "image_size_px": [
+        1602,
+        1096
+      ],
+      "anchor": {
+        "feature": "cart at the dirt yard",
+        "uv": [
+          0.51,
+          0.57
+        ],
+        "px": [
+          817,
+          624
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "W",
+          "role": "main",
+          "uv": [
+            0.054,
+            0.704
+          ],
+          "px": [
+            86,
+            771
+          ]
+        },
+        {
+          "direction": "SE",
+          "role": "secondary",
+          "uv": [
+            0.865,
+            0.825
+          ],
+          "px": [
+            1385,
+            903
+          ]
+        }
+      ]
+    },
+    "watermill-pond-race": {
+      "file": "setpieces/watermill-pond-race.png",
+      "ground_footprint_m": [
+        102,
+        88
+      ],
+      "image_size_px": [
+        1534,
+        1068
+      ],
+      "anchor": {
+        "feature": "mill yard by the low stone well",
+        "uv": [
+          0.54,
+          0.716
+        ],
+        "px": [
+          828,
+          764
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "W",
+          "role": "main",
+          "uv": [
+            0.052,
+            0.59
+          ],
+          "px": [
+            80,
+            630
+          ]
+        },
+        {
+          "direction": "SE",
+          "role": "secondary",
+          "uv": [
+            0.815,
+            0.9
+          ],
+          "px": [
+            1249,
+            960
+          ]
+        }
+      ]
+    },
+    "sawmill-wood-edge": {
+      "file": "setpieces/sawmill-wood-edge.png",
+      "ground_footprint_m": [
+        108,
+        91
+      ],
+      "image_size_px": [
+        1490,
+        1162
+      ],
+      "anchor": {
+        "feature": "log-loading area facing the yard",
+        "uv": [
+          0.54,
+          0.58
+        ],
+        "px": [
+          804,
+          673
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "S",
+          "role": "main",
+          "uv": [
+            0.465,
+            0.93
+          ],
+          "px": [
+            692,
+            1080
+          ]
+        },
+        {
+          "direction": "E",
+          "role": "secondary",
+          "uv": [
+            0.96,
+            0.54
+          ],
+          "px": [
+            1429,
+            627
+          ]
+        }
+      ]
+    },
+    "village-crossroads": {
+      "file": "setpieces/village-crossroads.png",
+      "ground_footprint_m": [
+        111,
+        79
+      ],
+      "image_size_px": [
+        1822,
+        930
+      ],
+      "anchor": {
+        "feature": "well beside crossroads",
+        "uv": [
+          0.55,
+          0.48
+        ],
+        "px": [
+          1002,
+          446
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "W",
+          "role": "main",
+          "uv": [
+            0.04,
+            0.575
+          ],
+          "px": [
+            73,
+            534
+          ]
+        },
+        {
+          "direction": "E",
+          "role": "secondary",
+          "uv": [
+            0.95,
+            0.465
+          ],
+          "px": [
+            1730,
+            432
+          ]
+        }
+      ]
+    },
+    "village-willow-well": {
+      "file": "setpieces/village-willow-well.png",
+      "ground_footprint_m": [
+        98,
+        83
+      ],
+      "image_size_px": [
+        1537,
+        1152
+      ],
+      "anchor": {
+        "feature": "well below the willow green",
+        "uv": [
+          0.455,
+          0.58
+        ],
+        "px": [
+          699,
+          668
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "S",
+          "role": "main",
+          "uv": [
+            0.48,
+            0.935
+          ],
+          "px": [
+            737,
+            1076
+          ]
+        },
+        {
+          "direction": "NW",
+          "role": "secondary",
+          "uv": [
+            0.085,
+            0.225
+          ],
+          "px": [
+            131,
+            259
+          ]
+        }
+      ]
+    },
+    "village-timber-commons": {
+      "file": "setpieces/village-timber-commons.png",
+      "ground_footprint_m": [
+        108,
+        94
+      ],
+      "image_size_px": [
+        1474,
+        1167
+      ],
+      "anchor": {
+        "feature": "well in the commons",
+        "uv": [
+          0.49,
+          0.54
+        ],
+        "px": [
+          722,
+          630
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "SE",
+          "role": "main",
+          "uv": [
+            0.72,
+            0.935
+          ],
+          "px": [
+            1061,
+            1090
+          ]
+        },
+        {
+          "direction": "N",
+          "role": "secondary",
+          "uv": [
+            0.41,
+            0.065
+          ],
+          "px": [
+            604,
+            76
+          ]
+        }
+      ]
+    },
+    "walled-town-limestone": {
+      "file": "setpieces/walled-town-limestone.png",
+      "ground_footprint_m": [
+        184,
+        147
+      ],
+      "image_size_px": [
+        1403,
+        1216
+      ],
+      "anchor": {
+        "feature": "inner market well",
+        "uv": [
+          0.55,
+          0.485
+        ],
+        "px": [
+          771,
+          589
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "S",
+          "role": "main",
+          "uv": [
+            0.435,
+            0.95
+          ],
+          "px": [
+            610,
+            1154
+          ]
+        }
+      ]
+    },
+    "walled-town-red-roofs": {
+      "file": "setpieces/walled-town-red-roofs.png",
+      "ground_footprint_m": [
+        181,
+        146
+      ],
+      "image_size_px": [
+        1381,
+        1254
+      ],
+      "anchor": {
+        "feature": "market well inside the walls",
+        "uv": [
+          0.48,
+          0.54
+        ],
+        "px": [
+          662,
+          677
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "SW",
+          "role": "main",
+          "uv": [
+            0.08,
+            0.915
+          ],
+          "px": [
+            110,
+            1146
+          ]
+        },
+        {
+          "direction": "N",
+          "role": "secondary",
+          "uv": [
+            0.525,
+            0.08
+          ],
+          "px": [
+            724,
+            100
+          ]
+        }
+      ]
+    },
+    "farmstead-thatch-paddock": {
+      "file": "setpieces/farmstead-thatch-paddock.png",
+      "ground_footprint_m": [
+        70,
+        54
+      ],
+      "image_size_px": [
+        1580,
+        1083
+      ],
+      "anchor": {
+        "feature": "cart in the shared yard",
+        "uv": [
+          0.48,
+          0.51
+        ],
+        "px": [
+          758,
+          552
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "E",
+          "role": "main",
+          "uv": [
+            0.96,
+            0.56
+          ],
+          "px": [
+            1516,
+            606
+          ]
+        },
+        {
+          "direction": "SW",
+          "role": "secondary",
+          "uv": [
+            0.14,
+            0.925
+          ],
+          "px": [
+            221,
+            1001
+          ]
+        }
+      ]
+    },
+    "farmstead-brick-strip": {
+      "file": "setpieces/farmstead-brick-strip.png",
+      "ground_footprint_m": [
+        76,
+        60
+      ],
+      "image_size_px": [
+        1546,
+        1103
+      ],
+      "anchor": {
+        "feature": "working yard by the cart",
+        "uv": [
+          0.49,
+          0.51
+        ],
+        "px": [
+          757,
+          562
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "S",
+          "role": "main",
+          "uv": [
+            0.42,
+            0.93
+          ],
+          "px": [
+            649,
+            1025
+          ]
+        },
+        {
+          "direction": "NE",
+          "role": "secondary",
+          "uv": [
+            0.9,
+            0.33
+          ],
+          "px": [
+            1390,
+            364
+          ]
+        }
+      ]
+    },
+    "farmstead-orchard-gate": {
+      "file": "setpieces/farmstead-orchard-gate.png",
+      "ground_footprint_m": [
+        69,
+        59
+      ],
+      "image_size_px": [
+        1482,
+        1078
+      ],
+      "anchor": {
+        "feature": "cart inside the orchard gate",
+        "uv": [
+          0.52,
+          0.54
+        ],
+        "px": [
+          770,
+          582
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "SE",
+          "role": "main",
+          "uv": [
+            0.86,
+            0.93
+          ],
+          "px": [
+            1274,
+            1002
+          ]
+        },
+        {
+          "direction": "N",
+          "role": "secondary",
+          "uv": [
+            0.4,
+            0.1
+          ],
+          "px": [
+            592,
+            108
+          ]
+        }
+      ]
+    },
+    "vineyard-estate": {
+      "file": "setpieces/vineyard-estate.png",
+      "ground_footprint_m": [
+        131,
+        106
+      ],
+      "image_size_px": [
+        1584,
+        1095
+      ],
+      "anchor": {
+        "feature": "estate yard between house and press",
+        "uv": [
+          0.49,
+          0.55
+        ],
+        "px": [
+          776,
+          602
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "SW",
+          "role": "main",
+          "uv": [
+            0.15,
+            0.91
+          ],
+          "px": [
+            237,
+            996
+          ]
+        },
+        {
+          "direction": "NE",
+          "role": "secondary",
+          "uv": [
+            0.925,
+            0.305
+          ],
+          "px": [
+            1464,
+            334
+          ]
+        }
+      ]
+    },
+    "red-gable-canal-water-west": {
+      "file": "setpieces/red-gable-canal-water-west.png",
+      "ground_footprint_m": [
+        119,
+        102
+      ],
+      "image_size_px": [
+        1316,
+        1239
+      ],
+      "anchor": {
+        "feature": "small inland well court",
+        "uv": [
+          0.49,
+          0.5
+        ],
+        "px": [
+          644,
+          619
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "E",
+          "role": "main",
+          "uv": [
+            0.955,
+            0.45
+          ],
+          "px": [
+            1256,
+            557
+          ]
+        },
+        {
+          "direction": "S",
+          "role": "secondary",
+          "uv": [
+            0.357,
+            0.94
+          ],
+          "px": [
+            469,
+            1164
+          ]
+        }
+      ],
+      "water_side": "west",
+      "quay_landline": [
+        {
+          "uv": [
+            0.103,
+            0.145
+          ],
+          "px": [
+            135,
+            180
+          ]
+        },
+        {
+          "uv": [
+            0.103,
+            0.84
+          ],
+          "px": [
+            135,
+            1040
+          ]
+        }
+      ]
+    },
+    "canal-chapel-court-water-south": {
+      "file": "setpieces/canal-chapel-court-water-south.png",
+      "ground_footprint_m": [
+        125,
+        109
+      ],
+      "image_size_px": [
+        1567,
+        1048
+      ],
+      "anchor": {
+        "feature": "well on the chapel court",
+        "uv": [
+          0.51,
+          0.53
+        ],
+        "px": [
+          799,
+          555
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "N",
+          "role": "main",
+          "uv": [
+            0.46,
+            0.075
+          ],
+          "px": [
+            720,
+            79
+          ]
+        },
+        {
+          "direction": "E",
+          "role": "secondary",
+          "uv": [
+            0.947,
+            0.43
+          ],
+          "px": [
+            1483,
+            450
+          ]
+        }
+      ],
+      "water_side": "south",
+      "quay_landline": [
+        {
+          "uv": [
+            0.058,
+            0.895
+          ],
+          "px": [
+            91,
+            937
+          ]
+        },
+        {
+          "uv": [
+            0.908,
+            0.895
+          ],
+          "px": [
+            1422,
+            937
+          ]
+        }
+      ]
+    },
+    "quay-workshops-water-south": {
+      "file": "setpieces/quay-workshops-water-south.png",
+      "ground_footprint_m": [
+        110,
+        93
+      ],
+      "image_size_px": [
+        1458,
+        1115
+      ],
+      "anchor": {
+        "feature": "cobbled workshop yard",
+        "uv": [
+          0.555,
+          0.54
+        ],
+        "px": [
+          809,
+          602
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "N",
+          "role": "main",
+          "uv": [
+            0.44,
+            0.075
+          ],
+          "px": [
+            641,
+            84
+          ]
+        },
+        {
+          "direction": "E",
+          "role": "secondary",
+          "uv": [
+            0.95,
+            0.52
+          ],
+          "px": [
+            1384,
+            579
+          ]
+        }
+      ],
+      "water_side": "south",
+      "quay_landline": [
+        {
+          "uv": [
+            0.066,
+            0.889
+          ],
+          "px": [
+            96,
+            990
+          ]
+        },
+        {
+          "uv": [
+            0.885,
+            0.889
+          ],
+          "px": [
+            1289,
+            990
+          ]
+        }
+      ]
+    },
+    "alpine-red-roof-inn": {
+      "file": "setpieces/alpine-red-roof-inn.png",
+      "ground_footprint_m": [
+        125,
+        96
+      ],
+      "image_size_px": [
+        1410,
+        1197
+      ],
+      "anchor": {
+        "feature": "stone fountain on the chalet common",
+        "uv": [
+          0.545,
+          0.545
+        ],
+        "px": [
+          768,
+          652
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "SW",
+          "role": "main",
+          "uv": [
+            0.075,
+            0.935
+          ],
+          "px": [
+            106,
+            1118
+          ]
+        },
+        {
+          "direction": "NE",
+          "role": "secondary",
+          "uv": [
+            0.929,
+            0.24
+          ],
+          "px": [
+            1309,
+            287
+          ]
+        }
+      ]
+    },
+    "red-gable-canal-water-south": {
+      "file": "setpieces/red-gable-canal-water-south.png",
+      "ground_footprint_m": [
+        119,
+        102
+      ],
+      "image_size_px": [
+        1429,
+        1160
+      ],
+      "anchor": {
+        "feature": "paved court well",
+        "uv": [
+          0.462,
+          0.51
+        ],
+        "px": [
+          660,
+          591
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "N",
+          "role": "main",
+          "uv": [
+            0.455,
+            0.073
+          ],
+          "px": [
+            650,
+            85
+          ]
+        },
+        {
+          "direction": "E",
+          "role": "secondary",
+          "uv": [
+            0.955,
+            0.45
+          ],
+          "px": [
+            1364,
+            522
+          ]
+        }
+      ],
+      "water_side": "south",
+      "quay_landline": [
+        {
+          "uv": [
+            0.054,
+            0.898
+          ],
+          "px": [
+            77,
+            1041
+          ]
+        },
+        {
+          "uv": [
+            0.93,
+            0.898
+          ],
+          "px": [
+            1328,
+            1041
+          ]
+        }
+      ]
+    },
+    "quay-workshops-water-west": {
+      "file": "setpieces/quay-workshops-water-west.png",
+      "ground_footprint_m": [
+        110,
+        93
+      ],
+      "image_size_px": [
+        1328,
+        1213
+      ],
+      "anchor": {
+        "feature": "meeting point of workshop lanes",
+        "uv": [
+          0.472,
+          0.53
+        ],
+        "px": [
+          626,
+          642
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "E",
+          "role": "main",
+          "uv": [
+            0.94,
+            0.47
+          ],
+          "px": [
+            1247,
+            570
+          ]
+        },
+        {
+          "direction": "S",
+          "role": "secondary",
+          "uv": [
+            0.39,
+            0.94
+          ],
+          "px": [
+            518,
+            1139
+          ]
+        }
+      ],
+      "water_side": "west",
+      "quay_landline": [
+        {
+          "uv": [
+            0.088,
+            0.11
+          ],
+          "px": [
+            117,
+            133
+          ]
+        },
+        {
+          "uv": [
+            0.091,
+            0.88
+          ],
+          "px": [
+            121,
+            1067
+          ]
+        }
+      ]
+    },
+    "walled-town-grey-corner": {
+      "file": "setpieces/walled-town-grey-corner.png",
+      "ground_footprint_m": [
+        191,
+        150
+      ],
+      "image_size_px": [
+        1515,
+        1144
+      ],
+      "anchor": {
+        "feature": "market well inside the walls",
+        "uv": [
+          0.5,
+          0.52
+        ],
+        "px": [
+          757,
+          594
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "SE",
+          "role": "main",
+          "uv": [
+            0.915,
+            0.935
+          ],
+          "px": [
+            1385,
+            1069
+          ]
+        },
+        {
+          "direction": "W",
+          "role": "secondary",
+          "uv": [
+            0.047,
+            0.59
+          ],
+          "px": [
+            71,
+            674
+          ]
+        }
+      ]
+    },
+    "alpine-chapel-common": {
+      "file": "setpieces/alpine-chapel-common.png",
+      "ground_footprint_m": [
+        118,
+        91
+      ],
+      "image_size_px": [
+        1419,
+        1214
+      ],
+      "anchor": {
+        "feature": "common well",
+        "uv": [
+          0.485,
+          0.5
+        ],
+        "px": [
+          688,
+          606
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "S",
+          "role": "main",
+          "uv": [
+            0.4,
+            0.945
+          ],
+          "px": [
+            567,
+            1146
+          ]
+        },
+        {
+          "direction": "E",
+          "role": "secondary",
+          "uv": [
+            0.95,
+            0.52
+          ],
+          "px": [
+            1347,
+            631
+          ]
+        }
+      ]
+    },
+    "canal-chapel-court-water-west": {
+      "file": "setpieces/canal-chapel-court-water-west.png",
+      "ground_footprint_m": [
+        125,
+        109
+      ],
+      "image_size_px": [
+        1299,
+        1247
+      ],
+      "anchor": {
+        "feature": "chapel-court well",
+        "uv": [
+          0.405,
+          0.5
+        ],
+        "px": [
+          526,
+          623
+        ]
+      },
+      "entrances": [
+        {
+          "direction": "E",
+          "role": "main",
+          "uv": [
+            0.94,
+            0.5
+          ],
+          "px": [
+            1220,
+            623
+          ]
+        },
+        {
+          "direction": "S",
+          "role": "secondary",
+          "uv": [
+            0.33,
+            0.91
+          ],
+          "px": [
+            428,
+            1134
+          ]
+        }
+      ],
+      "water_side": "west",
+      "quay_landline": [
+        {
+          "uv": [
+            0.083,
+            0.1
+          ],
+          "px": [
+            108,
+            125
+          ]
+        },
+        {
+          "uv": [
+            0.082,
+            0.891
+          ],
+          "px": [
+            106,
+            1110
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "fingerprint": "ea50df47c283491d",
+  "chromium": "159.0.8154.6",
+  "quality": 0.75,
+  "tiles": {
+    "16/34802/22788": {
+      "rgba": "61719c4f",
+      "webp": "6b6e0d1abd29eef56339b48591369cce",
+      "labels": "d751713988987e9331980363e24189ce"
+    },
+    "16/34803/22788": {
+      "rgba": "6687fbc7",
+      "webp": "0d37877330145df10dc76de7e35c1df6",
+      "labels": "d751713988987e9331980363e24189ce"
+    },
+    "16/34802/22789": {
+      "rgba": "bd39ba6a",
+      "webp": "b4ac19b2d788fb28248b9fd6c4e1f14a",
+      "labels": "a1014fb40668da4241edcafcc9fd26ea"
+    },
+    "16/34803/22789": {
+      "rgba": "b5e34e46",
+      "webp": "d976a9149071f04298367edc2d480d16",
+      "labels": "d751713988987e9331980363e24189ce"
+    },
+    "15/17401/11394": {
+      "webp": "1205dc07ae00af0058832f6045ec660f",
+      "labels": "a1014fb40668da4241edcafcc9fd26ea"
+    }
+  }
+}

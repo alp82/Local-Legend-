@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
+# The manual fallback, for when the registry or Coolify is unavailable. Normally releases go out
+# by themselves: a merge to main builds and pushes the image, and Coolify pulls it
+# (docs/fantasy-map-deploy.md, "Releases").
+#
 # Builds the worker image from the committed renderer folder, copies it to the host over
 # ssh (docker save | docker load, no registry), installs compose.yaml, and points .env at
-# the new tag. It does NOT start or restart anything: the runbook does that
-# (docs/fantasy-map-deploy.md).
+# the new image. It does NOT start or restart anything: the runbook does that.
 #
 #   deploy/ship.sh user@host
 #
 # The image is tagged with the commit it was built from. The host keeps earlier tags, so a
-# rollback is: set the previous tag in .env and run docker compose up -d.
+# rollback is: set the previous image in .env and run docker compose up -d.
 set -euo pipefail
 
 HOST=${1:?usage: deploy/ship.sh user@host}
@@ -33,8 +36,8 @@ echo "copying $IMAGE to $HOST (about 1 GB compressed)"
 docker save "$IMAGE" | gzip -1 | ssh "$HOST" 'gunzip | docker load'
 
 ssh "$HOST" "mkdir -p $DIR && test -f $DIR/worker.env || echo 'note: $DIR/worker.env is missing (see worker.env.example)'"
-scp "$HERE/deploy/compose.yaml" "$HERE/deploy/worker.env.example" "$HOST:$DIR/"
-# Only the tag line changes; the other settings in .env (host, memory) stay.
-ssh "$HOST" "cd $DIR && touch .env && cp .env .env.previous && { grep -v '^FANTASY_RENDERER_TAG=' .env.previous; echo FANTASY_RENDERER_TAG=$TAG; } > .env && { docker compose config --quiet || echo 'compose check failed: are worker.env and FANTASY_SUPABASE_HOST in .env there?'; }"
+scp "$HERE/deploy/compose.yaml" "$HERE/deploy/worker.env.example" "$HERE/src/egress-proxy.mjs" "$HOST:$DIR/"
+# Only the image line changes; the other settings in .env (host, memory) stay.
+ssh "$HOST" "cd $DIR && touch .env && cp .env .env.previous && { grep -v '^FANTASY_RENDERER_IMAGE=\|^FANTASY_EGRESS_SCRIPT=' .env.previous; echo FANTASY_RENDERER_IMAGE=$IMAGE; echo FANTASY_EGRESS_SCRIPT=./egress-proxy.mjs; } > .env && { docker compose config --quiet || echo 'compose check failed: are worker.env and FANTASY_SUPABASE_HOST in .env there?'; }"
 echo "shipped $IMAGE; the previous .env is saved as $DIR/.env.previous. Start or restart with:"
 echo "  ssh $HOST 'cd $DIR && docker compose up -d'"

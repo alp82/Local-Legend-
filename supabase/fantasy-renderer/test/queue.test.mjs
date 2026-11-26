@@ -8,12 +8,19 @@ import { execSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { after, before, test } from 'node:test';
 
+// QUEUE_TEST=off skips it without looking (CI jobs that have no stack); a `supabase` binary on PATH is used
+// before npx (CI installs the CLI with supabase/setup-cli).
 let env = null;
-try {
-  const out = execSync('npx supabase status -o env', { cwd: new URL('../..', import.meta.url), stdio: ['ignore', 'pipe', 'ignore'], timeout: 60_000 }).toString();
-  env = Object.fromEntries([...out.matchAll(/^(\w+)="(.*)"$/gm)].map((m) => [m[1], m[2]]));
-  if (!env.API_URL?.startsWith('http://127.0.0.1')) env = null; // never anything but the local stack
-} catch {}
+if (process.env.QUEUE_TEST !== 'off') {
+  for (const cmd of ['supabase status -o env', 'npx --no-install supabase status -o env']) {
+    try {
+      const out = execSync(cmd, { cwd: new URL('../..', import.meta.url), stdio: ['ignore', 'pipe', 'ignore'], timeout: 60_000 }).toString();
+      env = Object.fromEntries([...out.matchAll(/^(\w+)="(.*)"$/gm)].map((m) => [m[1], m[2]]));
+      if (!env.API_URL?.startsWith('http://127.0.0.1')) env = null; // never anything but the local stack
+      if (env) break;
+    } catch {}
+  }
+}
 const skip = env ? false : 'the local Supabase stack is not running';
 
 const VERSION = 9999;
@@ -64,7 +71,7 @@ before(async () => {
 after(async () => {
   if (skip) return;
   await config(savedConfig);
-  await admin(`/rest/v1/fantasy_tiles?version=eq.${VERSION}`, { method: 'DELETE' });
+  await admin(`/rest/v1/fantasy_tiles?version=gte.${VERSION}`, { method: 'DELETE' });
   for (const p of players) await admin(`/auth/v1/admin/users/${p.id}`, { method: 'DELETE' });
 });
 
@@ -101,4 +108,25 @@ test('a z15 tile costs five units against the cap', { skip }, async () => {
   assert.equal(a.reason, 'player');
   const [row] = await admin(`/rest/v1/fantasy_requests?player=eq.${p.id}&select=tiles`);
   assert.equal(row.tiles, 6);
+});
+
+// The release functions through the real API: PostgREST loads safeupdate, which pgTAP doesn't, so an UPDATE
+// without WHERE in them would only fail here.
+test('releases work through the API: adopt, stage, roll back', { skip }, async () => {
+  const rpc = (fn, body) => admin(`/rest/v1/rpc/${fn}`, { method: 'POST', body });
+  await config({ fingerprint: null, staging_version: null, staging_fingerprint: null, staging_started_at: null });
+  try {
+    assert.equal((await rpc('begin_fantasy_release', { p_fingerprint: '1111111111111111' })).action, 'adopted');
+    const staged = await rpc('begin_fantasy_release', { p_fingerprint: '2222222222222222' });
+    assert.equal(staged.action, 'staging');
+    assert.ok(staged.version > VERSION);
+    const adv = await rpc('advance_fantasy_release', {});
+    assert.ok(adv.staging === true || adv.switched === true, JSON.stringify(adv));
+    const back = await rpc('begin_fantasy_release', { p_fingerprint: '1111111111111111' });
+    assert.ok(['current', 'rolled_back'].includes(back.action), JSON.stringify(back));
+    assert.equal(back.version, VERSION);
+  } finally {
+    await admin(`/rest/v1/fantasy_tiles?version=gt.${VERSION}`, { method: 'DELETE' });
+    await admin('/rest/v1/fantasy_versions?fingerprint=in.(1111111111111111,2222222222222222)', { method: 'DELETE' });
+  }
 });

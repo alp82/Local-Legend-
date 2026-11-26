@@ -3,11 +3,23 @@
 The renderer paints the fantasy map as raster tiles. The app shows them above the street
 map and under every game overlay (`mobile/src/components/fantasy-layer.tsx`).
 
-It runs the fantasy map painter from the prototype, vendored in `painter/` (see
-[VENDORED.md](VENDORED.md)), in headless Chromium, the browser the painter was written
-for. A Node worker leases queued tiles from Supabase, paints them, and uploads them to
-the public `fantasy-tiles` bucket. The queue is in
-`supabase/migrations/20261125210000_fantasy_tiles.sql`.
+It runs the fantasy map painter (`painter/`, see [painter/README.md](painter/README.md)) in
+headless Chromium, the browser the painter was written for. A Node worker leases queued
+tiles from Supabase, paints them, and uploads them to the public `fantasy-tiles` bucket. The
+queue is in `supabase/migrations/20261125210000_fantasy_tiles.sql`, releases in
+`supabase/migrations/20261126150000_fantasy_releases.sql`.
+
+This folder is the source of truth for everything the renderer paints with:
+
+| Folder | What | Change it how |
+| --- | --- | --- |
+| `painter/` | The painter and planner | Edit, test, open a pull request ([painter/README.md](painter/README.md)) |
+| `assets/` | The finished art: atlases, textures, sprite index | Rebuilt from the raw concept art, which stays on the owner's machine ([art/README.md](art/README.md)) |
+| `art/` | The art build tools and the small inputs that decide placement | Edit and rebuild |
+| `src/` | The worker, the local source server, the in-browser paint path | Edit, test, open a pull request |
+
+It used to be a copy of a local prototype; [VENDORED.md](VENDORED.md) says what was copied
+and when.
 
 ## Tiles
 
@@ -170,8 +182,10 @@ The worker container is the security boundary, with these settings
 (`deploy/compose.yaml`):
 
 - **Network.** The worker is only on a Docker network with no route out (`internal: true`).
-  Its one way out is the egress proxy (`src/egress-proxy.mjs`), a second container from the
-  same image. The proxy accepts only `CONNECT` on port 443, to exactly these names: the
+  Its one way out is the egress proxy (`src/egress-proxy.mjs`), a second container that runs
+  the script from the deployed checkout of this repository in its own image (official
+  `node:24-alpine`, pinned by digest), never from the release image: a bad release can't widen
+  its own way out. The proxy accepts only `CONNECT` on port 443, to exactly these names: the
   Supabase project, `tiles.openfreemap.org` and `elevation-tiles-prod.s3.amazonaws.com`. It
   never connects to a private, loopback or link-local address, even when an allowed name
   resolves to one, and it connects to the address it checked. The worker therefore can't
@@ -229,8 +243,9 @@ and the worker's heartbeat):
 node src/status.mjs
 ```
 
-Production runs `deploy/compose.yaml` on the worker host. The image is shipped by
-`deploy/ship.sh`. See [docs/fantasy-map-deploy.md](../../docs/fantasy-map-deploy.md).
+Production runs `deploy/compose.yaml` on the worker host, deployed by Coolify from the
+registry image after every merge to `main` (see "Releases"); `deploy/ship.sh` is the manual
+fallback. See [docs/fantasy-map-deploy.md](../../docs/fantasy-map-deploy.md).
 
 To paint a block of tiles to a folder without Supabase, for checks:
 
@@ -272,42 +287,60 @@ Measured with the round 11 painter in Docker at 2 CPUs, one painter, on a fast d
 ## Tests
 
 ```sh
-npm test   # tile arithmetic, determinism, z15, neighbours agreeing at edges,
-           # source limits, the egress proxy, and the queue under parallel calls
+npm test   # tile arithmetic, determinism, z15, neighbours agreeing at edges, golden tiles,
+           # source limits, the egress proxy, the queue under parallel calls, releases via the API
 ```
 
 `test/queue.test.mjs` runs against the local Supabase stack (never another one) and skips
 itself when the stack isn't running. The database rules are also covered by pgTAP:
 `npx supabase test db`.
 
-## Re-sync with the prototype
-
-```sh
-node scripts/sync-prototype.mjs
-git diff painter/ VENDORED.md
-npm test
-```
-
-Painter, art or Chromium changes paint different pixels. After a re-sync, raise
-`fantasy_config.version`, so the app asks for new tiles instead of mixing old and new
-ones.
-
 `test/neighbours.test.mjs` paints adjacent tiles in separate browsers, from different
 histories. It checks that they share plans, that sprites across the edge have one owner,
 that no two set pieces stand on the same ground, and that pixels change no more across the
-edge than inside a tile. Run it on every re-sync.
+edge than inside a tile.
 
-### Known issues (round 11, November 26, 2026)
+`test/golden.test.mjs` paints a fixed 2 × 2 block of tiles and its z15 parent from frozen
+source data (`test/fixtures/golden-source`, 3.7 MB, no network) and compares them by hash
+with `test/golden.json`. It proves the painter fingerprint (see "Releases"). After a change
+that paints differently on purpose, record the new hashes with `npm run golden:update`.
 
-The round 8 look is restored: roads to every heart, woods and mountain scenery before
-fillers, sharp landmark trees and hamlets (no sprite is drawn above its atlas size), and every
-heart named. What remains:
+## Releases
 
-- **A tree avenue can run into a set piece.** Roads run solid up to a set piece's walls (round
-  10), and the avenue along such a road can put its last trees over the wall (Berlin, the
-  Kreuzberg walled town's north side).
-- **Composition differs from round 8 by design:** hearts are decided per fixed world cell, so
-  some sit at other spots, and some names differ (Berlin's camera heart is Kreuzberg; Luisenstadt
-  names its neighbour).
-- Church and landmark names aren't shown; only village names (painted in) and road and
-  water names (live) are.
+A merge to `main` that touches the renderer releases it by itself
+(`.github/workflows/fantasy-renderer.yml`):
+
+1. GitHub runs the tests, builds the image, paints the golden tiles in it, and pushes it to
+   the container registry as `sha-<commit>`, with a credential only the protected
+   `fantasy-release` environment holds.
+2. It attests the image's build provenance, points the `fantasy-renderer-deploy` branch at the
+   image's digest (`deploy/render-deploy.mjs`: the compose file pinned by digest, the egress
+   script, the release record), and calls Coolify's deploy webhook.
+3. Coolify deploys that branch on the worker host.
+4. The worker computes its **painter fingerprint** (`src/fingerprint.mjs`) and reports it
+   (`begin_fantasy_release`):
+   - **Same as the live version:** it carries on. Changes to the worker loop, the queue or the
+     deploy files are just a restart.
+   - **New:** a new tile version is staged. The worker paints it in the background for every
+     known area (claimed land plus 1 km, and the live tiles players requested within 30
+     days) while phones keep the live version. When nothing is left, phones switch to it at
+     their next configuration check. The switch is held (`blocked` in the status) if no staged
+     tile painted or too many were given up.
+   - **An earlier released version whose tiles are all still there:** phones switch back to it
+     at once, and what they viewed meanwhile is queued.
+5. Replaced versions are deleted after 7 days (`version_grace`) by the worker itself, through
+   the Storage API; a version being deleted is never rolled back to.
+
+Phones never see old and new tiles side by side: they show one version, and an unpainted tile
+shows the street map. Each version keeps its WebP quality. GitHub holds no database credential;
+the worker does all of it as the renderer user.
+
+**The fingerprint** hashes everything that can change painted output: `painter/`, `assets/`,
+`src/page/`, `src/paint-output.mjs` (Chromium's flags, the label format, the z15 child order
+and labels, and what the painter reads from the source server), the Playwright version and the
+Dockerfile's pinned base image. `node src/fingerprint.mjs --list` shows each input. A change to
+any of them, even a comment, starts a new version (a repaint costs about 4 s per tile on the
+worker host); keep unrelated edits out of those files.
+
+**Roll back** with the "Fantasy renderer rollback" workflow (Actions tab): it takes a digest a
+release run recorded and attested, and deploys it. Then revert the bad commit on `main`.
