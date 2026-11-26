@@ -45,8 +45,21 @@ Keep `SOURCE_CACHE_DIR` on a persistent volume. Deleting it lets OpenStreetMap c
 and a new tile can then disagree with an older neighbour.
 
 After three failed fetches the painter treats a data tile as empty. So the renderer
-fetches the source tiles within 2 km before painting. A paint during which any source request
-failed is thrown away, and the painter page is reloaded.
+fetches the source tiles within `SOURCE_PREFETCH_KM` before painting. A paint during which any
+source request failed is thrown away, and the painter page is reloaded.
+
+The store has two hard limits, so painting can't fill the host's disk or hammer the source
+hosts:
+
+- **Size** (`SOURCE_MAX_MB`, 8 GB in production). At the limit the store serves what it
+  holds and fetches nothing new.
+- **Fetches per day** (`SOURCE_FETCHES_PER_DAY`, 20,000 in production; a new area costs about
+  150 to 300). The count survives restarts (`fetches.json` in the store).
+
+When either limit is reached, tiles whose source data is already stored still paint. A tile
+that needs new data fails at once with `not painted, needs new source data: <reason>`, and
+isn't retried. `src/status.mjs` shows the store size, fetches today, free disk space and the
+reason (`worker.source.limited`), and the health check prints `LIMITED: <reason>`.
 
 ## Configuration
 
@@ -61,6 +74,10 @@ The worker reads only environment variables:
 | `SOURCE_CACHE_DIR` | `.source` (`/data/source` in Docker) | Frozen source tiles |
 | `PAINT_WORKERS` | `4` | Painter Web Workers. Each needs about 1.5 GB in a dense city; production runs 1 |
 | `SOURCE_PREFETCH_KM` | `12` | Radius (map km) of vector tiles fetched in parallel before a paint |
+| `SOURCE_MAX_MB` | `8000` | The frozen store's size limit |
+| `SOURCE_FETCHES_PER_DAY` | `20000` | Upstream source fetches per UTC day |
+| `SOURCE_FETCH_CONCURRENCY` | `6` | Upstream source fetches at a time |
+| `NODE_USE_ENV_PROXY`, `HTTPS_PROXY`, `NO_PROXY` | (unset) | Send every outbound request through the egress proxy (set in `deploy/compose.yaml`) |
 | `RECYCLE_TILES` | `300` | Tiles per painter page; the page is then replaced (the painter's caches only grow). Production: 100 |
 | `LEASE_BATCH` | `8` | Tiles leased per round |
 | `IDLE_POLL_MS` | `1000` | Wait between empty polls |
@@ -77,9 +94,70 @@ has `"fantasy_renderer": true`
 
 The service key isn't needed.
 
-The kill switch, the tile version, WebP quality, the per-player daily cap and queue timing
-are in `public.fantasy_config` in the database, so they change without touching the
-worker.
+The kill switch, the tile version, WebP quality, the limits and queue timing are in
+`public.fantasy_config` in the database, so they change without touching the worker. A
+fresh migration leaves the map switched off.
+
+## Queue and limits
+
+The app calls `request_fantasy_tiles` with the tiles around its view. The database decides
+what gets queued, in this order:
+
+1. **Kill switch.** Off: nothing is queued.
+2. **Throttle.** A second call from the same player within `min_request_interval` (1 s)
+   queues nothing and answers `reason: "throttled"`.
+3. **Distance.** Only tiles within `near_player_m` (2 km) of the caller's own ground are
+   accepted: their claimed cells, and the positions they uploaded in the last
+   `recent_positions` (7 days). Other tiles are counted in `far` and ignored. Positions
+   never leave the database.
+4. **Room.** Each tile costs units: a z16 tile 1, a z15 tile 5 (it needs its four children).
+   Tiles are taken in order while they fit in the smallest of these:
+   - The player's allowance for the day (`daily_tiles_per_player`, 300).
+   - Everyone's allowance for the day (`global_daily_tiles`, 2000).
+   - The room left in the queue (`max_queue_depth`, 500 units).
+
+   The answer names the limit that stopped it (`reason`: `player`, `global` or `queue`).
+
+The player's row and the day's row are locked first, so parallel calls can't overshoot
+either allowance. At most `max_tiles_per_call` (64) tiles per call are read, and at most
+`max_visible_tiles` (24) of them count as on screen.
+
+The worker leases tiles in this order:
+
+1. Priority: on screen (0), around the screen (1), pre-painting (2).
+2. Within a priority, players take turns: each player's oldest tile, then each player's
+   second oldest, and so on. One player can't fill the queue ahead of the others.
+3. Arrival order, then z16 before z15.
+
+A tile that was already queued keeps its place; asking again doesn't move it forward. A tile
+that failed `max_attempts` (3) times is given up, then leased again after `failed_cooldown`
+(1 day), or at once with the operator query in the runbook.
+
+`queue_fantasy_tiles` (pre-painting, renderer only) skips the distance rule and the player
+and global allowances, at the lowest priority.
+
+## Isolation
+
+The worker container is the security boundary, with these settings
+(`deploy/compose.yaml`):
+
+- **Network.** The worker is only on a Docker network with no route out (`internal: true`).
+  Its one way out is the egress proxy (`src/egress-proxy.mjs`), a second container from the
+  same image. The proxy accepts only `CONNECT` on port 443, to exactly these names: the
+  Supabase project, `tiles.openfreemap.org` and `elevation-tiles-prod.s3.amazonaws.com`. It
+  never connects to a private, loopback or link-local address, even when an allowed name
+  resolves to one, and it connects to the address it checked. The worker therefore can't
+  reach the host's private network or any other machine on it.
+- **Chromium runs without its own sandbox.** Playwright launches Chromium with
+  `--no-sandbox` by default (`chromiumSandbox: false`). Chromium's sandbox needs user
+  namespaces or a setuid helper, and Docker's default seccomp profile blocks the system calls
+  it uses. Turning it on would need a custom seccomp profile or extra capabilities, which
+  would weaken the container instead.
+- **What the browser loads.** Chromium opens only the worker's own local pages and the
+  painter files on `127.0.0.1`. Map data comes through that local server, which fetches
+  only vector and terrain tiles from the allowed hosts, never pages or scripts.
+- **The container.** It runs as the image's non-root `pwuser`, with every Linux capability
+  dropped, `no-new-privileges`, no published ports, and CPU, memory and process limits.
 
 ## Run
 
@@ -150,8 +228,13 @@ Measured with the round 11 painter in Docker at 2 CPUs, one painter, on a fast d
 ## Tests
 
 ```sh
-npm test   # tile arithmetic, determinism, z15, neighbours agreeing at edges
+npm test   # tile arithmetic, determinism, z15, neighbours agreeing at edges,
+           # source limits, the egress proxy, and the queue under parallel calls
 ```
+
+`test/queue.test.mjs` runs against the local Supabase stack (never another one) and skips
+itself when the stack isn't running. The database rules are also covered by pgTAP:
+`npx supabase test db`.
 
 ## Re-sync with the prototype
 
