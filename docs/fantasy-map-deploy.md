@@ -42,7 +42,14 @@ Run these in order. Each step says what to check before you go on.
 
 ### 1. Apply the migrations
 
-From the repository root:
+First, the size of the largest territory. A tile request reads the caller's whole territory
+once; at 50,000 cells it took about 40 ms in tests.
+
+```sh
+npx supabase db query --remote --read-only "select max(n) from (select count(*) n from public.claimed_cells group by user_id) s"
+```
+
+Then, from the repository root:
 
 ```sh
 npx supabase db push --dry-run   # lists exactly the two fantasy migrations
@@ -72,49 +79,72 @@ The worker doesn't use the service key. It signs in as one auth user flagged
 
 The user's address is `fantasy-renderer@renderer.invalid`. It's synthetic: the `.invalid`
 domain can never receive mail, and the address names nobody. Nobody signs in with it but the
-worker.
+worker. Its password is made on the worker host and never leaves it.
 
-1. Make a password: `openssl rand -base64 33`.
-2. In the Dashboard, go to **Authentication > Users > Add user > Create new user**. Enter
-   `fantasy-renderer@renderer.invalid` and the password, and turn **Auto Confirm User** on.
-   This creates the user directly and sends no mail, so the project's email confirmation
-   doesn't get in the way. If Supabase rejects the address, stop and report it. Don't use a
-   real address instead.
-3. In the SQL editor:
+1. On the host, write the worker's credentials with a new password. The file is readable by
+   root only, and the command refuses to overwrite an existing one.
 
-   ```sql
-   update auth.users
-   set raw_app_meta_data = raw_app_meta_data || '{"fantasy_renderer": true}'
-   where email = 'fantasy-renderer@renderer.invalid';
+   ```sh
+   ssh "$WORKER" 'mkdir -p /opt/fantasy-renderer && cd /opt/fantasy-renderer && umask 077 && test ! -e worker.env && {
+     echo SUPABASE_URL=https://bvnlepwccygdkgsezgka.supabase.co
+     echo SUPABASE_PUBLISHABLE_KEY=<the publishable key the app ships with>
+     echo FANTASY_RENDERER_EMAIL=fantasy-renderer@renderer.invalid
+     echo FANTASY_RENDERER_PASSWORD=$(openssl rand -base64 48 | tr -dc A-Za-z0-9 | head -c 40)
+   } > worker.env && echo written'
    ```
 
-Check: **Authentication > Sign In / Providers > Email** is enabled (the worker signs in with
-email and password). Also check that
-`select raw_app_meta_data from auth.users where email = 'fantasy-renderer@renderer.invalid'`
-shows `"fantasy_renderer": true`.
+2. Sign the user up from the host, with the publishable key. Only the HTTP status and any
+   error message are printed:
+
+   ```sh
+   ssh "$WORKER" 'cd /opt/fantasy-renderer && set -a && . ./worker.env && set +a &&
+     curl -sS -o /tmp/signup.json -w "%{http_code}\n" "$SUPABASE_URL/auth/v1/signup" \
+       -H "apikey: $SUPABASE_PUBLISHABLE_KEY" -H "content-type: application/json" \
+       -d "{\"email\":\"$FANTASY_RENDERER_EMAIL\",\"password\":\"$FANTASY_RENDERER_PASSWORD\"}";
+     grep -o "\"\(msg\|error_code\)\":\"[^\"]*\"" /tmp/signup.json; rm -f /tmp/signup.json'
+   ```
+
+   If the project refuses the address, stop and report it. Don't use a real address
+   instead. With the owner at hand, the fallback is the Dashboard: **Authentication > Users >
+   Add user > Create new user** with the same address, the password from `worker.env`, and
+   **Auto Confirm User** on (this sends no mail).
+
+3. Confirm and flag the user, in one statement from your machine:
+
+   ```sh
+   npx supabase db query --remote "update auth.users set email_confirmed_at = coalesce(email_confirmed_at, now()), raw_app_meta_data = raw_app_meta_data || '{\"fantasy_renderer\": true}' where email = 'fantasy-renderer@renderer.invalid' returning email_confirmed_at is not null as confirmed, raw_app_meta_data -> 'fantasy_renderer' as renderer"
+   ```
+
+Check: the statement returns one row, confirmed and `renderer: true`.
+**Authentication > Sign In / Providers > Email** is enabled (the worker signs in with email
+and password).
+
+To undo: `delete from auth.users where email = 'fantasy-renderer@renderer.invalid';` and
+remove `/opt/fantasy-renderer/worker.env`.
 
 ### 3. Prepare the host (once)
 
-1. Check that there's room:
+1. Look at what runs there and check that there's room. Stop if less than about 4 GB of
+   memory is available (the worker may use 3 GB) or the Docker disk has less than 10 GB free.
 
    ```sh
-   ssh "$WORKER" 'free -h; df -h /var/lib/docker; docker stats --no-stream'
+   ssh "$WORKER" 'docker version --format "{{.Server.Version}}"; free -h; df -h /var/lib/docker; uptime; docker ps --format "{{.Names}}\t{{.Status}}"; docker stats --no-stream'
    ```
 
-2. Write the worker's credentials. The file stays on the host, readable by root only.
+2. Check that Docker is 28.0 or later. The worker's network relies on it to keep the worker
+   away from services on the host itself (see
+   [Isolation](../supabase/fantasy-renderer/README.md#isolation)). On an older Docker, update
+   it, or block the network's bridge in the host firewall instead, on the host after step 5:
 
    ```sh
-   ssh "$WORKER" 'mkdir -p /opt/fantasy-renderer && umask 077 && cat > /opt/fantasy-renderer/worker.env' <<'EOF'
-   SUPABASE_URL=https://bvnlepwccygdkgsezgka.supabase.co
-   SUPABASE_PUBLISHABLE_KEY=<the publishable key the app ships with>
-   FANTASY_RENDERER_EMAIL=fantasy-renderer@renderer.invalid
-   FANTASY_RENDERER_PASSWORD=<the password from step 2>
-   EOF
+   BR=br-$(docker network inspect fantasy-renderer_inside --format '{{.Id}}' | cut -c1-12)
+   iptables -I INPUT -i "$BR" -j DROP && ip6tables -I INPUT -i "$BR" -j DROP
    ```
 
-3. Name the Supabase host for the egress proxy, the worker's only way out (see
-   [Isolation](../supabase/fantasy-renderer/README.md#isolation)). `ship.sh` keeps this line
-   when it writes the image tag.
+   Make the rule survive reboots the way the host keeps its other firewall rules.
+
+3. Name the Supabase host for the egress proxy, the worker's only way out. `ship.sh` keeps
+   this line when it writes the image tag.
 
    ```sh
    ssh "$WORKER" 'echo FANTASY_SUPABASE_HOST=bvnlepwccygdkgsezgka.supabase.co >> /opt/fantasy-renderer/.env'
@@ -158,6 +188,15 @@ Check:
 - `docker compose logs --tail 20 worker` names `renderer user fantasy-renderer@…`.
 - `docker compose logs --tail 20 egress` shows `listening on 3128, allowing …` with the three
   hosts, and no `refused` lines once the worker signed in.
+- The egress check passes. Give it the host's own LAN address, so it checks that too (the
+  address stays in your terminal):
+
+  ```sh
+  ssh "$WORKER" 'cd /opt/fantasy-renderer && docker compose exec -T worker node src/egress-check.mjs "$(hostname -I | cut -d" " -f1):22"'
+  ```
+
+- The host's other stacks are unaffected: `docker ps` shows them as before, and `uptime`
+  shows a normal load.
 
 ### 6. Pre-paint the testers' home areas
 
@@ -369,9 +408,10 @@ The migrations set these launch values (November 26, 2026), with the map switche
 | `max_queue_depth` | 500 units | About 17 minutes of work at 2 s per tile. A deeper queue only means tiles painted long after the player has walked on |
 | `near_player_m` | 2000 m | A screen and its ring at walking zoom fit well inside it |
 
-All limits count cost units: a z16 tile is 1 unit, a z15 tile 5 (its four z16 children
-plus itself). Pre-painting (`queue_fantasy_tiles`) doesn't count against the player and
-global limits, so you can pre-paint more than 2000 tiles in a day. Change any value in the SQL
+All limits count cost units: a z16 tile is 1 unit, a z15 tile 1 plus each of its four z16
+children not painted or queued yet (up to 5). Pre-painting (`queue_fantasy_tiles`) doesn't
+count against the player and global limits or the queue depth, so you can pre-paint more
+than 2000 tiles in a day without blocking players. Change any value in the SQL
 editor, for example `update public.fantasy_config set global_daily_tiles = 3000;`.
 
 These were measured on 27 z16 tiles in Berlin, Manhattan and Innsbruck:
@@ -390,7 +430,7 @@ How the costs work out:
 - **A tile is paid for once.** It's painted, stored and served from the CDN for everyone,
   and each phone keeps it in its 200 MB MapLibre cache. A tester walking new streets needs
   roughly 15 new tiles per km, and a first visit to an area asks for about 30.
-- **The limits bound the worst case**, in units (z15 costs 5 units for about 5 tiles' worth
+- **The limits bound the worst case**, in units (z15 costs up to 5 units for up to 5 tiles' worth
   of storage and painting, so a unit is about one z16 tile either way):
 
   | Limit | Units a day | New storage | Worker time at 2 s per unit |

@@ -58,8 +58,11 @@ hosts:
 
 When either limit is reached, tiles whose source data is already stored still paint. A tile
 that needs new data fails at once with `not painted, needs new source data: <reason>`, and
-isn't retried. `src/status.mjs` shows the store size, fetches today, free disk space and the
-reason (`worker.source.limited`), and the health check prints `LIMITED: <reason>`.
+isn't retried. Then `src/status.mjs` starts with `WARNING: NEW AREAS ARE NOT PAINTED:
+<reason>` (also in its `warnings` list), and so does the health check's output
+(`docker inspect --format '{{json .State.Health}}'`). Free disk under 2 GB gets a warning the
+same way. The status also shows the store size, fetches today and free disk space
+(`worker.source`).
 
 ## Configuration
 
@@ -110,11 +113,12 @@ what gets queued, in this order:
    accepted: their claimed cells, and the positions they uploaded in the last
    `recent_positions` (7 days). Other tiles are counted in `far` and ignored. Positions
    never leave the database.
-4. **Room.** Each tile costs units: a z16 tile 1, a z15 tile 5 (it needs its four children).
+4. **Room.** Each tile costs units: a z16 tile 1, a z15 tile up to 5 (see the following
+   paragraphs).
    Tiles are taken in order while they fit in the smallest of these:
    - The player's allowance for the day (`daily_tiles_per_player`, 300).
    - Everyone's allowance for the day (`global_daily_tiles`, 2000).
-   - The room left in the queue (`max_queue_depth`, 500 units).
+   - The room left in the queue (`max_queue_depth`, 500 units of players' tiles).
 
    The answer names the limit that stopped it (`reason`: `player`, `global` or `queue`).
 
@@ -134,7 +138,30 @@ that failed `max_attempts` (3) times is given up, then leased again after `faile
 (1 day), or at once with the operator query in the runbook.
 
 `queue_fantasy_tiles` (pre-painting, renderer only) skips the distance rule and the player
-and global allowances, at the lowest priority.
+and global allowances, at the lowest priority. Pre-painting doesn't count toward the queue
+depth either, so a large pre-paint never blocks players' requests; it's leased after them.
+
+A z15 tile costs 1 plus each of its four z16 children not painted or queued yet, so a z15
+tile over painted ground costs 1. When a limit cuts a request short, the tiles on screen are
+queued first, then those nearest the middle of the screen.
+
+A lease that expires is leased again, at most `max_attempts` times in all. After that the
+tile is given up like a failed one, so a tile that crashes the browser every time can't
+restart the worker forever.
+
+The distance rule reads `public.claimed_cells` and `public.walk_points` (`user_id`,
+`recorded_at`, `geom`). A change to either table must keep `request_fantasy_tiles` working,
+or every request comes back `far`; the pgTAP tests cover both.
+
+### Follow-up: positions forged to open new areas
+
+A player can upload forged positions, and the distance rule then accepts tiles around them.
+Each forged spot opens a new area: new source data (150 to 300 fetches) and up to the
+player's 300 units a day. Nothing yet limits how many new areas one player opens per day.
+The source store's 8 GB limit and the 20,000 fetches a day bound the damage to the host and
+the source hosts, and the global 2000 units a day bound the painting. The fix is a cap on
+new areas per player per day: count the z14 source tiles a player's requests would add
+first, and refuse past a small number.
 
 ## Isolation
 
@@ -148,6 +175,15 @@ The worker container is the security boundary, with these settings
   never connects to a private, loopback or link-local address, even when an allowed name
   resolves to one, and it connects to the address it checked. The worker therefore can't
   reach the host's private network or any other machine on it.
+- **The host itself.** An internal Docker network still gets an address on the host, and
+  through it a container reaches every host service listening on all addresses (sshd, for
+  one). The `inside` network is created with `gateway_mode_ipv4: isolated` (and IPv6), so
+  the bridge has no host address at all. This needs Docker 28.0 or later; older engines
+  ignore the option without an error.
+- **Proof after every deploy.** `src/egress-check.mjs`, run inside the worker container,
+  checks that the allowed hosts answer through the proxy, that another host is refused,
+  that nothing leaves directly, and that the host can't be reached on its network gateway
+  address, `docker0`, or any address given on the command line.
 - **Chromium runs without its own sandbox.** Playwright launches Chromium with
   `--no-sandbox` by default (`chromiumSandbox: false`). Chromium's sandbox needs user
   namespaces or a setuid helper, and Docker's default seccomp profile blocks the system calls

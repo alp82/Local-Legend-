@@ -6,6 +6,7 @@
 import { readFileSync } from 'node:fs';
 
 import { supabaseFromEnv } from './supabase.mjs';
+import { workerWarnings } from './warnings.mjs';
 
 const status = await supabaseFromEnv().rpc('fantasy_status');
 let heartbeat = null;
@@ -13,4 +14,6 @@ try {
   heartbeat = JSON.parse(readFileSync(process.env.HEARTBEAT_FILE || '/tmp/fantasy-worker-heartbeat.json', 'utf8'));
   heartbeat.age_s = Math.round((Date.now() - Date.parse(heartbeat.at)) / 1000);
 } catch {}
-console.log(JSON.stringify({ database: status, worker: heartbeat }, null, 2));
+const warnings = workerWarnings(heartbeat);
+for (const w of warnings) console.error(`WARNING: ${w}`);
+console.log(JSON.stringify({ warnings, database: status, worker: heartbeat }, null, 2));

@@ -97,9 +97,16 @@ services:
         max-file: "3"
 
 networks:
-  # No route out of this network: the worker reaches only the egress proxy.
+  # No route out of this network: the worker reaches only the egress proxy. "isolated" also
+  # leaves the bridge without an address on the host, so the worker can't reach services
+  # listening on the host itself (an internal network otherwise gets one: Docker 28.0
+  # release notes). Needs Docker 28.0 or later; older engines ignore it, so the runbook
+  # checks the version and src/egress-check.mjs proves it from inside after every deploy.
   inside:
     internal: true
+    driver_opts:
+      com.docker.network.bridge.gateway_mode_ipv4: isolated
+      com.docker.network.bridge.gateway_mode_ipv6: isolated
   outside: {}
 
 volumes:
