@@ -2,11 +2,13 @@
 # so it can't starve the host's other stacks, and no way out but an allow-list proxy.
 # Runbook: docs/fantasy-map-deploy.md.
 #
-# Deployed by Coolify as a Git-based Docker Compose application in raw mode ("deploy file as-is"):
-# Coolify pulls the images and runs this file unchanged. Raw mode matters: without it Coolify
+# Deployed by Coolify as a Git-based Docker Compose application in raw mode ("deploy file as-is"),
+# from the fantasy-renderer-deploy branch: there deploy/render-deploy.mjs has pinned the worker
+# image to the digest a release run built and attested, so a moved tag never changes what runs.
+# Coolify pulls the images and runs that file unchanged. Raw mode matters: without it Coolify
 # joins every service to every network and to its own bridge network, which would give the
 # worker a way round the egress proxy, and hands every variable to every container. So:
-# - images only, from the registry (no build); every deploy pulls :release again;
+# - images only, from the registry (no build), the worker's by digest;
 # - the worker's credentials come from a file on the host (worker.env, chmod 600), never from
 #   Coolify, so the renderer password stays on the host;
 # - the frozen source data is an external volume with a fixed name: it outlives every deploy,
@@ -16,14 +18,16 @@
 # Variables (Coolify's Environment Variables, or .env next to this file without Coolify):
 #   FANTASY_SUPABASE_HOST    <project ref>.supabase.co, for the egress allow-list (required)
 #   FANTASY_RENDERER_DIR     the host folder with worker.env (default /opt/fantasy-renderer)
-#   FANTASY_RENDERER_IMAGE   the image (default the registry's :release; deploy/ship.sh sets a
-#                            locally loaded image instead)
+#   FANTASY_RENDERER_IMAGE   the worker image; on the deploy branch it's pinned by digest in place
+#                            (deploy/ship.sh sets a locally loaded image instead)
+#   FANTASY_EGRESS_SCRIPT    the egress proxy script (default the repository's; the deploy branch and
+#                            deploy/ship.sh put it next to this file)
 #   FANTASY_RENDERER_MEMORY  memory limit (default 3g)
 name: fantasy-renderer
 
 services:
   worker:
-    image: ${FANTASY_RENDERER_IMAGE:-ghcr.io/process-roman/local-legend-fantasy-renderer:release}
+    image: ${FANTASY_RENDERER_IMAGE:?}
     restart: unless-stopped
     env_file: ${FANTASY_RENDERER_DIR:-/opt/fantasy-renderer}/worker.env
     environment:
@@ -87,9 +91,17 @@ services:
   # The worker's only way out (src/egress-proxy.mjs): CONNECT to these hosts on 443, never to
   # a private, loopback or link-local address, so the worker can't reach the other machines
   # on the host's private network.
+  #
+  # Its own image (official Node, pinned by digest), running the proxy script from the deployed
+  # checkout of this repository, never from the release image: a bad release can't widen its own
+  # way out.
   egress:
-    image: ${FANTASY_RENDERER_IMAGE:-ghcr.io/process-roman/local-legend-fantasy-renderer:release}
-    command: ["node", "src/egress-proxy.mjs"]
+    image: node:24-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5
+    user: node
+    command: ["node", "/egress/egress-proxy.mjs"]
+    volumes:
+      # next to this file in the repository; deploy/ship.sh copies it and sets FANTASY_EGRESS_SCRIPT
+      - ${FANTASY_EGRESS_SCRIPT:-../src/egress-proxy.mjs}:/egress/egress-proxy.mjs:ro
     restart: unless-stopped
     environment:
       EGRESS_ALLOW: ${FANTASY_SUPABASE_HOST:?},tiles.openfreemap.org,elevation-tiles-prod.s3.amazonaws.com

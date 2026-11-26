@@ -36,8 +36,8 @@ echo "copying $IMAGE to $HOST (about 1 GB compressed)"
 docker save "$IMAGE" | gzip -1 | ssh "$HOST" 'gunzip | docker load'
 
 ssh "$HOST" "mkdir -p $DIR && test -f $DIR/worker.env || echo 'note: $DIR/worker.env is missing (see worker.env.example)'"
-scp "$HERE/deploy/compose.yaml" "$HERE/deploy/worker.env.example" "$HOST:$DIR/"
+scp "$HERE/deploy/compose.yaml" "$HERE/deploy/worker.env.example" "$HERE/src/egress-proxy.mjs" "$HOST:$DIR/"
 # Only the image line changes; the other settings in .env (host, memory) stay.
-ssh "$HOST" "cd $DIR && touch .env && cp .env .env.previous && { grep -v '^FANTASY_RENDERER_IMAGE=' .env.previous; echo FANTASY_RENDERER_IMAGE=$IMAGE; } > .env && { docker compose config --quiet || echo 'compose check failed: are worker.env and FANTASY_SUPABASE_HOST in .env there?'; }"
+ssh "$HOST" "cd $DIR && touch .env && cp .env .env.previous && { grep -v '^FANTASY_RENDERER_IMAGE=\|^FANTASY_EGRESS_SCRIPT=' .env.previous; echo FANTASY_RENDERER_IMAGE=$IMAGE; echo FANTASY_EGRESS_SCRIPT=./egress-proxy.mjs; } > .env && { docker compose config --quiet || echo 'compose check failed: are worker.env and FANTASY_SUPABASE_HOST in .env there?'; }"
 echo "shipped $IMAGE; the previous .env is saved as $DIR/.env.previous. Start or restart with:"
 echo "  ssh $HOST 'cd $DIR && docker compose up -d'"
