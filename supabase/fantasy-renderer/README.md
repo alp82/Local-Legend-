@@ -182,8 +182,10 @@ The worker container is the security boundary, with these settings
 (`deploy/compose.yaml`):
 
 - **Network.** The worker is only on a Docker network with no route out (`internal: true`).
-  Its one way out is the egress proxy (`src/egress-proxy.mjs`), a second container from the
-  same image. The proxy accepts only `CONNECT` on port 443, to exactly these names: the
+  Its one way out is the egress proxy (`src/egress-proxy.mjs`), a second container that runs
+  the script from the deployed checkout of this repository in its own image (official
+  `node:24-alpine`, pinned by digest), never from the release image: a bad release can't widen
+  its own way out. The proxy accepts only `CONNECT` on port 443, to exactly these names: the
   Supabase project, `tiles.openfreemap.org` and `elevation-tiles-prod.s3.amazonaws.com`. It
   never connects to a private, loopback or link-local address, even when an allowed name
   resolves to one, and it connects to the address it checked. The worker therefore can't
@@ -308,47 +310,37 @@ that paints differently on purpose, record the new hashes with `npm run golden:u
 A merge to `main` that touches the renderer releases it by itself
 (`.github/workflows/fantasy-renderer.yml`):
 
-1. GitHub runs the tests, builds the image, paints the golden tiles in it, pushes it to the
-   container registry as `sha-<commit>` and `:release`, and calls Coolify's deploy webhook.
-2. Coolify pulls `:release` and restarts the stack on the worker host.
-3. The worker computes its **painter fingerprint** (`src/fingerprint.mjs`) and reports it
+1. GitHub runs the tests, builds the image, paints the golden tiles in it, and pushes it to
+   the container registry as `sha-<commit>`, with a credential only the protected
+   `fantasy-release` environment holds.
+2. It attests the image's build provenance, points the `fantasy-renderer-deploy` branch at the
+   image's digest (`deploy/render-deploy.mjs`: the compose file pinned by digest, the egress
+   script, the release record), and calls Coolify's deploy webhook.
+3. Coolify deploys that branch on the worker host.
+4. The worker computes its **painter fingerprint** (`src/fingerprint.mjs`) and reports it
    (`begin_fantasy_release`):
    - **Same as the live version:** it carries on. Changes to the worker loop, the queue or the
      deploy files are just a restart.
    - **New:** a new tile version is staged. The worker paints it in the background for every
      known area (claimed land plus 1 km, and the live tiles players requested within 30
      days) while phones keep the live version. When nothing is left, phones switch to it at
-     their next configuration check (app start or return to the foreground). Players' new
-     tiles go to the staged version meanwhile.
-   - **An earlier released version whose tiles still exist:** phones switch back to it at
-     once, and the areas it misses are queued.
-4. Replaced versions are deleted after 7 days (`version_grace`) by the worker itself, through
-   the Storage API.
+     their next configuration check. The switch is held (`blocked` in the status) if no staged
+     tile painted or too many were given up.
+   - **An earlier released version whose tiles are all still there:** phones switch back to it
+     at once, and what they viewed meanwhile is queued.
+5. Replaced versions are deleted after 7 days (`version_grace`) by the worker itself, through
+   the Storage API; a version being deleted is never rolled back to.
 
 Phones never see old and new tiles side by side: they show one version, and an unpainted tile
-shows the street map. GitHub holds no database credential; the worker does all of it as the
-renderer user.
+shows the street map. Each version keeps its WebP quality. GitHub holds no database credential;
+the worker does all of it as the renderer user.
 
 **The fingerprint** hashes everything that can change painted output: `painter/`, `assets/`,
-`src/page/`, `src/paint-output.mjs` (Chromium's flags and the label format), the Playwright
-version and the Dockerfile's pinned base image. `node src/fingerprint.mjs --list` shows each
-input. A change to any of them, even a comment, starts a new version (a repaint costs about 4 s
-per tile on the worker host); keep unrelated edits out of those files.
+`src/page/`, `src/paint-output.mjs` (Chromium's flags, the label format, the z15 child order
+and labels, and what the painter reads from the source server), the Playwright version and the
+Dockerfile's pinned base image. `node src/fingerprint.mjs --list` shows each input. A change to
+any of them, even a comment, starts a new version (a repaint costs about 4 s per tile on the
+worker host); keep unrelated edits out of those files.
 
-**Roll back** with the "Fantasy renderer rollback" workflow (Actions tab): it points
-`:release` at an earlier `sha-<commit>` image and deploys it.
-
-### Known issues (round 11, November 26, 2026)
-
-The round 8 look is restored: roads to every heart, woods and mountain scenery before
-fillers, sharp landmark trees and hamlets (no sprite is drawn above its atlas size), and every
-heart named. What remains:
-
-- **A tree avenue can run into a set piece.** Roads run solid up to a set piece's walls (round
-  10), and the avenue along such a road can put its last trees over the wall (Berlin, the
-  Kreuzberg walled town's north side).
-- **Composition differs from round 8 by design:** hearts are decided per fixed world cell, so
-  some sit at other spots, and some names differ (Berlin's camera heart is Kreuzberg; Luisenstadt
-  names its neighbour).
-- Church and landmark names aren't shown; only village names (painted in) and road and
-  water names (live) are.
+**Roll back** with the "Fantasy renderer rollback" workflow (Actions tab): it takes a digest a
+release run recorded and attested, and deploys it. Then revert the bad commit on `main`.

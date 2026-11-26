@@ -323,7 +323,8 @@ Run these in order, and stop as soon as the problem is gone.
 
 3. **Go back to the previous worker image** if a new image misbehaves: run the "Fantasy
    renderer rollback" workflow (see [Releases](#releases)). Without Coolify, `ship.sh` saved
-   the previous image:
+   the previous image (never one from before the release mechanism, see
+   [Without Coolify](#without-coolify)):
 
    ```sh
    ssh "$WORKER" 'cd /opt/fantasy-renderer && cp .env.previous .env && docker compose up -d'
@@ -405,115 +406,230 @@ is stopped. Any copy of the token outside the worker would have to have leaked f
 
 ## Releases
 
-Once Coolify is set up ([Set up automatic releases](#set-up-automatic-releases-once)), a merge
-to `main` that touches the renderer releases it with nobody running anything:
+Once automatic releases are set up ([Set up automatic releases](#set-up-automatic-releases-once)),
+a merge to `main` that touches the renderer releases it with nobody running anything:
 
-1. GitHub Actions runs the tests, builds the image, paints the golden tiles in it, pushes it to
-   `ghcr.io/process-roman/local-legend-fantasy-renderer` as `sha-<commit>` and `:release`, and
-   calls Coolify's deploy webhook.
-2. Coolify pulls `:release` and restarts the stack on the worker host. The source volume, the
-   credentials file and the isolated network stay as they are.
-3. The worker reports its painter fingerprint at start-up. Same as the live version: it carries
-   on. New: it paints the next tile version in the background for every known area, and phones
-   switch when it's done. An earlier version whose tiles still exist: phones switch back at once.
-4. Replaced versions are deleted after `version_grace` (7 days).
+1. GitHub Actions runs the tests, builds the image, paints the golden tiles in it, and pushes it
+   to `ghcr.io/process-roman/local-legend-fantasy-renderer` as `sha-<commit>`.
+2. It attests the image's build provenance and points the `fantasy-renderer-deploy` branch at
+   the image's **digest**. That branch holds the compose file with the image pinned by digest,
+   the egress proxy script, `RELEASE.json` (what's deployed) and `releases.ndjson` (every
+   release). No deploy ever goes through a tag, so a moved tag changes nothing.
+3. It calls Coolify's deploy webhook. Coolify deploys the branch: it pulls the pinned image and
+   restarts the stack. The source volume, the credentials file and the isolated network stay.
+4. The worker reports its painter fingerprint at start-up:
+   - **Same as the live version:** it carries on.
+   - **New:** it paints the next tile version in the background for every known area, and
+     phones switch when it's done. The switch is held while the staged version has no painted
+     tile, or more tiles were given up than `release_max_given_up` (10) and
+     `release_max_given_up_share` (1%) allow.
+   - **An earlier version whose tiles are all still there:** phones switch back at once, and
+     what they viewed on the version being left is queued behind players' own requests.
+5. Replaced versions are deleted after `version_grace` (7 days). A version is marked before its
+   first file goes, and is never rolled back to after that; its painter gets a fresh version.
 
-Watch a release in the status (`node src/status.mjs`, or `select jsonb_pretty(public.fantasy_status());`):
-`staging` shows the version being painted and how many tiles remain, and `versions` lists every
-version with its fingerprint. A release of the testers' areas (about 450 tiles) takes about
-half an hour at 4 s per tile.
+Each version keeps the WebP quality it started with: a change of `webp_quality` applies from the
+next release on.
 
-**Roll back:** in GitHub, **Actions > Fantasy renderer rollback > Run workflow**, with the image
-to go back to (`sha-<first 12 characters of the commit>`, listed under the repository's
-**Packages**). It points `:release` at that image and deploys it. Phones are back on its tile
-version as soon as the worker starts, if those tiles haven't been deleted yet (7 days after
-they were replaced); otherwise its version is painted again.
+### Watch a release
 
-**Without Coolify** (it's down, or not set up yet): `supabase/fantasy-renderer/deploy/ship.sh
-"$WORKER"` builds and copies the image over ssh, then `docker compose up -d` on the host
-starts it. The worker's release handling is the same.
+`node src/status.mjs`, or `select jsonb_pretty(public.fantasy_status());`:
 
-Keep the source volume (`fantasy-renderer-source`) across releases. It's the map data the
-tiles were painted from. Deleting it lets map changes in at tile edges; do it only if map
-changes should come in, and then start a new version by hand
-(`update public.fantasy_config set version = version + 1, fingerprint = null where id;`
-followed by a worker restart, which adopts the new number as its own).
+- `staging`: the version being painted, `remaining`, `ready`, `given_up`, and `blocked` with a
+  `reason` when the switch is held.
+- `versions`: every version with its fingerprint, quality, and when it was released, retired and
+  purged.
+
+A release of the testers' areas (about 450 tiles) takes about half an hour at 4 s per tile.
+
+**A held release** (`blocked: true`) means the new painter failed too many tiles: phones stay on
+the live version. Look at `last_error` and the worker log, fix the cause on `main`, and merge
+again. Or deploy the live painter again (the rollback workflow with the live version's
+digest): that abandons the release.
+
+### Roll back
+
+1. In GitHub, go to **Actions > Fantasy renderer rollback > Run workflow** on `main`, with the
+   digest to go back to. Digests are in `RELEASE.json` and `releases.ndjson` on the
+   `fantasy-renderer-deploy` branch. The workflow accepts only a digest that a release run
+   recorded and whose build provenance proves the release workflow built it on `main`.
+2. Phones are back on that painter's tile version as soon as the worker starts, if its tiles are
+   all still there. Otherwise its painter's version is painted again.
+3. **Revert the bad commit on `main` right away.** The next merge that touches the renderer, its
+   migrations or its tests releases `main` again, bad commit included.
+
+### Without Coolify
+
+When Coolify is down or not set up yet: `supabase/fantasy-renderer/deploy/ship.sh "$WORKER"`
+builds and copies an image over ssh, then `docker compose up -d` on the host starts it. Build it
+from a commit that has this release mechanism. **Never start an image from before it (the
+pre-cut-over `.env.previous`) after the fingerprint is recorded:** the database refuses its
+leases, because it can't tell its tiles apart.
+
+### Fresh map data
+
+Keep the source volume (`fantasy-renderer-source`) across releases: it's the map data the tiles
+were painted from. Deleting it lets map changes in at tile edges. Do it only if map changes
+should come in, and then start a new version by hand:
+
+```sql
+update public.fantasy_config set version = version + 1, fingerprint = null where id;
+```
+
+Then restart the worker, which adopts the new number as its own.
+
+### Follow-up: migrations
+
+CI doesn't apply database migrations. A release whose worker needs a new migration must have
+that migration pushed (`npx supabase db push`) before it's merged. Applying migrations from CI
+is a follow-up.
 
 ## Set up automatic releases (once)
 
-These steps wire GitHub to the owner's Coolify (version 4.5.3). Do them in this order. Each
-step says what to check before you go on. What's here was checked against Coolify's
-documentation and its 4.5.3 source on November 26, 2026.
+These steps wire GitHub to the owner's Coolify (version 4.5.3). Do them in this order: A, B,
+D1 to D8, then C, then D9 and D10. Step C stops the running worker's painting until D9 starts the
+new one, so keep them minutes apart. Each step says what to check before you go on. They were checked against GitHub's documentation, Coolify's
+documentation and Coolify's 4.5.3 source on November 26, 2026, and reviewed independently.
 
-**Why raw mode.** A normal Coolify Docker Compose resource adds every service to every
+**Why Coolify's raw mode.** A normal Coolify Docker Compose resource adds every service to every
 network in the file and to a bridge network of its own, and hands every variable to every
 container. The worker would get a route round the egress proxy, and the proxy the renderer's
-password. Raw mode ("deploy file as-is") runs `compose.yaml` unchanged; Coolify then only
-pulls the images and runs `docker compose up`. The compose file is written for it: images
-only, the credentials from a file on the host, the source volume external, no domains.
+password. Raw mode ("deploy file as-is") runs the compose file unchanged; Coolify then only
+pulls the images and runs `docker compose up`.
 
-### A. GitHub (repository admin)
+**Trade-offs to accept first.** Coolify always starts its `coolify-sentinel` container on a
+server it manages, with the Docker socket, the host's process namespace and a restart policy;
+with root SSH that gives the Coolify instance root on the worker host, which is shared with the
+analytics and Windmill stacks. Coolify's deploy token (step D10) is broader than its name: on
+4.5.3 it can stop, start and restart every application, database and service of its team,
+restart any server's proxy, run application rollbacks and deploy previews. Keep the worker host
+and this application in a Coolify team of their own, so a leaked token reaches nothing else.
 
-1. **Settings > Actions > General:** under **Workflow permissions**, keep **Read repository
-   contents and packages permissions**. Under **Fork pull request workflows**, require approval
-   for all outside contributors.
-2. **Settings > Environments > New environment** `fantasy-release`. Under **Deployment branches
-   and tags**, choose **Selected branches and tags** and add `main`. The secrets come in step
-   C9.
-3. After the first release run (the first merge to `main` with the workflow), go to the
-   repository's **Packages > local-legend-fantasy-renderer > Package settings** and **Change
-   visibility** to public, so the worker host pulls it without a registry login. The image
-   holds nothing secret: it's built from this public repository.
+### A. GitHub settings (repository admin)
+
+Who may release is the owner's decision (required reviewers in step A3). Everything else here is
+needed either way.
+
+1. **Settings > Actions > General:** keep **Workflow permissions** at **Read repository contents
+   and packages permissions**. Under **Fork pull request workflows from outside collaborators**,
+   choose **Require approval for all outside collaborators**.
+2. **Settings > Rules > Rulesets > New branch ruleset**, named `main`:
+   - Enforcement: **Active**. Target: the default branch.
+   - **Restrict deletions**, **Block force pushes**, and **Require a pull request before merging**
+     (with **Required approvals: 1** if the owner wants a second person on every change).
+   - Bypass list: empty.
+3. **Settings > Environments > New environment** `fantasy-release`:
+   - **Deployment branches and tags:** **Selected branches and tags**, add `main`.
+   - **Required reviewers:** the owner's decision. With reviewers, tick **Prevent self-review**
+     and untick **Allow administrators to bypass configured protection rules**.
+4. **The package token.** Create a classic personal access token on the account that owns the
+   repository (**Settings > Developer settings > Personal access tokens > Tokens (classic)**)
+   with only **write:packages** ticked (untick **repo**, which GitHub ticks with it) and an
+   expiry. GitHub's registry accepts no fine-grained or GitHub App token. Save it as the
+   `fantasy-release` environment secret `FANTASY_PACKAGES_TOKEN`. It acts as that account, so
+   rotate it before it expires.
+5. **The deploy key.** `ssh-keygen -t ed25519 -N '' -C fantasy-renderer-deploy -f deploy_key`.
+   Add `deploy_key.pub` under **Settings > Deploy keys** with **Allow write access**. Save
+   `deploy_key` as the environment secret `FANTASY_DEPLOY_KEY`, then delete both files.
+6. **Settings > Rules > Rulesets > New branch ruleset**, named `fantasy-renderer-deploy`:
+   - Target: branch name `fantasy-renderer-deploy`.
+   - **Restrict creations**, **Restrict updates**, **Restrict deletions**, **Block force pushes**.
+   - Bypass list: **Deploy keys**. Only the environment's key can then move the branch.
+7. Merge the pull request. The release run builds, pushes the first image with the package
+   token, attests it and creates the `fantasy-renderer-deploy` branch. Without the Coolify
+   secrets it stops there with a notice.
+8. Under the repository's **Packages > local-legend-fantasy-renderer > Package settings**:
+   - **Change visibility** to public: the worker host pulls it without a login, and it holds
+     nothing that isn't in this public repository.
+   - **Manage Actions access:** turn off **Inherit access from source repository** and set this
+     repository's role to **Read** (or remove it). Then no workflow's `GITHUB_TOKEN`, on any
+     branch, can push; only the environment's token can.
+   - Check: a test push from a workflow on another branch fails with 403.
 
 ### B. The worker host
 
-1. Check that ports 80 and 443 are free: Coolify starts its own proxy while validating the
-   server, before you can turn it off.
+1. As `root` over ssh, check that Docker is complete, so Coolify's validation won't reinstall it
+   or restart the Docker service (which would restart every stack on the host):
 
    ```sh
-   ssh "$WORKER" "ss -ltnp '( sport = :80 or sport = :443 )'"
+   ssh "$WORKER" 'command -v docker && docker version && docker compose version'
    ```
 
-   If something listens there, stop and decide with the owner first.
+   All three must succeed. Then validation only creates a `coolify` Docker network.
 
-2. Docker is 28.5.1, above Coolify's minimum (24). Validation checks Docker and **can
-   reinstall it and restart the Docker service**, which restarts every stack on the host. Do
-   the validation (step C2) at a quiet time, and check afterwards that the analytics and
-   Windmill containers are back (`docker ps`).
+2. Check that ports 80, 443 and 8080 are free, in case Coolify's proxy starts after all:
 
-### C. Coolify
+   ```sh
+   ssh "$WORKER" "ss -ltnp '( sport = :80 or sport = :443 or sport = :8080 )'"
+   ```
 
-1. **Keys & Tokens > Private Keys > Generate ED25519**, named for the worker host. Add its
-   public key to `root`'s `~/.ssh/authorized_keys` on the worker host, limited to the Coolify
-   host: `from="<Coolify host address>" ssh-ed25519 AAAA… coolify`. Allow port 22 from the
-   Coolify host if a firewall is in the way.
-2. **Servers > New server:** a name for the worker host, its address, port 22, user `root`, the
-   key from step 1, **Server role: Deployments only**. Click **Validate connection**.
-   Check: validated, Docker found, and the host's other containers still running.
-3. On that server, **Proxy > Stop Proxy**, then **Switch Proxy > Custom**. Coolify stores
-   this as no proxy and won't start one again. Check that nothing listens on 80 and 443.
-4. Under the server's **Docker cleanup**, keep **Delete unused volumes** off.
-5. In a project, **New resource > Public Repository**:
-   - Repository `https://github.com/process-roman/Local-Legend-`, branch `main`.
-   - Build pack **Docker Compose**, base directory `/supabase/fantasy-renderer/deploy`,
-     compose file `/compose.yaml`.
+### C. The database (cut-over step one)
+
+1. Check that the painter the live tiles were painted with is the one in `main`: run the golden
+   tiles with the live image's commit (the tag in `/opt/fantasy-renderer/.env`) and compare
+   them with `supabase/fantasy-renderer/test/golden.json`. On November 26, 2026 the live commit
+   `9f70638` painted them identically. Also check that nothing that can change pixels differs:
+
+   ```sh
+   git diff --stat <live commit> main -- supabase/fantasy-renderer/painter supabase/fantasy-renderer/assets \
+     supabase/fantasy-renderer/src/page supabase/fantasy-renderer/package-lock.json supabase/fantasy-renderer/Dockerfile
+   ```
+
+   Expect no changes (the code moved into `src/paint-output.mjs` and the z15 rules were extracted
+   unchanged; the golden tiles prove it).
+2. Apply the release migration and record the live painter in the same step, so no worker ever
+   "adopts" version 1:
+
+   ```sh
+   npx supabase db push    # lists 20261126150000_fantasy_releases.sql
+   FP=$(node supabase/fantasy-renderer/src/fingerprint.mjs)
+   npx supabase db query --remote "update public.fantasy_config set fingerprint = '$FP' where id"
+   npx supabase db query --remote "insert into public.fantasy_versions (version, fingerprint, released_at, webp_quality) select version, fingerprint, now(), webp_quality from public.fantasy_config"
+   ```
+
+   From here the running pre-cut-over worker gets no tiles (the database refuses workers without
+   a fingerprint). Players' requests queue until the new worker starts in step D9.
+
+### D. Coolify
+
+1. In Coolify, create a team for the worker host (**Teams > Create**) and switch to it.
+2. **Keys & Tokens > Private Keys > Generate ED25519**, named for the worker host. Add the public
+   key to `root`'s `~/.ssh/authorized_keys` on the worker host, limited to the Coolify host:
+   `from="<Coolify host address>" ssh-ed25519 AAAA… coolify`.
+3. Under the server settings Coolify applies to every server, check **Docker cleanup** before
+   the server exists: Coolify runs it every night at midnight and, forced by default, removes
+   every image no container uses (the other stacks' rollback images and the manual fallback
+   image) and prunes the build cache. Turn the forced cleanup off for this server as soon as it
+   exists (step D5), or set its threshold to 100%, and keep **Delete unused volumes** off.
+4. **Servers > New server:** a name for the worker host, its address, port 22, user `root`, the
+   key from step 2. **Don't validate yet.**
+5. On the new server, open **Proxy** and choose **Switch Proxy > Custom** (Coolify stores this as
+   no proxy). Open **Docker cleanup** and apply step 3. Only then click **Validate
+   connection**. Check: validated, nothing listens on 80, 443 or 8080, and the host's other
+   containers are still running (`docker ps`).
+6. In a project of the new team, **New resource > Public Repository**:
+   - Repository `https://github.com/process-roman/Local-Legend-`, branch
+     `fantasy-renderer-deploy`.
+   - Build pack **Docker Compose**, base directory `/`, compose file `/compose.yaml`.
    - Destination: the worker host.
-6. In the new application:
+7. In the new application:
    - **Advanced > Compose deployment: Raw (deploy file as-is)** on.
    - **Connect to predefined network** off.
-   - **Auto deploy** off: deploys come from GitHub after the image is pushed, never on a bare
-     git push.
+   - **Auto deploy** off: deploys come from GitHub after a release run, never from a bare push.
    - No domain on either service.
-7. **Environment Variables:** add `FANTASY_SUPABASE_HOST` = `bvnlepwccygdkgsezgka.supabase.co`.
+8. **Environment Variables:** add `FANTASY_SUPABASE_HOST` = `bvnlepwccygdkgsezgka.supabase.co`.
    Nothing else: the worker's credentials stay in `/opt/fantasy-renderer/worker.env` on the
    host, which the compose file reads by absolute path, so the password never enters Coolify.
-8. **Deploy** once from Coolify, and check (next section, "Check a deploy").
-9. **Webhooks:** copy **Deploy Webhook (auth required)**
-   (`https://<coolify>/api/v1/deploy?uuid=<application uuid>&force=false`). Under **Keys &
-   Tokens > API tokens**, create a token with only **deploy** ticked (not read, not write). On
-   4.5.3 a token reaches every resource of its team; the deploy permission can start deploys
-   and restarts, nothing else. Put both in the GitHub environment `fantasy-release` as secrets
-   `COOLIFY_DEPLOY_URL` and `COOLIFY_DEPLOY_TOKEN`.
+9. **Deploy** once from Coolify, and check (next section). The compose file keeps the project
+   name `fantasy-renderer`, so this replaces the manually started containers in place, with the
+   same volume and network names.
+10. **Webhooks:** copy **Deploy Webhook (auth required)**
+    (`https://<coolify>/api/v1/deploy?uuid=<application uuid>&force=false`). Under **Keys &
+    Tokens > API tokens** (still in the new team), create a token. The form starts with
+    **read** ticked: untick it so only **deploy** is ticked. Save both as the `fantasy-release`
+    environment secrets `COOLIFY_DEPLOY_URL` and `COOLIFY_DEPLOY_TOKEN`.
+
+From the next merge on, releases are automatic.
 
 ### Check a deploy
 
@@ -526,25 +642,23 @@ ssh "$WORKER" 'docker exec fantasy-renderer-worker-1 node src/egress-check.mjs "
 ssh "$WORKER" 'docker logs --tail 20 fantasy-renderer-worker-1'
 ```
 
-- Both containers run the registry image, and the worker is `(healthy)`.
+- The worker runs the image at the digest in `RELEASE.json`, and is `(healthy)`. The egress
+  proxy runs `node:24-alpine` at its pinned digest.
 - The worker is on `fantasy-renderer_inside` only. Any other network (a Coolify bridge network
   named after the application) means raw mode is off: stop and fix that first.
 - The egress check passes.
-- The log shows `painter <fingerprint>: adopted version 1` on the first start (the live tiles
-  are taken as this painter's), then `current version …` on later restarts.
+- The log shows `painter <fingerprint>: current version 1`: the fingerprint recorded in step C2.
 
-### Cut over from the manual deployment
+### Undo the cut-over
 
-The compose file keeps the project name `fantasy-renderer`, so Coolify's first deploy replaces
-the manually started containers in place, with the same volume and network names.
-
-1. Apply the release migration first: `npx supabase db push` (it lists
-   `20261126150000_fantasy_releases.sql`). The running worker keeps working: it leases the live
-   version as before.
-2. Merge the pull request. The workflow pushes the first image; without the Coolify secrets it
-   stops there with a notice.
-3. Do steps A3 and C1 to C9, and check the deploy.
-4. `/opt/fantasy-renderer/compose.yaml` and `.env` stay on the host for the manual fallback.
+1. In Coolify, stop the application.
+2. On the host: `cd /opt/fantasy-renderer && docker compose up -d` with an image built by
+   `ship.sh` from a commit that has releases (not the pre-cut-over image, which the database now
+   refuses).
+3. If a release was staging, abandon it:
+   `update public.fantasy_config set staging_version = null, staging_fingerprint = null, staging_started_at = null where id;`
+4. If phones were switched, set `version` and `fingerprint` back to the earlier version's row in
+   `public.fantasy_versions`.
 
 ## Starting values and what they cost
 
