@@ -6,7 +6,7 @@
 -- Run with: npx supabase test db
 begin;
 
-select plan(40);
+select plan(42);
 
 insert into auth.users (id, aud, role, is_anonymous, raw_app_meta_data)
 values
@@ -34,9 +34,9 @@ create function pg_temp.as_postgres() returns void language sql as $$
   select set_config('role', 'postgres', true), set_config('request.jwt.claims', '', true);
 $$;
 
-create function pg_temp.put(p_bucket text, p_name text, p_size int) returns void language sql as $$
+create function pg_temp.put(p_bucket text, p_name text, p_size int, p_type text default 'image/webp') returns void language sql as $$
   insert into storage.objects (bucket_id, name, metadata)
-  values (p_bucket, p_name, jsonb_build_object('size', p_size, 'mimetype', 'image/webp'));
+  values (p_bucket, p_name, jsonb_build_object('size', p_size, 'mimetype', p_type, 'cacheControl', 'max-age=31536000'));
 $$;
 
 delete from public.legend_map_tiles;
@@ -104,9 +104,9 @@ select is(public.is_legend_map_renderer(), false, 'A false flag does not');
 
 select pg_temp.as_player();
 select is(public.is_legend_map_renderer(), false, 'A player is not the renderer');
-select is(public.get_legend_map_config() ->> 'bucket', 'legend-map-tiles', 'The new config names the new bucket');
 select is(public.get_fantasy_config() ->> 'bucket', 'fantasy-tiles', 'The earlier config names the old bucket until the copy is checked');
-select is(public.get_fantasy_config() - 'bucket', public.get_legend_map_config() - 'bucket', 'and otherwise says the same');
+select is(public.get_legend_map_config() ->> 'bucket', 'fantasy-tiles', 'and so does the new one (an early app update still finds every tile)');
+select is(public.get_fantasy_config(), public.get_legend_map_config(), 'Both say the same');
 select is(
   public.request_fantasy_tiles('[[16, 1, 1]]'::jsonb, 1) - 'queued' - 'far' - 'pending' - 'ready' - 'capped' - 'reason',
   jsonb_build_object('enabled', true, 'version', 1),
@@ -150,6 +150,7 @@ select pg_temp.put('fantasy-tiles', 'v1/16/2/2.webp', 1000);
 select pg_temp.put('fantasy-tiles', 'v1/16/2/2.json', 80);
 select pg_temp.put('fantasy-tiles', 'v1/15/1/1.webp', 3000);
 select pg_temp.put('legend-map-tiles', 'v1/16/2/2.webp', 1000);
+select pg_temp.put('legend-map-tiles', 'v1/15/1/1.webp', 3000, 'application/octet-stream'); -- right size, wrong type
 select pg_temp.put('legend-map-tiles', 'v1/16/2/2.json', 79);   -- a broken copy: wrong size
 
 select pg_temp.as_player();
@@ -158,17 +159,23 @@ select throws_ok($$select public.finish_legend_map_bucket_copy()$$, '42501', nul
 
 select pg_temp.as_old_renderer();
 select set_eq($$select name from public.legend_map_bucket_copy_candidates()$$, array['v1/15/1/1.webp', 'v1/16/2/2.json'],
-  'The copy lists files missing from the new bucket or of another size');
+  'The copy lists files whose copy has another size or content type');
 select is(public.finish_legend_map_bucket_copy(), '{"switched": false, "objects": 3, "bytes": 4080, "copied": 1}'::jsonb,
   'An incomplete copy does not switch');
 
 select pg_temp.as_postgres();
 update storage.objects set metadata = metadata || '{"size": 80}' where bucket_id = 'legend-map-tiles' and name = 'v1/16/2/2.json';
-select pg_temp.put('legend-map-tiles', 'v1/15/1/1.webp', 3000);
+update storage.objects set metadata = metadata || '{"cacheControl": "no-cache"}' where bucket_id = 'legend-map-tiles' and name = 'v1/16/2/2.json';
+update storage.objects set metadata = metadata || '{"mimetype": "image/webp"}' where bucket_id = 'legend-map-tiles' and name = 'v1/15/1/1.webp';
+select pg_temp.as_old_renderer();
+select is(public.finish_legend_map_bucket_copy() ->> 'copied', '2', 'A copy with other caching does not count either');
+select pg_temp.as_postgres();
+update storage.objects set metadata = metadata || '{"cacheControl": "max-age=31536000"}' where bucket_id = 'legend-map-tiles' and name = 'v1/16/2/2.json';
 select pg_temp.as_old_renderer();
 select is(public.finish_legend_map_bucket_copy(), '{"switched": true, "objects": 3, "bytes": 4080, "copied": 3}'::jsonb,
   'A complete copy (every file, same sizes) switches');
-select is(public.get_fantasy_config() ->> 'bucket', 'legend-map-tiles', 'and the earlier config then names the new bucket');
+select is(public.get_fantasy_config() ->> 'bucket', 'legend-map-tiles', 'and both configs then name the new bucket');
+select is(public.get_legend_map_config() ->> 'bucket', 'legend-map-tiles', 'the new one too');
 select is((select count(*)::int from public.legend_map_bucket_copy_candidates()), 0, 'Nothing is left to copy');
 select is(public.finish_legend_map_bucket_copy(), '{"switched": false, "already": true}'::jsonb, 'and checking again changes nothing');
 

@@ -73,7 +73,8 @@ insert into public.claimed_cells (user_id, cell, first_claimed_at) values
   (pg_temp.u(2), pg_temp.cell(35209, 21498), now());
 
 select pg_temp.as_player(1);
-select is(public.get_legend_map_config(), '{"enabled": true, "version": 1, "bucket": "legend-map-tiles"}'::jsonb, 'The app reads the switch, version and bucket');
+-- (the bucket is the old one until the rename's copy is checked: legend_map_rename_test.sql)
+select is(public.get_legend_map_config(), '{"enabled": true, "version": 1, "bucket": "fantasy-tiles"}'::jsonb, 'The app reads the switch, version and bucket');
 select throws_ok($$select * from public.legend_map_config$$, '42501', null, 'Players cannot read the config table');
 select throws_ok($$select * from public.legend_map_tiles$$, '42501', null, 'Players cannot read the tile table');
 select throws_ok($$select * from public.legend_map_daily$$, '42501', null, 'Players cannot read the global counter');

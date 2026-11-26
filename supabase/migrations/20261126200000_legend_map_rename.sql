@@ -13,15 +13,23 @@
 -- Compatibility (the last section, "Compatibility until the rename is adopted"): app versions from
 -- before the rename call get_fantasy_config and request_fantasy_tiles, and the worker image from
 -- before the rename calls lease_fantasy_tiles, finish_fantasy_tile, queue_fantasy_tiles and
--- fantasy_status. Those names stay as thin wrappers around the new functions. get_fantasy_config
--- names the bucket those app versions read from (legend_map_config.old_app_bucket): fantasy-tiles
--- until the worker has copied every old file into legend-map-tiles and the database has checked
--- the copy (finish_legend_map_bucket_copy), then legend-map-tiles.
+-- fantasy_status. Those names stay as thin wrappers around the new functions. Both config calls
+-- name the bucket that holds every tile (legend_map_config.old_app_bucket): fantasy-tiles until
+-- the worker has copied every old file into legend-map-tiles and the database has checked the
+-- copy (finish_legend_map_bucket_copy), then legend-map-tiles. Meanwhile the worker writes every
+-- new file to both buckets, so an app that stays open on the old bucket keeps seeing new tiles.
 --
 -- Remove the compatibility section once the app update with the new names is adopted
--- (docs/legend-map-deploy.md, "Rename cut-over", step 9): drop the wrappers, the old bucket's
--- policies, old_app_bucket and the copy functions, take fantasy_renderer out of
--- is_legend_map_renderer, then empty and delete the fantasy-tiles bucket.
+-- (docs/legend-map-deploy.md, "Rename cut-over", step 10): deploy a worker without the copy and
+-- the second write first, then drop the wrappers, the old bucket's policies, old_app_bucket and
+-- the copy functions, give get_legend_map_config its constant bucket back, take
+-- fantasy_renderer out of is_legend_map_renderer, then empty and delete the fantasy-tiles bucket.
+
+-- Renaming takes exclusive locks on the five tables and on storage.objects (every bucket's
+-- files) until commit. Wait at most 3 seconds for them instead of queueing every Storage read
+-- behind a long transaction: on a lock timeout (or a deadlock with a worker call), nothing is
+-- applied; run `supabase db push` again.
+set lock_timeout = '3s';
 
 -- ---------------------------------------------------------------------------
 -- Tables, constraints, indexes
@@ -825,16 +833,17 @@ create policy "Legend map renderer deletes replaced versions" on storage.objects
 -- (see the top of this file).
 -- ===========================================================================
 
--- The bucket app versions from before the rename read tiles from.
+-- The bucket that holds every tile, which both config calls name.
 alter table public.legend_map_config
   add column old_app_bucket text not null default 'fantasy-tiles'
     constraint legend_map_config_old_app_bucket_check check (old_app_bucket in ('fantasy-tiles', 'legend-map-tiles'));
 comment on column public.legend_map_config.old_app_bucket is
-  'Compatibility, removed later: the bucket app versions from before the rename read tiles from (get_fantasy_config). fantasy-tiles until finish_legend_map_bucket_copy has checked the copy, then legend-map-tiles.';
+  'Compatibility, removed later: the bucket both config calls name, the one holding every tile. fantasy-tiles until finish_legend_map_bucket_copy has checked the copy, then legend-map-tiles.';
 
--- The old bucket: the renderer may still read it (the copy's source) and write it (so the worker
--- image from before the rename keeps working if the cut-over is undone before the copy). It may no
--- longer delete there: the old files stay until the bucket is emptied on purpose.
+-- The old bucket: the renderer may still read it (the copy's source) and write it (the new worker
+-- writes every new file there too, and the worker image from before the rename keeps working if
+-- the cut-over is undone). It may no longer delete there: the old files stay until the bucket is
+-- emptied on purpose.
 create policy "Legend map renderer reads the old bucket" on storage.objects
   for select to authenticated
   using (bucket_id = 'fantasy-tiles' and public.is_legend_map_renderer());
@@ -856,7 +865,8 @@ create policy "Legend map renderer replaces in the old bucket" on storage.object
 
 -- The copy. The worker copies every old file server-side (Storage's copy call), then asks the
 -- database to check it; only a complete copy (every old file present in the new bucket with the
--- same size) switches old_app_bucket.
+-- same size, content type and cache control) switches old_app_bucket. (Not the eTag: whether a
+-- server-side copy keeps it is up to the storage backend.)
 
 create function public.legend_map_bucket_copy_candidates(p_limit int default 500)
 returns table (name text)
@@ -875,7 +885,9 @@ begin
     and o.bucket_id = 'fantasy-tiles'
     and not exists (
       select 1 from storage.objects n
-      where n.bucket_id = 'legend-map-tiles' and n.name = o.name and n.metadata ->> 'size' = o.metadata ->> 'size'
+      where n.bucket_id = 'legend-map-tiles' and n.name = o.name
+        and (n.metadata ->> 'size', n.metadata ->> 'mimetype', n.metadata ->> 'cacheControl')
+        is not distinct from (o.metadata ->> 'size', o.metadata ->> 'mimetype', o.metadata ->> 'cacheControl')
     )
   order by o.name
   limit greatest(0, least(p_limit, 1000));
@@ -883,7 +895,7 @@ end;
 $$;
 
 comment on function public.legend_map_bucket_copy_candidates(int) is
-  'Compatibility, removed later. Renderer only. Old-bucket files not yet in legend-map-tiles with the same size; none once old_app_bucket is switched.';
+  'Compatibility, removed later. Renderer only. Old-bucket files not yet in legend-map-tiles with the same size, type and caching; none once old_app_bucket is switched.';
 
 revoke all on function public.legend_map_bucket_copy_candidates(int) from public, anon;
 grant execute on function public.legend_map_bucket_copy_candidates(int) to authenticated, service_role;
@@ -908,7 +920,8 @@ begin
     return jsonb_build_object('switched', false, 'already', true);
   end if;
   select count(*), coalesce(sum((o.metadata ->> 'size')::bigint), 0),
-    count(n.id) filter (where n.metadata ->> 'size' = o.metadata ->> 'size')
+    count(n.id) filter (where (n.metadata ->> 'size', n.metadata ->> 'mimetype', n.metadata ->> 'cacheControl')
+      is not distinct from (o.metadata ->> 'size', o.metadata ->> 'mimetype', o.metadata ->> 'cacheControl'))
   into v_objects, v_bytes, v_copied
   from storage.objects o
   left join storage.objects n on n.bucket_id = 'legend-map-tiles' and n.name = o.name
@@ -922,10 +935,23 @@ end;
 $$;
 
 comment on function public.finish_legend_map_bucket_copy() is
-  'Compatibility, removed later. Renderer only. Checks that every old-bucket file is in legend-map-tiles with the same size and, if so, points app versions from before the rename at legend-map-tiles.';
+  'Compatibility, removed later. Renderer only. Checks that every old-bucket file is in legend-map-tiles with the same size, type and caching and, if so, points both config calls at legend-map-tiles.';
 
 revoke all on function public.finish_legend_map_bucket_copy() from public, anon;
 grant execute on function public.finish_legend_map_bucket_copy() to authenticated, service_role;
+
+-- Until then the new app reads the same bucket, so an app update published before the copy is
+-- checked still finds every tile. The removal gives it back the constant 'legend-map-tiles'.
+create or replace function public.get_legend_map_config()
+returns jsonb
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+  select jsonb_build_object('enabled', c.enabled, 'version', c.version, 'bucket', c.old_app_bucket)
+  from public.legend_map_config c
+$$;
 
 -- The names app versions and the worker image from before the rename call: thin wrappers.
 
@@ -936,8 +962,7 @@ stable
 security definer
 set search_path = ''
 as $$
-  select public.get_legend_map_config() || jsonb_build_object('bucket', c.old_app_bucket)
-  from public.legend_map_config c
+  select public.get_legend_map_config()
 $$;
 
 create function public.request_fantasy_tiles(p_tiles jsonb, p_visible int default 0)
@@ -982,7 +1007,7 @@ as $$
   select public.legend_map_status()
 $$;
 
-comment on function public.get_fantasy_config() is 'Compatibility, removed later: get_legend_map_config for app versions from before the rename, with the bucket they read from.';
+comment on function public.get_fantasy_config() is 'Compatibility, removed later: get_legend_map_config under its earlier name.';
 comment on function public.request_fantasy_tiles(jsonb, int) is 'Compatibility, removed later: request_legend_map_tiles under its earlier name.';
 comment on function public.lease_fantasy_tiles(int, text) is 'Compatibility, removed later: lease_legend_map_tiles under its earlier name.';
 comment on function public.finish_fantasy_tile(int, int, int, int, boolean, int, int, text) is 'Compatibility, removed later: finish_legend_map_tile under its earlier name.';
