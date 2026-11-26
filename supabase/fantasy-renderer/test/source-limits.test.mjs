@@ -1,15 +1,19 @@
 // The frozen source store's limits: when it is full, or the day's upstream fetches are used
 // up, tiles on known ground still paint and tiles that need new data fail with the reason,
-// fast, instead of filling the disk or hammering the tile services. Uses the source data the
-// other tests stored for Berlin (run after them, or with network once).
+// fast, instead of filling the disk or hammering the tile services. Uses a copy of the golden
+// tiles' frozen source data (test/fixtures/golden-source): no network, no order between tests.
 import assert from 'node:assert/strict';
-import { resolve } from 'node:path';
-import { test } from 'node:test';
+import { cpSync, mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { after, test } from 'node:test';
 
 import { startRenderer } from '../src/renderer.mjs';
 
-const sourceDir = resolve(process.env.SOURCE_CACHE_DIR ?? '.source');
-const KNOWN = [35209, 21498]; // Berlin, painted by the other tests
+const sourceDir = mkdtempSync(join(tmpdir(), 'source-limits-'));
+cpSync(new URL('./fixtures/golden-source/', import.meta.url), sourceDir, { recursive: true });
+after(() => import('node:fs').then((fs) => fs.rmSync(sourceDir, { recursive: true, force: true })));
+const KNOWN = [34803, 22788]; // a golden tile: its source data is in the fixture
 const NEW = [40500, 30500]; // central Africa: never fetched
 
 async function withLimits(env, fn) {
@@ -25,7 +29,7 @@ async function withLimits(env, fn) {
 }
 
 test('a full source store paints known ground and refuses new ground', async () => {
-  await withLimits({ SOURCE_MAX_MB: '1' }, async (r) => {
+  await withLimits({ SOURCE_MAX_MB: '1', SOURCE_PREFETCH_KM: '0' }, async (r) => {
     const known = await r.paint(...KNOWN, 0.75);
     assert.ok(known.webp.length > 30_000, 'the known tile is painted');
     const t0 = Date.now();

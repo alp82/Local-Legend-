@@ -3,7 +3,9 @@
 FROM mcr.microsoft.com/playwright:v1.65.1-noble@sha256:1507cbfc550a63a6b7396791ca4f00df17beb56342d2447b3f106c306f525579
 
 WORKDIR /app
-COPY package.json package-lock.json ./
+# The Dockerfile itself and package-lock.json are painter fingerprint inputs (src/fingerprint.mjs): the base
+# image digest and the Playwright version fix the Chromium build, so the worker reads them at start-up.
+COPY Dockerfile package.json package-lock.json ./
 RUN npm ci --omit=dev
 COPY painter painter
 COPY assets assets
