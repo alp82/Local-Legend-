@@ -33,6 +33,13 @@ The `main` ruleset requires these checks to pass, on a branch that's up to date 
 **App update possible** shows whether an app change can go out over the air; it isn't required, because a
 native change is allowed (its update waits for the build).
 
+**What the required checks can't prevent:** they run from the pull request's own copy of the workflow files,
+so a pull request could edit a check (for example the job that skips the renderer checks) to pass. A
+ruleset rule that pins the check workflows to `main`'s version ("Require workflows to pass") would close
+that, but GitHub only offers it for organization-owned repositories: for this personal repository the API
+refuses it (tried on November 27, 2026). With zero approvals and two trusted people with write access, that's
+within the owner's trust model: anyone who can merge can also change the pipeline.
+
 There's no dry run against the hosted project on a pull request: it needs the Supabase access token, which
 any branch could read by editing a workflow. The migrations the plan lists are exactly what will be applied,
 because the deploy refuses anything else.
@@ -42,12 +49,20 @@ because the deploy refuses anything else.
 - **One deploy at a time.** A merge waits for the running deploy. If a third merge arrives while one is
   waiting, GitHub replaces the waiting one; that's harmless, because every part deploys everything since it
   was last deployed.
-- **Each part has its own "last deployed".** It's the commit of the newest Deploy run in which that part's
-  job succeeded. So a part that fails (or an app update waiting for a native build) neither holds the other
-  parts back nor makes every merge redeploy them.
-- **Never older code over newer.** Every deploying job first checks that its part wasn't already deployed
-  from a newer commit. GitHub lets a run be re-run for 30 days with its original commit; an old run's re-run
-  stops there instead of rolling production back.
+- **Each part has its own "last deployed".** It's the commit of the newest Deploy run that left the part up
+  to date: its job succeeded, or it was skipped because nothing of it had changed (and nothing before it
+  failed). An app update waiting for a native build doesn't count. So a part that fails neither holds the
+  other parts back nor makes every merge redeploy them, and its changes stay pending until it succeeds. One
+  pass over the run history finds all four (usually in the previous run).
+- **Never deployed by this pipeline:** a part counts from `76f388d`, `main`'s head when the pipeline was
+  introduced; everything up to there was deployed by hand or by the earlier painter pipeline. If 100 runs
+  go by without the part being up to date in any of them, the plan stops rather than guess: find the last
+  commit that part was deployed from and redeploy it by hand.
+- **Never older code over newer.** The plan refuses a run whose commit is older than where a part already
+  is, and every deploying job first checks that no newer run has started deploying its part, whether that
+  job succeeded or failed partway (one platform published, some functions deployed). GitHub lets a run be
+  re-run for 30 days with its original commit; an old run's re-run stops there instead of rolling
+  production back.
 - **Every step can run again.** `db push` applies only what's pending; a function or an update is replaced;
   a painter release with an unchanged fingerprint carries on. After a failure, fix it and merge, or re-run
   the newest Deploy run with **Re-run all jobs**. Never **Re-run failed jobs** of an older run: it reuses
@@ -134,7 +149,9 @@ order by version desc limit 5` in the SQL editor.
    `create or replace`, guarded updates), with `set lock_timeout`.
 2. Run that file's SQL in the SQL editor.
 3. Mark it applied: `npx supabase migration repair --status applied <version> --remote`.
-4. Merge the pull request with the file. The deploy's dry run then finds nothing to apply.
+4. Merge the pull request with the file **right away**. Until it's on `main`, every deploy that touches
+   migrations stops, because the hosted history has a version `main` doesn't. The deploy's dry run then
+   finds nothing to apply.
 
 
 ## Edge Functions
@@ -176,10 +193,13 @@ native code or native configuration changes. So:
 2. If either isn't listed, nothing is published. The run stays green, with a warning and a job summary that
    say a native build is needed; the app's "last deployed" stays put, so the update goes out with the merge
    that lists the new build. Database, functions and painter carry on regardless. It never starts a store or
-   EAS build.
+   EAS build. Only "no matching runtime" takes this path: a broken check (a fingerprint that couldn't be
+   computed, a malformed `app-runtimes.json`) fails the job.
 3. If both are listed, **App update** exports the bundle once with EAS's `preview` environment (which holds
    the app's Supabase settings), checks that both platforms' bundles contain the hosted project's address (a
-   missing variable would export as undefined and break the app), and publishes exactly that bundle to the
+   missing variable would export as undefined and break the app) and the preview environment's publishable
+   key (compared without printing it), computes the runtime once more and checks it against
+   `app-runtimes.json`, and publishes exactly that bundle to the
    `preview` channel, one platform at a time (the combined export fails on the web build), with the commit's
    subject as its message.
 

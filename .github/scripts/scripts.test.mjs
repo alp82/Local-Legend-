@@ -7,11 +7,11 @@ import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 
-import { COMPONENT_JOBS, isAncestor, lastDeployed } from './deployed.mjs';
+import { ANCHOR, bases, JOBS, newerAttempts, upToDate } from './deployed.mjs';
 import { dryRunMigrations } from './dry-run-migrations.mjs';
 import { appliedAmong } from './never-applied.mjs';
 import { functionsPlan, isApp, isPainter, LOCK_TIMEOUT, migrationPlan, parseNameStatus, touches } from './plan.mjs';
-import { gate } from './runtime-gate.mjs';
+import { gate, NO_MATCH, parseRuntimes } from './runtime-gate.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const A = 'a'.repeat(40);
@@ -50,8 +50,29 @@ test('the gate publishes only when both platforms match a tester build', () => {
   const native = gate({ android: 'c'.repeat(40), ios: B }, installed);
   assert.equal(native.ok, false);
   assert.match(native.lines[0], /android: c{40} matches no tester build .* make and distribute a new build first/);
-  assert.equal(gate({ android: A, ios: '' }, installed).ok, false, 'a missing fingerprint never publishes');
+  assert.throws(() => gate({ android: A, ios: '' }, installed), /ios: no valid fingerprint/, 'a missing fingerprint is an error, not "waiting"');
   assert.equal(gate({ android: A, ios: B }, { android: [A] }).ok, false, 'a platform with no recorded build never publishes');
+  assert.throws(() => parseRuntimes('{"android": ["x"], "ios": []}'), /"android" must be a list of 40-hex/);
+  assert.throws(() => parseRuntimes('not json'));
+  assert.deepEqual(parseRuntimes(readFileSync(join(here, '../app-runtimes.json'), 'utf8')).android.length, 1);
+});
+
+test('the gate\'s exit codes: 0 publish, 2 waiting for a native build, 1 broken', () => {
+  const run = (args, runtimes) => {
+    const f = join(mkdtempSync(join(tmpdir(), 'gate-')), 'r.json');
+    writeFileSync(f, runtimes);
+    try {
+      execFileSync('node', [join(here, 'runtime-gate.mjs'), ...args, '--runtimes', f], { stdio: 'pipe' });
+      return 0;
+    } catch (e) {
+      return e.status;
+    }
+  };
+  const good = JSON.stringify({ android: [A], ios: [B] });
+  assert.equal(run(['--android', A, '--ios', B], good), 0);
+  assert.equal(run(['--android', 'c'.repeat(40), '--ios', B], good), NO_MATCH);
+  assert.equal(run(['--android', A, '--ios', ''], good), 1, 'an empty fingerprint');
+  assert.equal(run(['--android', A, '--ios', B], '{"android": ['), 1, 'a malformed app-runtimes.json');
 });
 
 test('lock_timeout must be set for the session by a statement, not in a comment and not "set local"', () => {
@@ -142,38 +163,57 @@ test('the repository itself passes the migration rules', () => {
   assert.equal(res.status, 0, res.stdout);
 });
 
-test('a part\'s base is the newest run whose job for it succeeded', async () => {
-  const runs = [
-    { id: 1, run_number: 1, head_sha: '1'.repeat(40) },
-    { id: 3, run_number: 3, head_sha: '3'.repeat(40) },
-    { id: 2, run_number: 2, head_sha: '2'.repeat(40) },
-  ];
-  const jobs = {
-    1: [{ name: COMPONENT_JOBS.functions, conclusion: 'success' }, { name: COMPONENT_JOBS.app, conclusion: 'success' }],
-    2: [{ name: COMPONENT_JOBS.functions, conclusion: 'success' }, { name: COMPONENT_JOBS.app, conclusion: 'skipped' }],
-    3: [{ name: COMPONENT_JOBS.functions, conclusion: 'failure' }, { name: COMPONENT_JOBS.painter, conclusion: 'success' }],
+const S = (n) => String(n).repeat(40);
+function history(runs) {
+  // runs: [{ n, jobs: { name: conclusion } }], any order; run ids = numbers
+  return async (path) => {
+    if (path.includes('/workflows/deploy.yml/runs')) {
+      return { workflow_runs: path.includes('page=1') ? runs.map((r) => ({ id: r.n, run_number: r.n, head_sha: S(r.n % 10), status: r.status ?? 'completed' })) : [] };
+    }
+    return { jobs: Object.entries(runs.find((r) => r.n === Number(path.match(/runs\/(\d+)\/jobs/)[1])).jobs).map(([name, conclusion]) => ({ name, conclusion })) };
   };
-  const api = async (path) => {
-    if (path.includes('/workflows/deploy.yml/runs')) return { workflow_runs: path.includes('page=1') ? runs : [] };
-    return { jobs: jobs[path.match(/runs\/(\d+)\/jobs/)[1]] };
-  };
-  assert.equal(await lastDeployed(api, 'o/r', COMPONENT_JOBS.functions), '2'.repeat(40), 'run 3 failed: run 2');
-  assert.equal(await lastDeployed(api, 'o/r', COMPONENT_JOBS.app), '1'.repeat(40), 'skipped is not deployed');
-  assert.equal(await lastDeployed(api, 'o/r', COMPONENT_JOBS.painter), '3'.repeat(40));
-  assert.equal(await lastDeployed(api, 'o/r', COMPONENT_JOBS.migrations), '', 'never deployed');
+}
+const ran = (extra = {}) => ({ [JOBS.plan]: 'success', [JOBS.migrations]: 'skipped', [JOBS.functions]: 'skipped', [JOBS.painterCaller]: 'skipped', [JOBS.appCheck]: 'skipped', [JOBS.app]: 'skipped', ...extra });
+
+test('up to date: a successful job, or skipped because nothing of the part changed; not a waiting app update', () => {
+  assert.deepEqual(upToDate(ran()), { migrations: true, functions: true, painter: true, app: true }, 'nothing changed anywhere');
+  assert.deepEqual(upToDate(ran({ [JOBS.migrations]: 'failure' })), { migrations: false, functions: false, painter: false, app: false },
+    'a failed migration: the later parts were skipped for that reason, not because nothing changed');
+  assert.equal(upToDate(ran({ [JOBS.appCheck]: 'success', [JOBS.app]: 'skipped' })).app, false, 'waiting for a native build');
+  assert.equal(upToDate(ran({ [JOBS.appCheck]: 'success', [JOBS.app]: 'success' })).app, true);
+  const painterCalled = ran({ [JOBS.painter]: 'failure' });
+  delete painterCalled[JOBS.painterCaller];
+  assert.equal(upToDate(painterCalled).painter, false, 'a failed release');
+  assert.equal(upToDate(painterCalled).app, false, 'and the app update after it was skipped for that reason');
+  assert.deepEqual(upToDate({ [JOBS.plan]: 'failure' }), { migrations: false, functions: false, painter: false, app: false });
 });
 
-test('the guard: an older run may not deploy over a newer one', () => {
-  const { dir, write, commit } = repo();
-  write('f', '1');
-  const old = commit('old');
-  write('f', '2');
-  const newer = commit('newer');
-  const git = (...a) => execFileSync('git', a, { cwd: dir, stdio: 'ignore' });
-  assert.equal(isAncestor(old, newer, git), true, 'a newer run may deploy');
-  assert.equal(isAncestor(newer, newer, git), true, 'a re-run of the same commit may deploy');
-  assert.equal(isAncestor(newer, old, git), false, 're-running the older run may not');
-  assert.equal(isAncestor('', old, git), true, 'nothing deployed yet');
+test('bases: one pass, each part from its newest up-to-date run; the anchor when history runs out; fail at the cap', async () => {
+  const api = history([
+    { n: 5, status: 'in_progress', jobs: {} }, // this run
+    { n: 4, jobs: ran({ [JOBS.functions]: 'failure', [JOBS.migrations]: 'success' }) },
+    { n: 3, jobs: ran({ [JOBS.appCheck]: 'success', [JOBS.app]: 'skipped' }) },
+    { n: 2, jobs: ran({ [JOBS.appCheck]: 'success', [JOBS.app]: 'success' }) },
+  ]);
+  assert.deepEqual(await bases(api, 'o/r', 5), { migrations: S(4), functions: S(3), painter: S(3), app: S(2) });
+  // a part never deployed (functions failed in every run): the anchor
+  const never = history([{ n: 2, jobs: ran({ [JOBS.functions]: 'failure' }) }, { n: 1, jobs: ran({ [JOBS.functions]: 'failure' }) }]);
+  assert.equal((await bases(never, 'o/r', 9)).functions, ANCHOR);
+  // more failing runs than the cap: refuse to guess
+  const many = history(Array.from({ length: 8 }, (_, i) => ({ n: i + 1, jobs: ran({ [JOBS.functions]: 'failure' }) })));
+  await assert.rejects(bases(many, 'o/r', 99, { maxRuns: 5 }), /no deploy of functions, painter, app in the last 5 runs/);
+});
+
+test('the guard: a newer run that started deploying the part, even if it failed partway', async () => {
+  const api = history([
+    { n: 7, jobs: ran({ [JOBS.appCheck]: 'success', [JOBS.app]: 'failure' }) }, // Android published, iOS failed
+    { n: 6, jobs: ran({ [JOBS.functions]: 'success' }) },
+    { n: 5, jobs: ran() },
+  ]);
+  assert.deepEqual(await newerAttempts(api, 'o/r', 'app', 5), ['#7 (failure)'], 're-running #5 may not publish over #7');
+  assert.deepEqual(await newerAttempts(api, 'o/r', 'functions', 5), ['#6 (success)']);
+  assert.deepEqual(await newerAttempts(api, 'o/r', 'migrations', 5), [], 'skipped everywhere since: #5 may');
+  assert.deepEqual(await newerAttempts(api, 'o/r', 'app', 7), [], 'the newest run may');
 });
 
 test('the dry run\'s JSON is parsed, anything else fails', () => {

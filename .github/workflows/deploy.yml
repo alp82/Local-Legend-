@@ -72,17 +72,22 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           PUSH_BEFORE: ${{ github.event.before }}
         run: |
-          # The push's <before>, or its parent: the base of a part never deployed by this pipeline yet.
+          # The push's <before> (or its parent), for the migration rules.
           before=$PUSH_BEFORE
           if [[ ! "$before" =~ ^[0-9a-f]{40}$ ]] || [[ "$before" =~ ^0+$ ]] || ! git cat-file -e "$before^{commit}" 2>/dev/null; then
             before=$(git rev-parse HEAD~1)
           fi
           echo "before=$before" >> "$GITHUB_OUTPUT"
+          # One pass over earlier runs gives every part's base (deployed.mjs: never deployed means the anchor).
+          node .github/scripts/deployed.mjs bases > bases.json
           for part in migrations functions painter app; do
-            node .github/scripts/deployed.mjs guard --component "$part"
-            base=$(node .github/scripts/deployed.mjs base --component "$part")
-            echo "$part: ${base:-never deployed by this pipeline, so since $before}"
-            echo "$part=${base:-$before}" >> "$GITHUB_OUTPUT"
+            base=$(python3 -c "import json, sys; print(json.load(open('bases.json'))[sys.argv[1]])" "$part")
+            [[ "$base" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::no base for $part"; exit 1; }
+            # a part already deployed from a newer commit: this is a re-run of an older run
+            git merge-base --is-ancestor "$base" HEAD ||
+              { echo "::error::$part was already deployed from $base, newer than $GITHUB_SHA: re-run the newest Deploy run instead (docs/deploy.md, Safety)"; exit 1; }
+            echo "$part: deployed up to $base"
+            echo "$part=$base" >> "$GITHUB_OUTPUT"
           done
       - name: Plan
         id: plan
@@ -258,15 +263,22 @@ jobs:
           ANDROID: ${{ steps.fp.outputs.android }}
           IOS: ${{ steps.fp.outputs.ios }}
         run: |
-          if node .github/scripts/runtime-gate.mjs --android "$ANDROID" --ios "$IOS" | tee gate.txt; then
+          set +e
+          node .github/scripts/runtime-gate.mjs --android "$ANDROID" --ios "$IOS" > gate.txt
+          code=$?
+          set -e
+          cat gate.txt
+          if [ "$code" = 0 ]; then
             echo "publish=true" >> "$GITHUB_OUTPUT"
-          else
-            # not a failure of this run: the update waits (the app's base stays put) until a build with this
-            # runtime is distributed and listed; database, functions and painter are unaffected
+          elif [ "$code" = 2 ]; then
+            # no tester build has this runtime: not a failure of this run. The update waits (the app's base stays
+            # put) until a build with it is distributed and listed; database, functions and painter are unaffected.
             echo "publish=false" >> "$GITHUB_OUTPUT"
             echo "::warning title=App update waits for a native build::The app's runtime fingerprint matches no tester build. Nothing was published; see the job summary."
             { echo "### App update not published: a native build is needed"; echo; sed 's/^/    /' gate.txt; echo
               echo "Make and distribute a build, add its runtime to .github/app-runtimes.json, merge: the update then goes out (docs/deploy.md, App updates)."; } >> "$GITHUB_STEP_SUMMARY"
+          else
+            exit "$code" # the gate itself failed (bad fingerprint, malformed app-runtimes.json): never "waiting"
           fi
 
   app-update:
@@ -302,7 +314,9 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: npx eas env:exec preview "npx expo export --platform android --platform ios --output-dir dist" --non-interactive
-      - name: Check the bundle points at the hosted project
+      - name: Check the bundle has the hosted project's address and key
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
           # a variable missing from EAS's preview environment would export as undefined and break the app
           for p in android ios; do
@@ -310,6 +324,24 @@ jobs:
             [ "$n" -gt 0 ] || { echo "::error::the $p bundle doesn't contain $SUPABASE_URL_HOST: check EXPO_PUBLIC_SUPABASE_URL in EAS's preview environment"; exit 1; }
             echo "$p bundle: contains $SUPABASE_URL_HOST"
           done
+          # the publishable key, compared inside the preview environment so its value is never printed
+          # shellcheck disable=SC2016 # expanded by env:exec's shell, not this one
+          npx eas env:exec preview '[[ "$EXPO_PUBLIC_SUPABASE_KEY" == sb_publishable_* ]] && for p in android ios; do grep -raqF "$EXPO_PUBLIC_SUPABASE_KEY" "dist/_expo/static/js/$p" || exit 1; done' --non-interactive ||
+            { echo "::error::a bundle lacks EXPO_PUBLIC_SUPABASE_KEY from EAS's preview environment (or it isn't a publishable key)"; exit 1; }
+          echo "both bundles: contain the preview environment's publishable key"
+      - name: Runtime once more, right before publishing (what eas update will publish under)
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          for p in android ios; do
+            fp=$(npx eas fingerprint:generate --platform "$p" --environment preview --json --non-interactive 2>/dev/null |
+              python3 -c 'import sys, json; t = sys.stdin.read(); print(json.loads(t[t.index("{"):])["hash"])')
+            echo "$p: $fp"
+            declare "fp_$p=$fp"
+          done
+          # shellcheck disable=SC2154 # set by declare
+          (cd .. && node .github/scripts/runtime-gate.mjs --android "$fp_android" --ios "$fp_ios") ||
+            { echo "::error::the runtime changed between the check and the publish: not publishing"; exit 1; }
       - name: Publish that bundle to the preview channel, one platform at a time
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}

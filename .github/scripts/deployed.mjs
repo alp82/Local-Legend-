@@ -1,81 +1,133 @@
 #!/usr/bin/env node
-// Which commit each part of the app was last deployed from, per the deploy pipeline's own history
-// (docs/deploy.md): the newest run of deploy.yml on main in which that part's job succeeded.
+// Where each part of the app stands, from the deploy pipeline's own history (docs/deploy.md, Safety):
 //
-//   node .github/scripts/deployed.mjs base --component <name>    prints that commit (empty: never deployed)
-//   node .github/scripts/deployed.mjs guard --component <name>   exits 1 unless that commit is this run's commit
-//                                                                or one of its ancestors
+//   node .github/scripts/deployed.mjs bases                     prints {"migrations": "<sha>", …} for every part
+//   node .github/scripts/deployed.mjs guard --component <part>  exits 1 if a newer run already started deploying it
 //
-// The base is where the part's changes are counted from, so one part failing (or waiting for a native build)
-// neither redeploys the others on every merge nor holds them back. The guard stops a re-run of an older run
-// from deploying older code over newer code: GitHub lets a run be re-run for 30 days, with its original commit.
+// bases — one pass over earlier Deploy runs on main, newest first. A part is up to date at a run's commit when
+//   its job succeeded there, or when it was skipped because nothing of it had changed (the plan succeeded and
+//   every job before it succeeded or was skipped). An app update waiting for a native build is not up to date.
+//   A part never deployed by this pipeline counts from ANCHOR, main's head when the pipeline was introduced
+//   (everything was deployed by hand or by the earlier painter pipeline up to there). If MAX_RUNS runs go by
+//   without an answer for some part, it fails rather than guess.
+// guard — a run may deploy a part only if no newer run (higher run number) has started deploying it, whether that
+//   job succeeded or failed partway (one platform published, some functions deployed): GitHub lets a run be
+//   re-run for 30 days with its original commit, and that must never put older code back.
 //
-// Needs GITHUB_TOKEN (actions: read), GITHUB_REPOSITORY, GITHUB_SHA; GITHUB_API_URL defaults to github.com.
-import { execFileSync } from 'node:child_process';
+// Needs GITHUB_TOKEN (actions: read), GITHUB_REPOSITORY, GITHUB_RUN_ID, GITHUB_RUN_NUMBER.
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 
-/** The job whose success means the part is deployed (a called workflow's jobs are named "<caller> / <job>"). */
-export const COMPONENT_JOBS = {
+export const ANCHOR = '76f388d17c5c900cb6328bddc95e2d1270e81491';
+export const MAX_RUNS = 100;
+
+/** The jobs of a run that matter per part (a called workflow's jobs are named "<caller> / <job>"). */
+export const JOBS = {
+  plan: 'Plan (what changed since each part was deployed)',
   migrations: 'Database migrations',
   functions: 'Edge Functions',
+  painterCaller: 'Painter',
   painter: 'Painter / Release (image by digest, deploy branch)',
+  appCheck: 'App update check (runtime fingerprint)',
   app: 'App update (over the air)',
 };
+export const PARTS = ['migrations', 'functions', 'painter', 'app'];
+/** The job whose start means the part is being deployed. */
+export const DEPLOYING_JOB = { migrations: JOBS.migrations, functions: JOBS.functions, painter: JOBS.painter, app: JOBS.app };
+
+const ok = (c) => c === 'success' || c === 'skipped';
 
 /**
- * The head commit of the newest run (by run number) whose job `jobName` succeeded, or ''.
- * @param {(path: string) => Promise<any>} api  GET a REST path, returning the parsed JSON
+ * Whether a run left each part up to date at its commit.
+ * @param {Record<string, string>} c  job name → conclusion (absent: the job didn't appear in the run)
  */
-export async function lastDeployed(api, repo, jobName, { maxRuns = 100 } = {}) {
-  let page = 1;
-  let seen = 0;
-  while (seen < maxRuns) {
-    const { workflow_runs: runs = [] } = await api(`/repos/${repo}/actions/workflows/deploy.yml/runs?branch=main&event=push&per_page=50&page=${page}`);
-    if (!runs.length) return '';
-    for (const run of [...runs].sort((a, b) => b.run_number - a.run_number)) {
-      seen++;
-      const { jobs = [] } = await api(`/repos/${repo}/actions/runs/${run.id}/jobs?filter=latest&per_page=100`);
-      if (jobs.some((j) => j.name === jobName && j.conclusion === 'success')) return run.head_sha;
-    }
-    page++;
-  }
-  return '';
+export function upToDate(c) {
+  const planOk = c[JOBS.plan] === 'success';
+  const before = { migrations: true, functions: ok(c[JOBS.migrations] ?? 'skipped') };
+  before.painter = before.functions && ok(c[JOBS.functions] ?? 'skipped');
+  before.app = before.painter && (c[JOBS.painter] ? c[JOBS.painter] === 'success' : ok(c[JOBS.painterCaller] ?? 'skipped'));
+  const skippedClean = (job, part) => planOk && before[part] && (c[job] ?? 'skipped') === 'skipped';
+  return {
+    migrations: c[JOBS.migrations] === 'success' || skippedClean(JOBS.migrations, 'migrations'),
+    functions: c[JOBS.functions] === 'success' || skippedClean(JOBS.functions, 'functions'),
+    painter: c[JOBS.painter] === 'success' || (!c[JOBS.painter] && skippedClean(JOBS.painterCaller, 'painter')),
+    // the check skipped: no app changes; the check passed but the update didn't run: waiting for a native build
+    app: c[JOBS.app] === 'success' || skippedClean(JOBS.appCheck, 'app'),
+  };
 }
 
-/** True when `ancestor` is `commit` or an ancestor of it (an empty ancestor: nothing deployed yet). */
-export function isAncestor(ancestor, commit, git = (...a) => execFileSync('git', a, { stdio: 'ignore' })) {
-  if (!ancestor) return true;
-  try {
-    git('merge-base', '--is-ancestor', ancestor, commit);
-    return true;
-  } catch {
-    return false;
+async function* completedRuns(api, repo, currentRunId) {
+  for (let page = 1; ; page++) {
+    const { workflow_runs: runs = [] } = await api(`/repos/${repo}/actions/workflows/deploy.yml/runs?branch=main&event=push&per_page=50&page=${page}`);
+    if (!runs.length) return;
+    for (const run of [...runs].sort((a, b) => b.run_number - a.run_number)) {
+      if (String(run.id) === String(currentRunId) || run.status !== 'completed') continue;
+      yield run;
+    }
   }
+}
+
+async function conclusions(api, repo, run) {
+  const { jobs = [] } = await api(`/repos/${repo}/actions/runs/${run.id}/jobs?filter=latest&per_page=100`);
+  return Object.fromEntries(jobs.map((j) => [j.name, j.conclusion]));
+}
+
+/** Every part's base: the newest commit it's up to date at, ANCHOR when history runs out. Throws at MAX_RUNS. */
+export async function bases(api, repo, currentRunId, { maxRuns = MAX_RUNS } = {}) {
+  const found = {};
+  let seen = 0;
+  for await (const run of completedRuns(api, repo, currentRunId)) {
+    if (++seen > maxRuns) {
+      throw new Error(`no deploy of ${PARTS.filter((p) => !found[p]).join(', ')} in the last ${maxRuns} runs: find the last good commit by hand (docs/deploy.md, Safety)`);
+    }
+    const state = upToDate(await conclusions(api, repo, run));
+    for (const p of PARTS) if (!found[p] && state[p]) found[p] = run.head_sha;
+    if (PARTS.every((p) => found[p])) break;
+  }
+  return Object.fromEntries(PARTS.map((p) => [p, found[p] ?? ANCHOR]));
+}
+
+/** Newer runs that started deploying `part` (the reason to refuse), as "#<number> (<conclusion>)" strings. */
+export async function newerAttempts(api, repo, part, currentRunNumber) {
+  const attempts = [];
+  for await (const run of completedRuns(api, repo, null)) {
+    if (run.run_number <= Number(currentRunNumber)) break;
+    const c = (await conclusions(api, repo, run))[DEPLOYING_JOB[part]];
+    if (c && c !== 'skipped') attempts.push(`#${run.run_number} (${c})`);
+  }
+  return attempts;
 }
 
 async function main() {
   const { positionals: [mode], values } = parseArgs({ allowPositionals: true, options: { component: { type: 'string' } } });
-  const jobName = COMPONENT_JOBS[values.component];
-  if (!['base', 'guard'].includes(mode) || !jobName) throw new Error(`usage: deployed.mjs base|guard --component ${Object.keys(COMPONENT_JOBS).join('|')}`);
-  const { GITHUB_TOKEN, GITHUB_REPOSITORY, GITHUB_SHA } = process.env;
+  const { GITHUB_TOKEN, GITHUB_REPOSITORY, GITHUB_RUN_ID, GITHUB_RUN_NUMBER } = process.env;
   const apiUrl = process.env.GITHUB_API_URL || 'https://api.github.com';
+  let calls = 0;
   const api = async (path) => {
+    calls++;
     const res = await fetch(`${apiUrl}${path}`, { headers: { authorization: `Bearer ${GITHUB_TOKEN}`, accept: 'application/vnd.github+json' } });
     if (!res.ok) throw new Error(`GET ${path}: ${res.status}`);
     return res.json();
   };
-  const sha = await lastDeployed(api, GITHUB_REPOSITORY, jobName);
-  if (mode === 'base') {
-    console.log(sha);
+  if (mode === 'bases') {
+    const b = await bases(api, GITHUB_REPOSITORY, GITHUB_RUN_ID);
+    console.log(JSON.stringify(b));
+    console.error(`(${calls} API calls)`);
     return;
   }
-  if (!isAncestor(sha, GITHUB_SHA)) {
-    console.log(`::error::${values.component} was already deployed from ${sha}, which is newer than this run's ${GITHUB_SHA}. ` +
-      'This is a re-run of an older run: deploying it would put older code back. Re-run the newest Deploy run instead (docs/deploy.md).');
+  if (mode !== 'guard' || !PARTS.includes(values.component)) throw new Error(`usage: deployed.mjs bases | guard --component ${PARTS.join('|')}`);
+  const newer = await newerAttempts(api, GITHUB_REPOSITORY, values.component, GITHUB_RUN_NUMBER);
+  if (newer.length) {
+    console.log(`::error::A newer Deploy run already started deploying ${values.component}: ${newer.join(', ')}. This run (#${GITHUB_RUN_NUMBER}) ` +
+      'is older; deploying it would put older code back. Re-run the newest Deploy run instead (docs/deploy.md, Safety).');
     process.exit(1);
   }
-  console.log(`${values.component}: last deployed from ${sha || 'nothing yet'}; ${GITHUB_SHA} is newer, so it may deploy`);
+  console.log(`${values.component}: no newer run has deployed it; run #${GITHUB_RUN_NUMBER} may (${calls} API calls)`);
 }
 
-if (import.meta.url === pathToFileURL(process.argv[1]).href) await main();
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((e) => {
+    console.log(`::error::${e.message}`);
+    process.exit(1);
+  });
+}

@@ -7,25 +7,35 @@
 //
 //   node .github/scripts/runtime-gate.mjs --android <fingerprint> --ios <fingerprint>
 //
-// Exits 0 when both match (publish), 1 otherwise (a native build is needed first).
+// Exit codes: 0 both match (publish); 2 a fingerprint matches no tester build (a native build is needed: the
+// update waits); 1 anything else is wrong (a missing or malformed fingerprint, a malformed app-runtimes.json),
+// which must fail the deploy rather than pass as "waiting".
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 
+export const NO_MATCH = 2;
+const HASH = /^[0-9a-f]{40}$/;
+
+/** Validates .github/app-runtimes.json's content; throws on anything but { android: [hash…], ios: [hash…] }. */
+export function parseRuntimes(text) {
+  const r = JSON.parse(text);
+  for (const p of ['android', 'ios']) {
+    if (!Array.isArray(r?.[p]) || !r[p].every((h) => HASH.test(h))) throw new Error(`.github/app-runtimes.json: "${p}" must be a list of 40-hex fingerprints`);
+  }
+  return r;
+}
+
 /**
  * @param {Record<string, string>} fingerprints  platform → computed fingerprint
  * @param {Record<string, string[]>} installed  platform → runtime versions of the testers' builds
- * @returns {{ ok: boolean, lines: string[] }}
+ * @returns {{ ok: boolean, lines: string[] }}  throws when a fingerprint is missing or malformed
  */
 export function gate(fingerprints, installed) {
   const lines = [];
   let ok = true;
   for (const [platform, fp] of Object.entries(fingerprints)) {
-    if (!/^[0-9a-f]{40}$/.test(fp ?? '')) {
-      ok = false;
-      lines.push(`${platform}: no fingerprint computed (got "${fp ?? ''}")`);
-      continue;
-    }
+    if (!HASH.test(fp ?? '')) throw new Error(`${platform}: no valid fingerprint computed (got "${fp ?? ''}")`);
     const known = installed[platform] ?? [];
     if (known.includes(fp)) {
       lines.push(`${platform}: ${fp} matches a tester build`);
@@ -40,13 +50,15 @@ export function gate(fingerprints, installed) {
 
 function main() {
   const { values } = parseArgs({ options: { android: { type: 'string' }, ios: { type: 'string' }, runtimes: { type: 'string', default: '.github/app-runtimes.json' } } });
-  const installed = JSON.parse(readFileSync(values.runtimes, 'utf8'));
-  const { ok, lines } = gate({ android: values.android, ios: values.ios }, installed);
-  for (const l of lines) console.log(l);
-  if (!ok) {
-    console.log('::error::Not publishing the over-the-air update: a native build is needed (see the lines above).');
+  let result;
+  try {
+    result = gate({ android: values.android, ios: values.ios }, parseRuntimes(readFileSync(values.runtimes, 'utf8')));
+  } catch (e) {
+    console.log(`::error::The app update gate failed: ${e.message}`);
     process.exit(1);
   }
+  for (const l of result.lines) console.log(l);
+  if (!result.ok) process.exit(NO_MATCH);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) main();
