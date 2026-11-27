@@ -116,7 +116,7 @@ jobs:
 
   release:
     name: Release (image by digest, deploy branch, Coolify)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'process-roman/Local-Legend-'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'alp82/Local-Legend-'
     needs: [renderer, database, golden]
     runs-on: ubuntu-24.04
     timeout-minutes: 30

@@ -22,7 +22,7 @@ const { values: a } = parseArgs({
     commit: { type: 'string' },
     fingerprint: { type: 'string' },
     run: { type: 'string' },
-    image: { type: 'string', default: 'ghcr.io/process-roman/local-legend-map-renderer' },
+    image: { type: 'string', default: 'ghcr.io/alp82/local-legend-map-renderer' },
     record: { type: 'boolean', default: false },
   },
 });

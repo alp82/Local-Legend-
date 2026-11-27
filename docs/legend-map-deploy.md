@@ -410,7 +410,7 @@ Once automatic releases are set up ([Set up automatic releases](#set-up-automati
 a merge to `main` that touches the renderer releases it with nobody running anything:
 
 1. GitHub Actions runs the tests, builds the image, paints the golden tiles in it, and pushes it
-   to `ghcr.io/process-roman/local-legend-map-renderer` as `sha-<commit>`.
+   to `ghcr.io/alp82/local-legend-map-renderer` as `sha-<commit>`.
 2. It attests the image's build provenance and points the `legend-map-deploy` branch at
    the image's **digest**. That branch holds the compose file with the image pinned by digest,
    the egress proxy script, `RELEASE.json` (what's deployed) and `releases.ndjson` (every
@@ -556,7 +556,8 @@ needed either way.
 7. Merge the pull request. The release run builds, pushes the first image with the package
    token, attests it and creates the `legend-map-deploy` branch. Without the Coolify
    secrets it stops there with a notice.
-8. Under the repository's **Packages > local-legend-map-renderer > Package settings**:
+8. Under the repository's **Packages > local-legend-map-renderer > Package settings** (the web
+   interface only: GitHub's API can't change a package's visibility or Actions access):
    - **Change visibility** to public: the worker host pulls it without a login, and it holds
      nothing that isn't in this public repository.
    - **Manage Actions access:** turn off **Inherit access from source repository** and set this
@@ -602,7 +603,7 @@ application has never deployed. For a fresh setup:
    connection**. Check: validated, nothing listens on 80, 443 or 8080, and the host's other
    containers are still running (`docker ps`).
 6. In a project of the team, **New resource > Public Repository**:
-   - Repository `https://github.com/process-roman/Local-Legend-`, branch `legend-map-deploy`.
+   - Repository `https://github.com/alp82/Local-Legend-`, branch `legend-map-deploy`.
    - Build pack **Docker Compose**, base directory `/`, compose file `/compose.yaml`.
    - Destination: the worker host.
 7. In the new application:
@@ -679,12 +680,13 @@ Do the steps in order. Steps 4 to 7 are the pause: do them in one sitting.
    environment is `legend-map-release`; its secrets are `LEGEND_MAP_PACKAGES_TOKEN` and
    `LEGEND_MAP_DEPLOY_KEY`; the deploy branch ruleset protects `legend-map-deploy`.
 3. **Merge the pull request.** The release run builds and pushes
-   `ghcr.io/process-roman/local-legend-map-renderer`, attests it and creates the
+   `ghcr.io/alp82/local-legend-map-renderer`, attests it and creates the
    `legend-map-deploy` branch. Without the Coolify secrets it stops there. Then step A8 (the
    package settings). Don't publish an app update yet: the app on `main` calls the new names.
 4. **Coolify renames** (no effect on anything running): the server to `legend-map-worker`, its
-   key to `legend map worker host`, the application to `legend-map-renderer` with branch
-   `legend-map-deploy`, and the environment variable `FANTASY_SUPABASE_HOST` replaced by
+   key to `legend map worker host`, the application to `legend-map-renderer` with repository
+   `https://github.com/alp82/Local-Legend-` (the repository moved from `process-roman` on November
+   27, 2026) and branch `legend-map-deploy`, and the environment variable `FANTASY_SUPABASE_HOST` replaced by
    `LEGEND_MAP_SUPABASE_HOST` with the same value.
 5. **The host folder** (no effect on the running worker): a copy of the old folder under the new
    name, with the new variable names. The old folder stays for the undo.

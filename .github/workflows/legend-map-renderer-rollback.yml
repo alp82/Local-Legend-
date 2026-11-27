@@ -28,7 +28,7 @@ concurrency:
 
 jobs:
   rollback:
-    if: github.repository == 'process-roman/Local-Legend-' && github.ref == 'refs/heads/main'
+    if: github.repository == 'alp82/Local-Legend-' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     environment: legend-map-release
