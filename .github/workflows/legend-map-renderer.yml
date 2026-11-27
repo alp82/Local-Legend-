@@ -4,7 +4,7 @@
 #                   golden tiles painted in the worker image itself
 #   push to main  → the same, then the image is pushed to GitHub's container registry as sha-<commit>, its
 #                   digest gets a build provenance attestation, the legend-map-deploy branch is pointed at
-#                   that digest, and Coolify deploys the branch. No deploy ever goes through a tag. The worker
+#                   that digest, and that push makes Coolify deploy the branch (a signed GitHub webhook). No deploy ever goes through a tag. The worker
 #                   reports its painter fingerprint when it starts; a new one paints a new tile version in the
 #                   background and switches phones when it's done (docs/legend-map-deploy.md, "Releases").
 #
@@ -16,8 +16,9 @@
 # - The release job runs only for pushes to main in this repository, in the "legend-map-release" environment
 #   (deployment branch main, set by an admin). Everything that can publish is that environment's secret: the
 #   classic token that pushes the image (the repository's own Actions access to the package is Read, so a
-#   workflow on another branch can't push), the deploy key that alone may update the deploy branch (a ruleset),
-#   and the Coolify webhook URL and deploy token. Without them the job publishes nothing.
+#   workflow on another branch can't push) and the deploy key that alone may update the deploy branch (a ruleset).
+#   Without them the job publishes nothing. GitHub holds no Coolify credential: the deploy branch's push reaches
+#   Coolify as a signed repository webhook (docs/legend-map-deploy.md, "How deploys are triggered").
 # - Actions are pinned by commit; the Playwright and base images by digest.
 # - Nothing from an event's free text (titles, branch names) is put into a shell command.
 name: Legend map renderer
@@ -115,7 +116,7 @@ jobs:
             node --test test/golden.test.mjs
 
   release:
-    name: Release (image by digest, deploy branch, Coolify)
+    name: Release (image by digest, deploy branch)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'alp82/Local-Legend-'
     needs: [renderer, database, golden]
     runs-on: ubuntu-24.04
@@ -133,11 +134,9 @@ jobs:
         env:
           PACKAGES_TOKEN: ${{ secrets.LEGEND_MAP_PACKAGES_TOKEN }}
           DEPLOY_KEY: ${{ secrets.LEGEND_MAP_DEPLOY_KEY }}
-          COOLIFY_DEPLOY_URL: ${{ secrets.COOLIFY_DEPLOY_URL }}
         run: |
           if [ -n "$PACKAGES_TOKEN" ]; then echo "publish=yes" >> "$GITHUB_OUTPUT"; else echo "::notice::LEGEND_MAP_PACKAGES_TOKEN isn't set: nothing is published (docs/legend-map-deploy.md, Set up automatic releases)."; fi
           if [ -n "$DEPLOY_KEY" ]; then echo "deploy_branch=yes" >> "$GITHUB_OUTPUT"; fi
-          if [ -n "$COOLIFY_DEPLOY_URL" ]; then echo "coolify=yes" >> "$GITHUB_OUTPUT"; fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: steps.creds.outputs.publish == 'yes'
         with:
@@ -209,12 +208,3 @@ jobs:
           RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           bash supabase/legend-map-renderer/deploy/push-deploy-branch.sh --record
-      - name: Tell Coolify to deploy
-        if: steps.creds.outputs.publish == 'yes' && steps.creds.outputs.deploy_branch == 'yes' && steps.creds.outputs.coolify == 'yes'
-        env:
-          COOLIFY_DEPLOY_URL: ${{ secrets.COOLIFY_DEPLOY_URL }}
-          COOLIFY_DEPLOY_TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
-        run: |
-          # the token goes to curl on stdin, not on its command line
-          printf 'Authorization: Bearer %s\n' "$COOLIFY_DEPLOY_TOKEN" |
-            curl --fail-with-body --silent --show-error --max-time 60 -X POST -H @- "$COOLIFY_DEPLOY_URL"

@@ -2,7 +2,7 @@
 # Renders the deploy tree (deploy/render-deploy.mjs) and pushes it to the legend-map-deploy branch with
 # the protected environment's deploy key, the only key a ruleset lets update that branch. Called by the release
 # workflow (--record: a new release) and the rollback workflow (an earlier, recorded one). Coolify deploys the
-# branch.
+# branch when it's pushed (a signed GitHub webhook).
 #
 # Environment: DEPLOY_KEY (private key), REPO (owner/name), IMAGE (ghcr.io/… without tag), DIGEST, FINGERPRINT,
 # SHA (the commit the image was built from), RUN (run URL), and optionally RENDER (the render-deploy.mjs to use:
