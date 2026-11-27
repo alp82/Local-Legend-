@@ -461,7 +461,19 @@ digest): that abandons the release.
 
 ### Without Coolify
 
-When Coolify is down or not set up yet: `supabase/legend-map-renderer/deploy/ship.sh "$WORKER"`
+Since November 27, 2026 the quickest way is the deploy branch itself, under the same project
+name, so a later Coolify deploy replaces it in place:
+
+```sh
+ssh "$WORKER" 'cd /opt/legend-map-renderer && B=https://raw.githubusercontent.com/alp82/Local-Legend-/legend-map-deploy &&
+  curl -fsSL "$B/compose.yaml" -o compose.yaml && curl -fsSL "$B/RELEASE.json" -o RELEASE.json &&
+  echo LEGEND_MAP_SUPABASE_HOST=bvnlepwccygdkgsezgka.supabase.co > .env && docker compose up -d'
+```
+
+(Deploy trees from before the inline egress script also need `egress-proxy.mjs` from the
+branch next to `compose.yaml`.)
+
+To build an image without the release workflow: `supabase/legend-map-renderer/deploy/ship.sh "$WORKER"`
 builds and copies an image over ssh, then `docker compose up -d` on the host starts it. Build it
 from a commit that has this release mechanism. **Never start an image from before it (the
 pre-cut-over `.env.previous`) after the fingerprint is recorded:** the database refuses its
@@ -603,8 +615,18 @@ application has never deployed. For a fresh setup:
    key from step 2. **Don't validate yet.**
 5. On the new server, open **Proxy** and choose **Switch Proxy > Custom** (Coolify stores this as
    no proxy). Open **Docker cleanup** and apply step 3. Only then click **Validate
-   connection**. Check: validated, nothing listens on 80, 443 or 8080, and the host's other
-   containers are still running (`docker ps`).
+   connection** (through the API: `install: false`, so Docker isn't reinstalled or restarted).
+   Check: validated, nothing listens on 80, 443 or 8080, and the host's other containers are
+   still running (`docker ps`).
+
+   Validation without the install step doesn't create the `coolify` Docker network that
+   Coolify's deploy helper joins; every deploy then fails at once with "network coolify not
+   found". Create it the way Coolify's installer does (`InstallDocker.php` in 4.5.3). No
+   container but the short-lived deploy helper joins it:
+
+   ```sh
+   ssh "$WORKER" 'docker network create --attachable coolify'
+   ```
 6. In a project of the team, **New resource > Public Repository**:
    - Repository `https://github.com/alp82/Local-Legend-`, branch `legend-map-deploy`.
    - Build pack **Docker Compose**, base directory `/`, compose file `/compose.yaml`.
@@ -614,7 +636,17 @@ application has never deployed. For a fresh setup:
    - **Connect to predefined network** off.
    - **Auto deploy** off: deploys come from GitHub after a release run, never from a bare push.
    - No domain on either service.
-8. **Environment Variables:** add `LEGEND_MAP_SUPABASE_HOST` = `bvnlepwccygdkgsezgka.supabase.co`.
+8. **What Coolify puts on the host:** only the compose file, in
+   `/data/coolify/applications/<application uuid>/`. Nothing else from the branch arrives, so the
+   deploy tree carries the egress proxy script inside `compose.yaml` (the proxy's
+   `EGRESS_SCRIPT` variable, written to a tmpfs at start; `deploy/render-deploy.mjs`). A deploy
+   tree from before that change (only the first release, `sha256:6fe3136b…`) mounts the script
+   from next to the file and fails under Coolify: Docker mounts an empty folder there and the
+   proxy can't start. Roll back to that digest only by hand ([Without Coolify](#without-coolify)).
+
+   **A failed deploy's log:** open the deployment under the application's **Deployments** in
+   Coolify. Through the API, the log is only shown to tokens with **read:sensitive**.
+9. **Environment Variables:** add `LEGEND_MAP_SUPABASE_HOST` = `bvnlepwccygdkgsezgka.supabase.co`.
    Nothing else: the worker's credentials stay in `/opt/legend-map-renderer/worker.env` on the
    host, which the compose file reads by absolute path, so the password never enters Coolify.
 
@@ -726,11 +758,12 @@ Do the steps in order. Steps 4 to 7 are the pause: do them in one sitting.
    ```sh
    ssh "$WORKER" 'cd /opt/fantasy-renderer && docker compose stop &&
      docker volume create legend-map-renderer-source &&
-     docker run --rm --network none -v fantasy-renderer-source:/from:ro -v legend-map-renderer-source:/to \
+     docker run --rm --network none --user 0 -v fantasy-renderer-source:/from:ro -v legend-map-renderer-source:/to \
        --entrypoint sh "$(docker compose config --images | head -1)" -c "cp -a /from/. /to/ && du -s /from /to"'
    ```
 
-   Check the two sizes match. Then move the renderer user to the new flag and address with one
+   Check the two sizes match. (`--user 0`: the image runs as a user that can't write into the new,
+   root-owned volume; `cp -a` keeps the files' owner.) Then move the renderer user to the new flag and address with one
    admin API call (as in Go live step 2: the secret key in a shell variable through a file
    descriptor, never printed; the earlier flag stays until the compatibility layer goes):
 
