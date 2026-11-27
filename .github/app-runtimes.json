@@ -1,0 +1,5 @@
+{
+  "_comment": "Runtime versions (fingerprints) of the native builds testers have on the preview channel, per platform. The deploy pipeline publishes an over-the-air update only when the app's fingerprint is listed here for both platforms (docs/deploy.md, App updates). Add a build's runtime when it is distributed; remove it when no tester runs it any more.",
+  "android": ["9a7d01507a267455935fb24f0ba772cc5f474935"],
+  "ios": ["290857d25ef8e4ef500d44c44b43105e4625b2e4"]
+}

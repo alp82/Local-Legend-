@@ -76,6 +76,9 @@ In development builds, `Updates.channel` and `Updates.updateId` are `null`, and 
 
 ## Verify OTA updates
 
+Merged changes under `mobile/` publish themselves to the `preview` channel ([deploy.md](deploy.md), "App
+updates"), when the testers' builds can run them. Publish by hand only to test something before merging.
+
 1. Note the current `BUILD_MARKER` and update ID on both phones.
 2. Change `BUILD_MARKER` in `mobile/` to a new value.
 3. Publish the update to the `preview` channel:

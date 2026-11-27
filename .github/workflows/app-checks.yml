@@ -1,0 +1,91 @@
+# Checks on every pull request, with no secrets (a fork's pull request runs it with a read-only token, and an
+# outside collaborator's only after approval): the workflow files, the deploy pipeline's scripts, what merging
+# would deploy (docs/deploy.md), and whether an app change can go out as an over-the-air update.
+#
+# No dry run against the hosted project here: that needs the Supabase access token, which a pull request
+# branch could read by editing a workflow. Instead this lists the migrations the merge adds; the hosted project
+# runs every migration on main (the deploy refuses anything else), so those are exactly what will be applied.
+# The renderer workflow runs every migration on a local stack, from scratch and from the hosted state.
+name: App checks
+
+on:
+  pull_request:
+
+permissions: {}
+
+concurrency:
+  group: app-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  workflows:
+    name: Workflow lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: actionlint (with shellcheck)
+        run: docker run --rm -v "$PWD:/repo:ro" -w /repo rhysd/actionlint@sha256:887a259a5a534f3c4f36cb02dca341673c6089431057242cdc931e9f133147e9 -no-color
+
+  plan:
+    name: What merging would deploy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      mobile: ${{ steps.plan.outputs.mobile }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - name: Pipeline script tests
+        run: node --test .github/scripts/scripts.test.mjs
+      - name: Plan (migration rules, migrations to apply, functions, painter, app)
+        id: plan
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: node .github/scripts/plan.mjs "$(git merge-base "$BASE" "$HEAD")" "$HEAD"
+
+  app-runtime:
+    name: App update possible (runtime fingerprint)
+    needs: plan
+    if: needs.plan.outputs.mobile == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - run: npm ci
+      - name: Runtime fingerprints
+        id: fp
+        run: |
+          for p in android ios; do
+            fp=$(npx expo-updates fingerprint:generate --platform "$p" | python3 -c 'import sys, json; print(json.load(sys.stdin)["hash"])')
+            echo "$p: $fp"
+            echo "$p=$fp" >> "$GITHUB_OUTPUT"
+          done
+      - name: Gate (as the deploy will run it)
+        working-directory: .
+        env:
+          ANDROID: ${{ steps.fp.outputs.android }}
+          IOS: ${{ steps.fp.outputs.ios }}
+        run: node .github/scripts/runtime-gate.mjs --android "$ANDROID" --ios "$IOS"

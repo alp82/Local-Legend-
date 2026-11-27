@@ -1,0 +1,224 @@
+# Deploys the whole app on every push to main (a merged pull request; main takes nothing else). Runbook:
+# docs/deploy.md. Each step runs only when its files changed since the last successful deploy, in this order,
+# and a failed step stops the ones after it:
+#
+#   plan        → what changed (.github/scripts/plan.mjs); refuses a modified, renamed or deleted migration
+#                 and a new one without a lock_timeout
+#   migrations  → supabase/migrations: a dry run against the hosted project, then `supabase db push` (never a
+#                 reset, never seed data)
+#   functions   → supabase/functions/<name>: deploys those Edge Functions with their config.toml settings
+#   painter     → supabase/legend-map-renderer: its tests and release (.github/workflows/legend-map-renderer.yml),
+#                 after the migrations, so a painter that needs one never goes live first
+#   app-update  → mobile/: the over-the-air update on the preview channel, per platform, only when the app's
+#                 runtime fingerprint is one the testers' builds have (.github/app-runtimes.json); otherwise it
+#                 fails and says a native build is needed. Never a store or EAS build.
+#
+# Security: the repository is public.
+# - push to main only: no pull_request trigger, so no fork and no branch ever runs this file's jobs with secrets
+#   (pull requests get .github/workflows/app-checks.yml, which has none).
+# - Every job that touches production runs in the "legend-map-release" environment, whose deployment branch is
+#   main (set by an admin): its secrets can't be read from any other branch, even by editing a workflow there.
+#   Each job reads only the secrets it names.
+# - Permissions are empty by default and granted per job; actions are pinned by commit.
+# - One deploy at a time (concurrency, never cancelled). Every step can run again safely: db push applies only
+#   what's pending, functions and updates are replaced, a painter release of the same fingerprint carries on.
+# - Nothing from an event's free text (commit messages, branch names) is put into a shell command: it goes
+#   through environment variables.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: deploy-main
+  cancel-in-progress: false
+
+env:
+  # the hosted Supabase project (its ref is public: the app ships with its URL)
+  SUPABASE_PROJECT_REF: bvnlepwccygdkgsezgka
+  SUPABASE_CLI_VERSION: 3.4.0
+  EAS_CLI_VERSION: 27.11.0
+
+jobs:
+  plan:
+    name: Plan (what changed since the last deploy)
+    if: github.repository == 'alp82/Local-Legend-'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read # the last successful run of this workflow
+    outputs:
+      base: ${{ steps.base.outputs.base }}
+      migrations: ${{ steps.plan.outputs.migrations }}
+      added_migrations: ${{ steps.plan.outputs.added_migrations }}
+      functions: ${{ steps.plan.outputs.functions }}
+      painter: ${{ steps.plan.outputs.painter }}
+      mobile: ${{ steps.plan.outputs.mobile }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Since the last successful deploy
+        id: base
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BEFORE: ${{ github.event.before }}
+        run: |
+          # Since the last fully successful run, not just this push: a failed or queued-over run's changes are
+          # deployed by the next one (every step is safe to run again).
+          last=$(gh api "repos/$REPO/actions/workflows/deploy.yml/runs?branch=main&status=success&per_page=1" --jq '.workflow_runs[0].head_sha // empty')
+          base=${last:-$BEFORE}
+          if [[ ! "$base" =~ ^[0-9a-f]{40}$ ]] || [[ "$base" =~ ^0+$ ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            base=$(git rev-parse HEAD~1)
+          fi
+          git merge-base --is-ancestor "$base" HEAD || { echo "::error::$base is not an ancestor of $GITHUB_SHA"; exit 1; }
+          echo "Deploying the changes from $base to $GITHUB_SHA"
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+      - name: Plan
+        id: plan
+        env:
+          BASE: ${{ steps.base.outputs.base }}
+        run: node .github/scripts/plan.mjs "$BASE" "$GITHUB_SHA"
+
+  migrations:
+    name: Database migrations
+    needs: plan
+    if: needs.plan.outputs.migrations == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: legend-map-release
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+      - name: Dry run against the hosted project
+        id: dry
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          EXPECTED: ${{ needs.plan.outputs.added_migrations }}
+        run: |
+          [ -n "$SUPABASE_ACCESS_TOKEN" ] || { echo "::error::SUPABASE_ACCESS_TOKEN isn't set in the legend-map-release environment"; exit 1; }
+          supabase db push --remote="$SUPABASE_PROJECT_REF" --dry-run | tee dry-run.txt
+          # The CLI ends with one JSON line: {"migrations": [...], ...}
+          would=$(grep '^{' dry-run.txt | tail -1 | python3 -c 'import sys, json; print(" ".join(json.load(sys.stdin)["migrations"]))')
+          echo "Would apply: ${would:-nothing}"
+          for m in $would; do
+            case " $EXPECTED " in
+              *" $m "*) ;;
+              *) echo "::error::$m would be applied but wasn't added in this deploy's changes: the hosted history doesn't match the repository. Look before going on (docs/deploy.md, Migrations)."; exit 1 ;;
+            esac
+          done
+          echo "would=$would" >> "$GITHUB_OUTPUT"
+      - name: Apply
+        if: steps.dry.outputs.would != ''
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        # db push: no reset, no seed (--include-seed is off). A migration's own lock_timeout makes it fail fast
+        # rather than queue behind a long transaction; the next deploy (or a re-run) tries again.
+        run: supabase db push --remote="$SUPABASE_PROJECT_REF" --yes
+      - name: Hosted history
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase migration list --remote="$SUPABASE_PROJECT_REF" | tail -8
+
+  functions:
+    name: Edge Functions
+    needs: [plan, migrations]
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.functions != '' && contains(fromJSON('["success","skipped"]'), needs.migrations.result) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: legend-map-release
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
+        with:
+          version: ${{ env.SUPABASE_CLI_VERSION }}
+      - name: Deploy the changed functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          FUNCTIONS: ${{ needs.plan.outputs.functions }}
+        run: |
+          [ -n "$SUPABASE_ACCESS_TOKEN" ] || { echo "::error::SUPABASE_ACCESS_TOKEN isn't set in the legend-map-release environment"; exit 1; }
+          for f in $FUNCTIONS; do
+            [[ "$f" =~ ^[a-z0-9_-]+$ ]] || { echo "::error::unexpected function name $f"; exit 1; }
+            # settings (verify_jwt) come from supabase/config.toml [functions.<name>]; bundled by the API, no Docker
+            supabase functions deploy "$f" --remote="$SUPABASE_PROJECT_REF" --use-api --yes
+          done
+      - name: Deployed functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: supabase functions list --remote="$SUPABASE_PROJECT_REF"
+
+  painter:
+    name: Painter
+    needs: [plan, migrations, functions]
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.painter == 'true' && contains(fromJSON('["success","skipped"]'), needs.migrations.result) && contains(fromJSON('["success","skipped"]'), needs.functions.result) }}
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    uses: ./.github/workflows/legend-map-renderer.yml
+    with:
+      release: true
+
+  app-update:
+    name: App update (over the air)
+    needs: [plan, migrations, functions, painter]
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.mobile == 'true' && contains(fromJSON('["success","skipped"]'), needs.migrations.result) && contains(fromJSON('["success","skipped"]'), needs.functions.result) && contains(fromJSON('["success","skipped"]'), needs.painter.result) }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: legend-map-release
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - run: npm ci
+      - name: Runtime fingerprints
+        id: fp
+        run: |
+          for p in android ios; do
+            fp=$(npx expo-updates fingerprint:generate --platform "$p" | python3 -c 'import sys, json; print(json.load(sys.stdin)["hash"])')
+            echo "$p: $fp"
+            echo "$p=$fp" >> "$GITHUB_OUTPUT"
+          done
+      - name: Gate (the testers' builds must have these runtimes)
+        working-directory: .
+        env:
+          ANDROID: ${{ steps.fp.outputs.android }}
+          IOS: ${{ steps.fp.outputs.ios }}
+        run: node .github/scripts/runtime-gate.mjs --android "$ANDROID" --ios "$IOS"
+      - name: Publish to the preview channel
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          SUBJECT: ${{ github.event.head_commit.message }}
+        run: |
+          [ -n "$EXPO_TOKEN" ] || { echo "::error::EXPO_TOKEN isn't set in the legend-map-release environment"; exit 1; }
+          message="$(printf '%s' "$SUBJECT" | head -1 | cut -c1-120) (${GITHUB_SHA:0:7})"
+          # one platform at a time: the combined export fails on the web build (expo-sqlite)
+          for p in android ios; do
+            npx --yes "eas-cli@$EAS_CLI_VERSION" update --channel preview --environment preview --platform "$p" \
+              --message "$message" --non-interactive
+          done

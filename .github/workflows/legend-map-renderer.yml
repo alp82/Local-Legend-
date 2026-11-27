@@ -1,8 +1,10 @@
-# The Legend map renderer: tests on every pull request that touches it, and a release on every merge to main.
+# The Legend map renderer: tests on every pull request that touches it, and a release on every merge to main that
+# touches it, called by the deploy pipeline (.github/workflows/deploy.yml) after the database migrations, so a
+# painter that needs a new migration never goes live before it.
 #
 #   pull request  → renderer tests in the pinned Chromium, database tests on a local Supabase stack, and the
 #                   golden tiles painted in the worker image itself
-#   push to main  → the same, then the image is pushed to GitHub's container registry as sha-<commit>, its
+#   deploy.yml    → the same, then (with release: true) the image is pushed to GitHub's container registry as sha-<commit>, its
 #                   digest gets a build provenance attestation, the legend-map-deploy branch is pointed at
 #                   that digest, and that push makes Coolify deploy the branch (a signed GitHub webhook). No deploy ever goes through a tag. The worker
 #                   reports its painter fingerprint when it starts; a new one paints a new tile version in the
@@ -13,7 +15,7 @@
 #   may write packages.
 # - pull_request only (never pull_request_target): a fork's pull request runs with a read-only token and no
 #   secrets, and the release job never runs for pull requests.
-# - The release job runs only for pushes to main in this repository, in the "legend-map-release" environment
+# - The release job runs only when deploy.yml calls it for a push to main in this repository, in the "legend-map-release" environment
 #   (deployment branch main, set by an admin). Everything that can publish is that environment's secret: the
 #   classic token that pushes the image (the repository's own Actions access to the package is Read, so a
 #   workflow on another branch can't push) and the deploy key that alone may update the deploy branch (a ruleset).
@@ -30,13 +32,13 @@ on:
       - supabase/migrations/**
       - supabase/tests/**
       - .github/workflows/legend-map-renderer.yml
-  push:
-    branches: [main]
-    paths:
-      - supabase/legend-map-renderer/**
-      - supabase/migrations/**
-      - supabase/tests/**
-      - .github/workflows/legend-map-renderer.yml
+  # deploy.yml calls it on pushes to main whose changes touch the renderer
+  workflow_call:
+    inputs:
+      release:
+        description: Release the tested image (only on a push to main in this repository)
+        type: boolean
+        default: false
 
 permissions: {}
 
@@ -117,7 +119,7 @@ jobs:
 
   release:
     name: Release (image by digest, deploy branch)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'alp82/Local-Legend-'
+    if: inputs.release && github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'alp82/Local-Legend-'
     needs: [renderer, database, golden]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
