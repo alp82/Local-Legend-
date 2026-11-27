@@ -78,8 +78,21 @@ after(async () => {
 test('parallel calls of one player cannot overshoot the per-player cap', { skip }, async () => {
   await config({ daily_tiles_per_player: 10 });
   const p = await newPlayer();
-  const answers = await Promise.all(Array.from({ length: 8 }, (_, k) => request(p, block(k, 4))));
-  const queued = answers.reduce((s, a) => s + a.queued, 0);
+  const blocks = Array.from({ length: 8 }, (_, k) => block(k, 4));
+  const answers = await Promise.all(blocks.map((b) => request(p, b)));
+  let queued = answers.reduce((s, a) => s + a.queued, 0);
+  assert.ok(queued <= 10, `the parallel calls never went past the cap (${queued})`);
+  // Some parallel calls are throttled even with min_request_interval 0: the throttle compares the previous
+  // call's last_request_at with now(), the start of this call's transaction, so a call that started before the
+  // one holding the lock and then waited for it counts as too soon. (With the real 1 s interval, overlapping
+  // calls are throttled by design.) Asking again one at a time settles it: the cap must then be met exactly.
+  for (let i = 0; i < answers.length; i++) {
+    for (let tries = 0; answers[i].reason === 'throttled'; tries++) {
+      assert.ok(tries < 5, 'a call made on its own is never throttled with min_request_interval 0');
+      answers[i] = await request(p, blocks[i]);
+      queued += answers[i].queued;
+    }
+  }
   assert.equal(queued, 10, `exactly the cap was queued (${queued})`);
   const [row] = await admin(`/rest/v1/legend_map_requests?player=eq.${p.id}&select=tiles`);
   assert.equal(row.tiles, 10, 'and counted');
