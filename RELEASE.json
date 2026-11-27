@@ -1,0 +1,8 @@
+{
+  "digest": "sha256:6fe3136be84ef0a05543144da533a6cf6e2c6983cdbc7520183272697a3a5b12",
+  "image": "ghcr.io/alp82/local-legend-map-renderer@sha256:6fe3136be84ef0a05543144da533a6cf6e2c6983cdbc7520183272697a3a5b12",
+  "commit": "7babda87244a072263483173651aff4ad26cbebd",
+  "fingerprint": "ea50df47c283491d",
+  "run": "https://github.com/alp82/Local-Legend-/actions/runs/45942229667",
+  "at": "2026-11-27T05:13:41.893Z"
+}
