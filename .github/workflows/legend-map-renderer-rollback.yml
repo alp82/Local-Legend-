@@ -1,5 +1,5 @@
 # Rolls the Legend map renderer back (or forward) to an image an earlier release run built: points the
-# legend-map-deploy branch at that digest and tells Coolify to deploy. Only digests that are
+# legend-map-deploy branch at that digest; the push makes Coolify deploy it (a signed GitHub webhook). Only digests that are
 #   - recorded in the deploy branch's releases.ndjson by a release run, and
 #   - covered by a build provenance attestation from .github/workflows/legend-map-renderer.yml on refs/heads/main of
 #     this repository (checked with gh attestation verify)
@@ -86,14 +86,3 @@ jobs:
           [ -n "$DEPLOY_KEY" ] || { echo "::error::LEGEND_MAP_DEPLOY_KEY isn't set"; exit 1; }
           # the image's own commit: its deploy files (compose.yaml, egress-proxy.mjs) and its script
           bash supabase/legend-map-renderer/deploy/push-deploy-branch.sh
-      - name: Tell Coolify to deploy
-        env:
-          COOLIFY_DEPLOY_URL: ${{ secrets.COOLIFY_DEPLOY_URL }}
-          COOLIFY_DEPLOY_TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
-        run: |
-          if [ -z "$COOLIFY_DEPLOY_URL" ] || [ -z "$COOLIFY_DEPLOY_TOKEN" ]; then
-            echo "::notice::The Coolify deploy webhook isn't configured; the deploy branch moved but nothing was deployed."
-            exit 0
-          fi
-          printf 'Authorization: Bearer %s\n' "$COOLIFY_DEPLOY_TOKEN" |
-            curl --fail-with-body --silent --show-error --max-time 60 -X POST -H @- "$COOLIFY_DEPLOY_URL"

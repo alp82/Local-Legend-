@@ -330,8 +330,9 @@ A merge to `main` that touches the renderer releases it by itself
    `legend-map-release` environment holds.
 2. It attests the image's build provenance, points the `legend-map-deploy` branch at the
    image's digest (`deploy/render-deploy.mjs`: the compose file pinned by digest, the egress
-   script, the release record), and calls Coolify's deploy webhook.
-3. Coolify deploys that branch on the worker host.
+   script, the release record).
+3. That push reaches Coolify as a signed GitHub webhook, and Coolify deploys the branch on the
+   worker host. GitHub holds no Coolify credential.
 4. The worker computes its **painter fingerprint** (`src/fingerprint.mjs`) and reports it
    (`begin_legend_map_release`):
    - **Same as the live version:** it carries on. Changes to the worker loop, the queue or the

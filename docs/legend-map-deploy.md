@@ -419,8 +419,9 @@ a merge to `main` that touches the renderer releases it with nobody running anyt
    the image's **digest**. That branch holds the compose file with the image pinned by digest,
    the egress proxy script, `RELEASE.json` (what's deployed) and `releases.ndjson` (every
    release). No deploy ever goes through a tag, so a moved tag changes nothing.
-3. It calls Coolify's deploy webhook. Coolify deploys the branch: it pulls the pinned image and
-   restarts the stack. The source volume, the credentials file and the isolated network stay.
+3. That push reaches Coolify as a signed GitHub webhook ([How deploys are triggered](#how-deploys-are-triggered)).
+   Coolify deploys the branch: it pulls the pinned image and restarts the stack. The source
+   volume, the credentials file and the isolated network stay.
 4. The worker reports its painter fingerprint at start-up:
    - **Same as the live version:** it carries on.
    - **New:** it paints the next tile version in the background for every known area, and
@@ -522,13 +523,11 @@ pulls the images and runs `docker compose up`.
 - **No approval anywhere.** Releases go out on merge with no reviewer and no approval click.
   What protects them is that nothing reaches `main` or the deploy branch without a pull request
   (step A2) or the environment's deploy key (step A6).
-- **The Coolify token in GitHub can deploy and read.** Since November 27, 2026 the GitHub
-  environment secret `COOLIFY_DEPLOY_TOKEN` is a token created for this purpose with
-  **deploy**, and it can also **read** (checked: it lists the team's servers and an
-  application's variable names). The owner accepted that: "the tokens are okay to have more
-  permissions". It can start, stop, restart and deploy every resource in the owner's Coolify
-  team and read their settings, but not change them. Only jobs in the `legend-map-release`
-  environment, on `main`, can read it. A token with only **deploy** ticked would narrow it.
+- **GitHub holds no Coolify credential.** Since November 27, 2026 deploys are triggered by a
+  signed repository webhook ([How deploys are triggered](#how-deploys-are-triggered)); the
+  earlier Coolify deploy token in GitHub was deleted. Coolify's public address refuses every
+  other request (a Traefik boundary on the Coolify host, added October 22, 2026, with one
+  exception for Git webhook `POST`s).
 - **The package token is broader than needed.** `LEGEND_MAP_PACKAGES_TOKEN` is a classic token
   of the owner's account (alp82) with **repo** and **write:packages** and no expiry date
   (checked November 27, 2026 through the `X-OAuth-Scopes` header; GitHub sent no expiry
@@ -637,7 +636,9 @@ application has never deployed. For a fresh setup:
 7. In the new application:
    - **Advanced > Compose deployment: Raw (deploy file as-is)** on.
    - **Connect to predefined network** off.
-   - **Auto deploy** off: deploys come from GitHub after a release run, never from a bare push.
+   - **Auto deploy** on, with a GitHub webhook secret: the deploy branch's push triggers the
+     deploy ([How deploys are triggered](#how-deploys-are-triggered)). Only the release and
+     rollback workflows can push that branch.
    - No domain on either service.
 8. **What Coolify puts on the host:** only the compose file, in
    `/data/coolify/applications/<application uuid>/`. Nothing else from the branch arrives, so the
@@ -652,6 +653,46 @@ application has never deployed. For a fresh setup:
 9. **Environment Variables:** add `LEGEND_MAP_SUPABASE_HOST` = `bvnlepwccygdkgsezgka.supabase.co`.
    Nothing else: the worker's credentials stay in `/opt/legend-map-renderer/worker.env` on the
    host, which the compose file reads by absolute path, so the password never enters Coolify.
+
+### How deploys are triggered
+
+Coolify deploys the `legend-map-deploy` branch whenever it's pushed, and only then:
+
+- The repository has a webhook for **push** events (JSON, SSL verification on) to Coolify's
+  manual GitHub webhook route, `https://<coolify>/webhooks/source/github/events/manual`.
+  It's the one route Coolify's public address lets through (Traefik boundary on the Coolify host).
+- Coolify checks the `X-Hub-Signature-256` HMAC against the application's GitHub webhook secret,
+  picks the application whose branch is the pushed one, and, with **Auto deploy** on, deploys
+  the pushed commit. A push to `main` or any other branch deploys nothing.
+- Only the release and rollback workflows can push the deploy branch (its ruleset lets only the
+  environment's deploy key through), so only they deploy.
+
+**Check a delivery:** **Settings > Webhooks** in GitHub, then **Recent Deliveries** (or
+`gh api repos/alp82/Local-Legend-/hooks/<id>/deliveries`). A deploy shows `200` with Coolify's
+JSON answer naming the queued deployment; a push to another branch gets a plain refusal.
+
+**What a leaked secret allows:** whoever has it can sign a push event for this repository and
+the deploy branch, so Coolify deploys the deploy branch again, at its pushed commit. They can't
+change what is deployed (the branch only moves through the deploy key), reach Coolify's API, or
+affect other applications. Rotate it if in doubt.
+
+**Rotate the secret** (no downtime; deliveries between the two steps fail, so do it between
+releases):
+
+```sh
+umask 077; openssl rand -hex 32 | tr -d '\n' > /tmp/whsecret
+# Coolify: the application's GitHub webhook secret (an operator's token with write, from a file descriptor)
+python3 -c "import json; print(json.dumps({'manual_webhook_secret_github': open('/tmp/whsecret').read()}))" |
+  curl -sS -X PATCH "https://<coolify>/api/v1/applications/<application uuid>" -H @<(printf 'Authorization: Bearer %s\ncontent-type: application/json\n' "$(cat <token file>)") --data-binary @-
+# GitHub: the webhook's secret
+python3 -c "import json; print(json.dumps({'config': {'url': 'https://<coolify>/webhooks/source/github/events/manual', 'content_type': 'json', 'insecure_ssl': '0', 'secret': open('/tmp/whsecret').read()}}))" |
+  gh api -X PATCH repos/alp82/Local-Legend-/hooks/<id> --input -
+shred -u /tmp/whsecret
+```
+
+Or in the web interfaces: the application's **Webhooks** page in Coolify (**GitHub Webhook
+Secret**), and the webhook's **Secret** field in GitHub. Never put the secret on a command line
+or in a file in the repository.
 
 ### Check a deploy
 
@@ -805,16 +846,10 @@ Do the steps in order. Steps 4 to 7 are the pause: do them in one sitting.
    checked whether the hosted backend's does, and a check that could never pass there would
    leave painting paused. A file with the same size but different bytes would only come from
    a copy interrupted and redone with other contents, which the steps here don't produce.
-8. **Automatic releases:** save the Coolify deploy webhook
-   (`https://<coolify>/api/v1/deploy?uuid=<application uuid>&force=false`) and the API token as the
-   `legend-map-release` environment secrets `COOLIFY_DEPLOY_URL` and `COOLIFY_DEPLOY_TOKEN`.
-
-   **Open, November 27, 2026:** the release job's call is refused with a plain `403 Forbidden`
-   before it reaches Coolify (Coolify's own refusals are JSON; the same token works from the
-   operator's machine), so something in front of Coolify blocks GitHub's runners. Until it lets
-   them through, a release builds, pushes, attests and moves `legend-map-deploy`, then fails at
-   **Tell Coolify to deploy**; deploy it by hand (Coolify's **Deploy**, or the API with an
-   operator's token).
+8. **Automatic releases:** done November 27, 2026 through the signed webhook
+   ([How deploys are triggered](#how-deploys-are-triggered)). (The first plan, a Coolify API
+   call from the release job, met the Traefik boundary in front of Coolify: a plain
+   `403 Forbidden` for every public client.)
 
 9. **The app update** with the new names: [8. Publish the OTA update](#8-publish-the-ota-update),
    once `select old_app_bucket from public.legend_map_config` says `legend-map-tiles`.
@@ -937,6 +972,8 @@ weeks whatever the values. The Legend map needs Pro beyond a short test.
 | --- | --- | --- |
 | Renderer user password | `/opt/legend-map-renderer/worker.env` on the worker host (mode 600) and your password manager | Lease, finish and queue Legend map tiles; read their status; write the `legend-map-tiles` bucket. Players can't gain these: the flag is in `app_metadata`, which only the service role can set. |
 | Publishable key | Same file | Public; the app ships with it |
+| Deploy webhook secret | Coolify (the application's GitHub webhook secret) and the repository webhook's settings in GitHub | Lets a signed push event make Coolify deploy the deploy branch again; nothing else ([How deploys are triggered](#how-deploys-are-triggered)) |
+| `LEGEND_MAP_PACKAGES_TOKEN`, `LEGEND_MAP_DEPLOY_KEY` | The `legend-map-release` environment in GitHub | Push the image; move the deploy branch |
 
 The worker never has the service key. The project's secret key is used once, transiently,
 to create the renderer user (step 2), and is stored nowhere. To rotate the password, set a
