@@ -324,10 +324,11 @@ jobs:
             [ "$n" -gt 0 ] || { echo "::error::the $p bundle doesn't contain $SUPABASE_URL_HOST: check EXPO_PUBLIC_SUPABASE_URL in EAS's preview environment"; exit 1; }
             echo "$p bundle: contains $SUPABASE_URL_HOST"
           done
-          # the publishable key, compared inside the preview environment so its value is never printed
+          # the publishable key, compared inside the preview environment so its value is never printed. env:exec runs
+          # its command with /bin/sh (dash on the runners): POSIX only, no [[ ]].
           # shellcheck disable=SC2016 # expanded by env:exec's shell, not this one
-          npx eas env:exec preview '[[ "$EXPO_PUBLIC_SUPABASE_KEY" == sb_publishable_* ]] && for p in android ios; do grep -raqF "$EXPO_PUBLIC_SUPABASE_KEY" "dist/_expo/static/js/$p" || exit 1; done' --non-interactive ||
-            { echo "::error::a bundle lacks EXPO_PUBLIC_SUPABASE_KEY from EAS's preview environment (or it isn't a publishable key)"; exit 1; }
+          npx eas env:exec preview "$(cat ../.github/scripts/bundle-key-check.sh)" --non-interactive ||
+            { echo "::error::a bundle lacks EXPO_PUBLIC_SUPABASE_KEY from EAS's preview environment, or it isn't a publishable key (see the line above)"; exit 1; }
           echo "both bundles: contain the preview environment's publishable key"
       - name: Runtime once more, right before publishing (what eas update will publish under)
         env:
