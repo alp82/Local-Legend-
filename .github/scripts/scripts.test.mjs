@@ -29,7 +29,7 @@ function repo() {
   return { dir, git, write, commit };
 }
 function runPlan(dir, args) {
-  const out = join(dir, `out-${Math.random()}.txt`);
+  const out = join(mkdtempSync(join(tmpdir(), 'plan-out-')), 'github-output.txt');
   writeFileSync(out, '');
   const res = { status: 0, stdout: '' };
   try {
