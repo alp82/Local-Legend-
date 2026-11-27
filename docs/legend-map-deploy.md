@@ -272,8 +272,11 @@ From `mobile/` on `main`:
 
 ```sh
 npx expo-updates fingerprint:generate --platform android | python3 -c 'import sys, json; print(json.load(sys.stdin)["hash"])'   # expect 9a7d01507a267455935fb24f0ba772cc5f474935
-npm run update:preview -- "Legend map for testers"
+npm run update:preview -- "Legend map for testers" --platform android
+npm run update:preview -- "Legend map for testers" --platform ios
 ```
+
+One platform at a time: the web export fails on `expo-sqlite` ([test-distribution.md](test-distribution.md)).
 
 If the fingerprint differs, stop: something native changed, and the update wouldn't reach the
 installed builds. The iOS fingerprint is `290857d25ef8e4ef500d44c44b43105e4625b2e4`.
@@ -670,6 +673,10 @@ ssh "$WORKER" 'docker logs --tail 20 legend-map-renderer-worker-1'
 
 ## Rename cut-over (once)
 
+Done on November 27, 2026: the database step at 05:18 UTC, painting again at 05:23 UTC (the
+copy: 1,150 files, 61.1 MB, in 29 seconds), the first Coolify-deployed worker at 05:41 UTC, the
+app update on both platforms after that. Step 10 is due no sooner than December 11, 2026.
+
 The layer was first called the fantasy map. The rename to the Legend map (pull request
 "Rename the fantasy map to the Legend map") changes every name: database objects, the bucket,
 the renderer's flag and address, the image, the deploy branch, the environment and its secrets,
@@ -801,6 +808,14 @@ Do the steps in order. Steps 4 to 7 are the pause: do them in one sitting.
 8. **Automatic releases:** save the Coolify deploy webhook
    (`https://<coolify>/api/v1/deploy?uuid=<application uuid>&force=false`) and the API token as the
    `legend-map-release` environment secrets `COOLIFY_DEPLOY_URL` and `COOLIFY_DEPLOY_TOKEN`.
+
+   **Open, November 27, 2026:** the release job's call is refused with a plain `403 Forbidden`
+   before it reaches Coolify (Coolify's own refusals are JSON; the same token works from the
+   operator's machine), so something in front of Coolify blocks GitHub's runners. Until it lets
+   them through, a release builds, pushes, attests and moves `legend-map-deploy`, then fails at
+   **Tell Coolify to deploy**; deploy it by hand (Coolify's **Deploy**, or the API with an
+   operator's token).
+
 9. **The app update** with the new names: [8. Publish the OTA update](#8-publish-the-ota-update),
    once `select old_app_bucket from public.legend_map_config` says `legend-map-tiles`.
 10. **Later, the compatibility removal** (no sooner than two weeks after step 9, and only when
