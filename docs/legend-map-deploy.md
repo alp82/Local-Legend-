@@ -20,7 +20,8 @@ There is no store build and no `production` channel. How the pieces fit is descr
 ## Before you begin
 
 - The branch `legend-map-layer` is merged to `main`, and you're on an up-to-date `main`.
-- The Supabase CLI is linked to the hosted project. `npx supabase projects list` marks
+- The Supabase CLI is linked to the hosted project. Its commands work on the local stack unless given
+  `--remote` (CLI 3.4.0), so every command here that means the hosted project says `--remote`. `npx supabase projects list` marks
   **Local Legend App** as linked.
 - `WORKER` holds the worker host's ssh login (`export WORKER=root@<worker host>`), `ssh "$WORKER"` works with your key, and Docker runs on this machine.
 - The EAS CLI is logged in as `alperortac` (see [test-distribution.md](test-distribution.md)).
@@ -52,8 +53,8 @@ npx supabase db query --remote --read-only "select max(n) from (select count(*) 
 Then, from the repository root:
 
 ```sh
-npx supabase db push --dry-run   # lists the Legend map migrations the project doesn't have yet
-npx supabase db push
+npx supabase db push --remote --dry-run   # lists the Legend map migrations the project doesn't have yet
+npx supabase db push --remote
 ```
 
 The migrations create the map switched off, with the launch values (see
@@ -460,7 +461,19 @@ digest): that abandons the release.
 
 ### Without Coolify
 
-When Coolify is down or not set up yet: `supabase/legend-map-renderer/deploy/ship.sh "$WORKER"`
+Since November 27, 2026 the quickest way is the deploy branch itself, under the same project
+name, so a later Coolify deploy replaces it in place:
+
+```sh
+ssh "$WORKER" 'cd /opt/legend-map-renderer && B=https://raw.githubusercontent.com/alp82/Local-Legend-/legend-map-deploy &&
+  curl -fsSL "$B/compose.yaml" -o compose.yaml && curl -fsSL "$B/RELEASE.json" -o RELEASE.json &&
+  echo LEGEND_MAP_SUPABASE_HOST=bvnlepwccygdkgsezgka.supabase.co > .env && docker compose up -d'
+```
+
+(Deploy trees from before the inline egress script also need `egress-proxy.mjs` from the
+branch next to `compose.yaml`.)
+
+To build an image without the release workflow: `supabase/legend-map-renderer/deploy/ship.sh "$WORKER"`
 builds and copies an image over ssh, then `docker compose up -d` on the host starts it. Build it
 from a commit that has this release mechanism. **Never start an image from before it (the
 pre-cut-over `.env.previous`) after the fingerprint is recorded:** the database refuses its
@@ -481,7 +494,7 @@ Then restart the worker, which adopts the new number as its own.
 ### Follow-up: migrations
 
 CI doesn't apply database migrations. A release whose worker needs a new migration must have
-that migration pushed (`npx supabase db push`) before it's merged. Applying migrations from CI
+that migration pushed (`npx supabase db push --remote`) before it's merged. Applying migrations from CI
 is a follow-up.
 
 ## Set up automatic releases (once)
@@ -506,19 +519,21 @@ pulls the images and runs `docker compose up`.
 - **No approval anywhere.** Releases go out on merge with no reviewer and no approval click.
   What protects them is that nothing reaches `main` or the deploy branch without a pull request
   (step A2) or the environment's deploy key (step A6).
-- **The Coolify token in GitHub has broad reach.** The owner kept the existing Coolify team and
-  the existing API token, with the **write** and **deploy** permissions (not root). Stored as the
-  GitHub environment secret `COOLIFY_DEPLOY_TOKEN`, it can do anything in that team except root
-  actions:
-  - create, change, delete, deploy, stop and restart every application, database and service
-    in the team, on every server the team has;
-  - change those servers' settings and proxies, and run rollbacks and preview deploys.
-  Coolify's documentation says the write permission "has root access to every server that runs
-  a resource inside its scope". So a leak of that GitHub secret is root on every server of the
-  owner's Coolify team, not only the worker host. Only jobs in the `legend-map-release`
-  environment, on `main`, can read it. A token with only **deploy** ticked would narrow this
-  (start, stop, restart and deploy, no changes); creating one takes a minute under **Keys &
-  Tokens > API tokens**.
+- **The Coolify token in GitHub can deploy and read.** Since November 27, 2026 the GitHub
+  environment secret `COOLIFY_DEPLOY_TOKEN` is a token created for this purpose with
+  **deploy**, and it can also **read** (checked: it lists the team's servers and an
+  application's variable names). The owner accepted that: "the tokens are okay to have more
+  permissions". It can start, stop, restart and deploy every resource in the owner's Coolify
+  team and read their settings, but not change them. Only jobs in the `legend-map-release`
+  environment, on `main`, can read it. A token with only **deploy** ticked would narrow it.
+- **The package token is broader than needed.** `LEGEND_MAP_PACKAGES_TOKEN` is a classic token
+  of the owner's account (alp82) with **repo** and **write:packages** and no expiry date
+  (checked November 27, 2026 through the `X-OAuth-Scopes` header; GitHub sent no expiry
+  header). **repo** gives full control of every repository that account can reach. The owner
+  accepted it. To tighten it, create a token with only **write:packages** (untick **repo**)
+  and an expiry, and replace the secret.
+- **The setup token** (Coolify **read**, **write** and **deploy**, used by hand for the
+  cut-over) never leaves the operator's machine.
 
 ### A. GitHub settings (repository admin)
 
@@ -600,8 +615,18 @@ application has never deployed. For a fresh setup:
    key from step 2. **Don't validate yet.**
 5. On the new server, open **Proxy** and choose **Switch Proxy > Custom** (Coolify stores this as
    no proxy). Open **Docker cleanup** and apply step 3. Only then click **Validate
-   connection**. Check: validated, nothing listens on 80, 443 or 8080, and the host's other
-   containers are still running (`docker ps`).
+   connection** (through the API: `install: false`, so Docker isn't reinstalled or restarted).
+   Check: validated, nothing listens on 80, 443 or 8080, and the host's other containers are
+   still running (`docker ps`).
+
+   Validation without the install step doesn't create the `coolify` Docker network that
+   Coolify's deploy helper joins; every deploy then fails at once with "network coolify not
+   found". Create it the way Coolify's installer does (`InstallDocker.php` in 4.5.3). No
+   container but the short-lived deploy helper joins it:
+
+   ```sh
+   ssh "$WORKER" 'docker network create --attachable coolify'
+   ```
 6. In a project of the team, **New resource > Public Repository**:
    - Repository `https://github.com/alp82/Local-Legend-`, branch `legend-map-deploy`.
    - Build pack **Docker Compose**, base directory `/`, compose file `/compose.yaml`.
@@ -611,7 +636,17 @@ application has never deployed. For a fresh setup:
    - **Connect to predefined network** off.
    - **Auto deploy** off: deploys come from GitHub after a release run, never from a bare push.
    - No domain on either service.
-8. **Environment Variables:** add `LEGEND_MAP_SUPABASE_HOST` = `bvnlepwccygdkgsezgka.supabase.co`.
+8. **What Coolify puts on the host:** only the compose file, in
+   `/data/coolify/applications/<application uuid>/`. Nothing else from the branch arrives, so the
+   deploy tree carries the egress proxy script inside `compose.yaml` (the proxy's
+   `EGRESS_SCRIPT` variable, written to a tmpfs at start; `deploy/render-deploy.mjs`). A deploy
+   tree from before that change (only the first release, `sha256:6fe3136b…`) mounts the script
+   from next to the file and fails under Coolify: Docker mounts an empty folder there and the
+   proxy can't start. Roll back to that digest only by hand ([Without Coolify](#without-coolify)).
+
+   **A failed deploy's log:** open the deployment under the application's **Deployments** in
+   Coolify. Through the API, the log is only shown to tokens with **read:sensitive**.
+9. **Environment Variables:** add `LEGEND_MAP_SUPABASE_HOST` = `bvnlepwccygdkgsezgka.supabase.co`.
    Nothing else: the worker's credentials stay in `/opt/legend-map-renderer/worker.env` on the
    host, which the compose file reads by absolute path, so the password never enters Coolify.
 
@@ -702,8 +737,8 @@ Do the steps in order. Steps 4 to 7 are the pause: do them in one sitting.
    live painter in the same step, so no worker ever "adopts" version 1:
 
    ```sh
-   npx supabase db push --dry-run   # lists 20261126150000_fantasy_releases.sql and 20261126200000_legend_map_rename.sql
-   npx supabase db push
+   npx supabase db push --remote --dry-run   # lists 20261126150000_fantasy_releases.sql and 20261126200000_legend_map_rename.sql
+   npx supabase db push --remote
    FP=$(node supabase/legend-map-renderer/src/fingerprint.mjs)
    npx supabase db query --remote "update public.legend_map_config set fingerprint = '$FP' where id"
    npx supabase db query --remote "insert into public.legend_map_versions (version, fingerprint, released_at, webp_quality) select version, fingerprint, now(), webp_quality from public.legend_map_config"
@@ -716,18 +751,19 @@ Do the steps in order. Steps 4 to 7 are the pause: do them in one sitting.
 
    The rename waits at most 3 seconds for its locks (it locks `storage.objects`, which every
    bucket's reads use, until it commits). **On a lock timeout or a deadlock, run
-   `npx supabase db push` again:** a failed attempt applies nothing of that migration, and the
+   `npx supabase db push --remote` again:** a failed attempt applies nothing of that migration, and the
    earlier names keep answering.
 7. **Stop the old worker, move its source store, the renderer's new name, deploy.**
 
    ```sh
    ssh "$WORKER" 'cd /opt/fantasy-renderer && docker compose stop &&
      docker volume create legend-map-renderer-source &&
-     docker run --rm --network none -v fantasy-renderer-source:/from:ro -v legend-map-renderer-source:/to \
+     docker run --rm --network none --user 0 -v fantasy-renderer-source:/from:ro -v legend-map-renderer-source:/to \
        --entrypoint sh "$(docker compose config --images | head -1)" -c "cp -a /from/. /to/ && du -s /from /to"'
    ```
 
-   Check the two sizes match. Then move the renderer user to the new flag and address with one
+   Check the two sizes match. (`--user 0`: the image runs as a user that can't write into the new,
+   root-owned volume; `cp -a` keeps the files' owner.) Then move the renderer user to the new flag and address with one
    admin API call (as in Go live step 2: the secret key in a shell variable through a file
    descriptor, never printed; the earlier flag stays until the compatibility layer goes):
 
