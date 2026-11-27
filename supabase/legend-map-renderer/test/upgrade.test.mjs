@@ -109,7 +109,8 @@ before(async () => {
   // 1. The hosted project's migrations only.
   mkdirSync(later, { recursive: true });
   for (const f of readdirSync(migrations)) if (f.slice(0, 14) > HOSTED_VERSION) renameSync(join(migrations, f), join(later, f));
-  assert.deepEqual(readdirSync(later).sort(), [RELEASES, RENAME], 'exactly the two migrations the hosted project lacks');
+  // the two the hosted project lacked on November 26, 2026; any newer ones are applied at the end, on top
+  assert.deepEqual(readdirSync(later).sort().slice(0, 2), [RELEASES, RENAME], 'the release and rename migrations come first');
   local('db', 'reset', '--no-seed');
 
   const r = await admin('/auth/v1/admin/users', { method: 'POST', body: { ...renderer, email_confirm: true, app_metadata: { fantasy_renderer: true } } });
@@ -250,4 +251,10 @@ test('the upgrade keeps every client working and moves the tiles', { skip }, asy
     assert.equal(res.status, 200, `${bucket} has the new file`);
     assert.deepEqual(Buffer.from(await res.arrayBuffer()), fresh);
   }
+
+  // Migrations added since the rename apply on top of the upgraded state, with its data.
+  const newer = readdirSync(later).sort();
+  for (const f of newer) renameSync(join(later, f), join(migrations, f));
+  if (newer.length) local('migration', 'up');
+  assert.deepEqual(readdirSync(later), [], `and the newer migrations applied too (${newer.join(', ') || 'none'})`);
 });
