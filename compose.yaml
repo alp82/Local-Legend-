@@ -2,7 +2,7 @@
 # so it can't starve the host's other stacks, and no way out but an allow-list proxy.
 # Runbook: docs/legend-map-deploy.md.
 #
-# Rendered by deploy/render-deploy.mjs from 76f388d17c5c900cb6328bddc95e2d1270e81491 (https://github.com/alp82/Local-Legend-/actions/runs/45948913579). Don't edit this branch.
+# Rendered by deploy/render-deploy.mjs from 2be22a81b519cab6875b9758034ecd518166f829 (https://github.com/alp82/Local-Legend-/actions/runs/46049391575). Don't edit this branch.
 #
 # Deployed by Coolify as a Git-based Docker Compose application in raw mode ("deploy file as-is"),
 # from the legend-map-deploy branch: there deploy/render-deploy.mjs has pinned the worker
@@ -29,7 +29,7 @@ name: legend-map-renderer
 
 services:
   worker:
-    image: ghcr.io/alp82/local-legend-map-renderer@sha256:411b5fe68f55c2d12776ee17251573c57f82f36f0d301f98af866c6f10610bf9
+    image: ghcr.io/alp82/local-legend-map-renderer@sha256:d996af0611d33934b465581f251860e69b203360e15571f4da064bf47be633b6
     restart: unless-stopped
     env_file: ${LEGEND_MAP_RENDERER_DIR:-/opt/legend-map-renderer}/worker.env
     environment:
