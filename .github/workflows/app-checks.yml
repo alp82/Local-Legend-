@@ -54,7 +54,9 @@ jobs:
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
-        run: node .github/scripts/plan.mjs "$(git merge-base "$BASE" "$HEAD")" "$HEAD"
+        run: |
+          b=$(git merge-base "$BASE" "$HEAD")
+          node .github/scripts/plan.mjs --head "$HEAD" --before "$b" --migrations-base "$b" --functions-base "$b" --painter-base "$b" --app-base "$b"
 
   app-runtime:
     name: App update possible (runtime fingerprint)
@@ -83,6 +85,8 @@ jobs:
             echo "$p: $fp"
             echo "$p=$fp" >> "$GITHUB_OUTPUT"
           done
+      # (the deploy computes them with `eas fingerprint:generate --environment preview`, which needs the Expo
+      # token; for this app, whose config is a static app.json, both give the same hashes)
       - name: Gate (as the deploy will run it)
         working-directory: .
         env:

@@ -1,27 +1,30 @@
 # Deploys the whole app on every push to main (a merged pull request; main takes nothing else). Runbook:
-# docs/deploy.md. Each step runs only when its files changed since the last successful deploy, in this order,
+# docs/deploy.md. Each part runs only when its files changed since that part was last deployed, in this order,
 # and a failed step stops the ones after it:
 #
-#   plan        → what changed (.github/scripts/plan.mjs); refuses a modified, renamed or deleted migration
-#                 and a new one without a lock_timeout
+#   plan        → what changed, per part (.github/scripts/deployed.mjs, .github/scripts/plan.mjs); refuses a
+#                 modified, renamed, deleted or out-of-order migration and one without a lock_timeout
 #   migrations  → supabase/migrations: a dry run against the hosted project, then `supabase db push` (never a
 #                 reset, never seed data)
 #   functions   → supabase/functions/<name>: deploys those Edge Functions with their config.toml settings
 #   painter     → supabase/legend-map-renderer: its tests and release (.github/workflows/legend-map-renderer.yml),
 #                 after the migrations, so a painter that needs one never goes live first
-#   app-update  → mobile/: the over-the-air update on the preview channel, per platform, only when the app's
-#                 runtime fingerprint is one the testers' builds have (.github/app-runtimes.json); otherwise it
-#                 fails and says a native build is needed. Never a store or EAS build.
+#   app-check   → mobile/: is the app's runtime fingerprint one the testers' builds have
+#                 (.github/app-runtimes.json)? If not, it says a native build is needed and the update waits,
+#                 without failing the run or holding back the other parts
+#   app-update  → the over-the-air update on the preview channel, per platform. Never a store or EAS build.
 #
 # Security: the repository is public.
 # - push to main only: no pull_request trigger, so no fork and no branch ever runs this file's jobs with secrets
-#   (pull requests get .github/workflows/app-checks.yml, which has none).
+#   (pull requests get .github/workflows/app-checks.yml and the renderer checks, which have none).
 # - Every job that touches production runs in the "legend-map-release" environment, whose deployment branch is
 #   main (set by an admin): its secrets can't be read from any other branch, even by editing a workflow there.
-#   Each job reads only the secrets it names.
-# - Permissions are empty by default and granted per job; actions are pinned by commit.
-# - One deploy at a time (concurrency, never cancelled). Every step can run again safely: db push applies only
-#   what's pending, functions and updates are replaced, a painter release of the same fingerprint carries on.
+#   Each job reads only the secrets it names; the called painter workflow gets exactly its two.
+# - Every deploying job first checks that its part wasn't already deployed from a newer commit (a re-run of an
+#   older run would put older code back).
+# - Permissions are empty by default and granted per job; actions are pinned by commit, CLIs by version.
+# - One deploy at a time. A newer push can replace a pending one; that's harmless, because every part deploys
+#   everything since it was last deployed, and every step can run again.
 # - Nothing from an event's free text (commit messages, branch names) is put into a shell command: it goes
 #   through environment variables.
 name: Deploy
@@ -39,22 +42,22 @@ concurrency:
 env:
   # the hosted Supabase project (its ref is public: the app ships with its URL)
   SUPABASE_PROJECT_REF: bvnlepwccygdkgsezgka
+  SUPABASE_URL_HOST: bvnlepwccygdkgsezgka.supabase.co
   SUPABASE_CLI_VERSION: 3.4.0
-  EAS_CLI_VERSION: 27.11.0
 
 jobs:
   plan:
-    name: Plan (what changed since the last deploy)
+    name: Plan (what changed since each part was deployed)
     if: github.repository == 'alp82/Local-Legend-'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: read
-      actions: read # the last successful run of this workflow
+      actions: read # earlier runs of this workflow
     outputs:
-      base: ${{ steps.base.outputs.base }}
       migrations: ${{ steps.plan.outputs.migrations }}
       added_migrations: ${{ steps.plan.outputs.added_migrations }}
+      changed_unapplied: ${{ steps.plan.outputs.changed_unapplied }}
       functions: ${{ steps.plan.outputs.functions }}
       painter: ${{ steps.plan.outputs.painter }}
       mobile: ${{ steps.plan.outputs.mobile }}
@@ -63,28 +66,35 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Since the last successful deploy
-        id: base
+      - name: Where each part was last deployed from
+        id: bases
         env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-          BEFORE: ${{ github.event.before }}
+          GITHUB_TOKEN: ${{ github.token }}
+          PUSH_BEFORE: ${{ github.event.before }}
         run: |
-          # Since the last fully successful run, not just this push: a failed or queued-over run's changes are
-          # deployed by the next one (every step is safe to run again).
-          last=$(gh api "repos/$REPO/actions/workflows/deploy.yml/runs?branch=main&status=success&per_page=1" --jq '.workflow_runs[0].head_sha // empty')
-          base=${last:-$BEFORE}
-          if [[ ! "$base" =~ ^[0-9a-f]{40}$ ]] || [[ "$base" =~ ^0+$ ]] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
-            base=$(git rev-parse HEAD~1)
+          # The push's <before>, or its parent: the base of a part never deployed by this pipeline yet.
+          before=$PUSH_BEFORE
+          if [[ ! "$before" =~ ^[0-9a-f]{40}$ ]] || [[ "$before" =~ ^0+$ ]] || ! git cat-file -e "$before^{commit}" 2>/dev/null; then
+            before=$(git rev-parse HEAD~1)
           fi
-          git merge-base --is-ancestor "$base" HEAD || { echo "::error::$base is not an ancestor of $GITHUB_SHA"; exit 1; }
-          echo "Deploying the changes from $base to $GITHUB_SHA"
-          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "before=$before" >> "$GITHUB_OUTPUT"
+          for part in migrations functions painter app; do
+            node .github/scripts/deployed.mjs guard --component "$part"
+            base=$(node .github/scripts/deployed.mjs base --component "$part")
+            echo "$part: ${base:-never deployed by this pipeline, so since $before}"
+            echo "$part=${base:-$before}" >> "$GITHUB_OUTPUT"
+          done
       - name: Plan
         id: plan
         env:
-          BASE: ${{ steps.base.outputs.base }}
-        run: node .github/scripts/plan.mjs "$BASE" "$GITHUB_SHA"
+          BEFORE: ${{ steps.bases.outputs.before }}
+          MIGRATIONS_BASE: ${{ steps.bases.outputs.migrations }}
+          FUNCTIONS_BASE: ${{ steps.bases.outputs.functions }}
+          PAINTER_BASE: ${{ steps.bases.outputs.painter }}
+          APP_BASE: ${{ steps.bases.outputs.app }}
+        run: |
+          node .github/scripts/plan.mjs --head "$GITHUB_SHA" --before "$BEFORE" --migrations-base "$MIGRATIONS_BASE" \
+            --functions-base "$FUNCTIONS_BASE" --painter-base "$PAINTER_BASE" --app-base "$APP_BASE"
 
   migrations:
     name: Database migrations
@@ -95,28 +105,45 @@ jobs:
     environment: legend-map-release
     permissions:
       contents: read
+      actions: read # the guard
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
+      - name: Guard (never deploy older code over newer)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node .github/scripts/deployed.mjs guard --component migrations
       - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
+      - name: Changed migrations listed as never applied really never were
+        if: needs.plan.outputs.changed_unapplied != ''
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          VERSIONS: ${{ needs.plan.outputs.changed_unapplied }}
+        run: |
+          [ -n "$SUPABASE_ACCESS_TOKEN" ] || { echo "::error::SUPABASE_ACCESS_TOKEN isn't set in the legend-map-release environment"; exit 1; }
+          supabase migration list --remote="$SUPABASE_PROJECT_REF" --output-format json > history.json
+          # shellcheck disable=SC2086 # one argument per version
+          node .github/scripts/never-applied.mjs history.json $VERSIONS
       - name: Dry run against the hosted project
         id: dry
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
           EXPECTED: ${{ needs.plan.outputs.added_migrations }}
+          FIXED: ${{ needs.plan.outputs.changed_unapplied }}
         run: |
           [ -n "$SUPABASE_ACCESS_TOKEN" ] || { echo "::error::SUPABASE_ACCESS_TOKEN isn't set in the legend-map-release environment"; exit 1; }
-          supabase db push --remote="$SUPABASE_PROJECT_REF" --dry-run | tee dry-run.txt
-          # The CLI ends with one JSON line: {"migrations": [...], ...}
-          would=$(grep '^{' dry-run.txt | tail -1 | python3 -c 'import sys, json; print(" ".join(json.load(sys.stdin)["migrations"]))')
-          echo "Would apply: ${would:-nothing}"
+          supabase db push --remote="$SUPABASE_PROJECT_REF" --dry-run --output-format json > dry-run.json
+          would=$(node .github/scripts/dry-run-migrations.mjs dry-run.json)
+          echo "Would apply: ${would:-nothing (already applied)}"
           for m in $would; do
+            case " $FIXED " in *" ${m:0:14} "*) continue ;; esac # a fixed, never-applied migration
             case " $EXPECTED " in
               *" $m "*) ;;
-              *) echo "::error::$m would be applied but wasn't added in this deploy's changes: the hosted history doesn't match the repository. Look before going on (docs/deploy.md, Migrations)."; exit 1 ;;
+              *) echo "::error::$m would be applied but wasn't added since the last migration deploy: the hosted history doesn't match the repository. Look before going on (docs/deploy.md, Migrations)."; exit 1 ;;
             esac
           done
           echo "would=$would" >> "$GITHUB_OUTPUT"
@@ -124,10 +151,11 @@ jobs:
         if: steps.dry.outputs.would != ''
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-        # db push: no reset, no seed (--include-seed is off). A migration's own lock_timeout makes it fail fast
-        # rather than queue behind a long transaction; the next deploy (or a re-run) tries again.
+        # db push: no reset, no seed (--include-seed is off)
         run: supabase db push --remote="$SUPABASE_PROJECT_REF" --yes
       - name: Hosted history
+        # informational: the job's success must mean "applied", not depend on this listing
+        continue-on-error: true
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: supabase migration list --remote="$SUPABASE_PROJECT_REF" | tail -8
@@ -141,10 +169,16 @@ jobs:
     environment: legend-map-release
     permissions:
       contents: read
+      actions: read # the guard
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
+          fetch-depth: 0
           persist-credentials: false
+      - name: Guard (never deploy older code over newer)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node .github/scripts/deployed.mjs guard --component functions
       - uses: supabase/setup-cli@689adcfb80d947100a1eab127289b97d1fb07b13 # v3.2.0
         with:
           version: ${{ env.SUPABASE_CLI_VERSION }}
@@ -170,24 +204,33 @@ jobs:
     if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.painter == 'true' && contains(fromJSON('["success","skipped"]'), needs.migrations.result) && contains(fromJSON('["success","skipped"]'), needs.functions.result) }}
     permissions:
       contents: read
+      actions: read
       id-token: write
       attestations: write
     uses: ./.github/workflows/legend-map-renderer.yml
     with:
       release: true
+    # by name: a called workflow gets nothing else (not "inherit": it needs no more than these two)
+    secrets:
+      LEGEND_MAP_PACKAGES_TOKEN: ${{ secrets.LEGEND_MAP_PACKAGES_TOKEN }}
+      LEGEND_MAP_DEPLOY_KEY: ${{ secrets.LEGEND_MAP_DEPLOY_KEY }}
 
-  app-update:
-    name: App update (over the air)
+  app-check:
+    name: App update check (runtime fingerprint)
     needs: [plan, migrations, functions, painter]
     if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.mobile == 'true' && contains(fromJSON('["success","skipped"]'), needs.migrations.result) && contains(fromJSON('["success","skipped"]'), needs.functions.result) && contains(fromJSON('["success","skipped"]'), needs.painter.result) }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 20
     environment: legend-map-release
     permissions:
       contents: read
+    outputs:
+      publish: ${{ steps.gate.outputs.publish }}
     defaults:
       run:
         working-directory: mobile
+    env:
+      EXPO_NO_DOTENV: "1" # as eas update computes it
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -196,29 +239,84 @@ jobs:
         with:
           node-version: 24
       - run: npm ci
-      - name: Runtime fingerprints
+      - name: Runtime fingerprints (the way eas update computes them, with the preview environment)
         id: fp
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: |
+          [ -n "$EXPO_TOKEN" ] || { echo "::error::EXPO_TOKEN isn't set in the legend-map-release environment"; exit 1; }
           for p in android ios; do
-            fp=$(npx expo-updates fingerprint:generate --platform "$p" | python3 -c 'import sys, json; print(json.load(sys.stdin)["hash"])')
+            fp=$(npx eas fingerprint:generate --platform "$p" --environment preview --json --non-interactive 2>/dev/null |
+              python3 -c 'import sys, json; t = sys.stdin.read(); print(json.loads(t[t.index("{"):])["hash"])')
             echo "$p: $fp"
             echo "$p=$fp" >> "$GITHUB_OUTPUT"
           done
       - name: Gate (the testers' builds must have these runtimes)
+        id: gate
         working-directory: .
         env:
           ANDROID: ${{ steps.fp.outputs.android }}
           IOS: ${{ steps.fp.outputs.ios }}
-        run: node .github/scripts/runtime-gate.mjs --android "$ANDROID" --ios "$IOS"
-      - name: Publish to the preview channel
+        run: |
+          if node .github/scripts/runtime-gate.mjs --android "$ANDROID" --ios "$IOS" | tee gate.txt; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            # not a failure of this run: the update waits (the app's base stays put) until a build with this
+            # runtime is distributed and listed; database, functions and painter are unaffected
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "::warning title=App update waits for a native build::The app's runtime fingerprint matches no tester build. Nothing was published; see the job summary."
+            { echo "### App update not published: a native build is needed"; echo; sed 's/^/    /' gate.txt; echo
+              echo "Make and distribute a build, add its runtime to .github/app-runtimes.json, merge: the update then goes out (docs/deploy.md, App updates)."; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  app-update:
+    name: App update (over the air)
+    needs: [plan, app-check]
+    if: ${{ !cancelled() && needs.app-check.result == 'success' && needs.app-check.outputs.publish == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: legend-map-release
+    permissions:
+      contents: read
+      actions: read # the guard
+    defaults:
+      run:
+        working-directory: mobile
+    env:
+      EXPO_NO_DOTENV: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Guard (never deploy older code over newer)
+        working-directory: .
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node .github/scripts/deployed.mjs guard --component app
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+      - run: npm ci # eas-cli is a pinned devDependency (mobile/package.json)
+      - name: Export the bundle with the preview environment
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx eas env:exec preview "npx expo export --platform android --platform ios --output-dir dist" --non-interactive
+      - name: Check the bundle points at the hosted project
+        run: |
+          # a variable missing from EAS's preview environment would export as undefined and break the app
+          for p in android ios; do
+            n=$(grep -ral -F "$SUPABASE_URL_HOST" "dist/_expo/static/js/$p" | wc -l) # -a: Hermes bytecode
+            [ "$n" -gt 0 ] || { echo "::error::the $p bundle doesn't contain $SUPABASE_URL_HOST: check EXPO_PUBLIC_SUPABASE_URL in EAS's preview environment"; exit 1; }
+            echo "$p bundle: contains $SUPABASE_URL_HOST"
+          done
+      - name: Publish that bundle to the preview channel, one platform at a time
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
           SUBJECT: ${{ github.event.head_commit.message }}
         run: |
-          [ -n "$EXPO_TOKEN" ] || { echo "::error::EXPO_TOKEN isn't set in the legend-map-release environment"; exit 1; }
           message="$(printf '%s' "$SUBJECT" | head -1 | cut -c1-120) (${GITHUB_SHA:0:7})"
-          # one platform at a time: the combined export fails on the web build (expo-sqlite)
           for p in android ios; do
-            npx --yes "eas-cli@$EAS_CLI_VERSION" update --channel preview --environment preview --platform "$p" \
+            npx eas update --skip-bundler --input-dir dist --channel preview --environment preview --platform "$p" \
               --message "$message" --non-interactive
           done

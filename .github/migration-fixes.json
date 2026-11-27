@@ -1,0 +1,4 @@
+{
+  "_comment": "Migration versions that never reached the hosted project and may therefore be modified, renamed or deleted (docs/deploy.md, Migrations: a migration that failed on the hosted project, or one merged out of order). The deploy checks against the hosted history that each one changed in a deploy was never applied, and refuses otherwise. Entries can stay: the check runs on every deploy.",
+  "never_applied": []
+}
