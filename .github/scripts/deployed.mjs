@@ -7,9 +7,13 @@
 // bases — one pass over earlier Deploy runs on main, newest first. A part is up to date at a run's commit when
 //   its job succeeded there, or when it was skipped because nothing of it had changed (the plan succeeded and
 //   every job before it succeeded or was skipped). An app update waiting for a native build is not up to date.
+//   A skipped job counts only in a run that wasn't cancelled (a cancel can skip jobs that had work to do), and
+//   a job missing from the run counts as not up to date (a renamed job must not pass silently).
 //   A part never deployed by this pipeline counts from ANCHOR, main's head when the pipeline was introduced
-//   (everything was deployed by hand or by the earlier painter pipeline up to there). If MAX_RUNS runs go by
-//   without an answer for some part, it fails rather than guess.
+//   (everything was deployed by hand or by the earlier painter pipeline up to there). So does a part with no
+//   answer within MAX_RUNS runs (with a warning): every step is safe to repeat, so deploying everything since
+//   the anchor deploys more, never less, and a part that's behind (an app update waiting for a native build for
+//   a long time) never blocks the others.
 // guard — a run may deploy a part only if no newer run (higher run number) has started deploying it, whether that
 //   job succeeded or failed partway (one platform published, some functions deployed): GitHub lets a run be
 //   re-run for 30 days with its original commit, and that must never put older code back.
@@ -39,14 +43,16 @@ const ok = (c) => c === 'success' || c === 'skipped';
 
 /**
  * Whether a run left each part up to date at its commit.
- * @param {Record<string, string>} c  job name → conclusion (absent: the job didn't appear in the run)
+ * @param {Record<string, string>} c  job name → conclusion (absent: the job didn't appear in the run, which
+ *   never counts: every job of deploy.yml is listed, skipped or not)
+ * @param {string} runConclusion  the run's conclusion; in a cancelled run only successes count
  */
-export function upToDate(c) {
+export function upToDate(c, runConclusion = 'success') {
   const planOk = c[JOBS.plan] === 'success';
-  const before = { migrations: true, functions: ok(c[JOBS.migrations] ?? 'skipped') };
-  before.painter = before.functions && ok(c[JOBS.functions] ?? 'skipped');
-  before.app = before.painter && (c[JOBS.painter] ? c[JOBS.painter] === 'success' : ok(c[JOBS.painterCaller] ?? 'skipped'));
-  const skippedClean = (job, part) => planOk && before[part] && (c[job] ?? 'skipped') === 'skipped';
+  const before = { migrations: true, functions: ok(c[JOBS.migrations]) };
+  before.painter = before.functions && ok(c[JOBS.functions]);
+  before.app = before.painter && (c[JOBS.painter] ? c[JOBS.painter] === 'success' : ok(c[JOBS.painterCaller]));
+  const skippedClean = (job, part) => runConclusion !== 'cancelled' && planOk && before[part] && c[job] === 'skipped';
   return {
     migrations: c[JOBS.migrations] === 'success' || skippedClean(JOBS.migrations, 'migrations'),
     functions: c[JOBS.functions] === 'success' || skippedClean(JOBS.functions, 'functions'),
@@ -72,19 +78,28 @@ async function conclusions(api, repo, run) {
   return Object.fromEntries(jobs.map((j) => [j.name, j.conclusion]));
 }
 
-/** Every part's base: the newest commit it's up to date at, ANCHOR when history runs out. Throws at MAX_RUNS. */
+/**
+ * Every part's base: the newest commit it's up to date at; ANCHOR when the history runs out or a part has no
+ * answer within `maxRuns` runs (those parts are listed in `behind`).
+ * @returns {Promise<{ bases: Record<string, string>, behind: string[] }>}
+ */
 export async function bases(api, repo, currentRunId, { maxRuns = MAX_RUNS } = {}) {
   const found = {};
   let seen = 0;
+  let capped = false;
   for await (const run of completedRuns(api, repo, currentRunId)) {
     if (++seen > maxRuns) {
-      throw new Error(`no deploy of ${PARTS.filter((p) => !found[p]).join(', ')} in the last ${maxRuns} runs: find the last good commit by hand (docs/deploy.md, Safety)`);
+      capped = true;
+      break;
     }
-    const state = upToDate(await conclusions(api, repo, run));
+    const state = upToDate(await conclusions(api, repo, run), run.conclusion);
     for (const p of PARTS) if (!found[p] && state[p]) found[p] = run.head_sha;
     if (PARTS.every((p) => found[p])) break;
   }
-  return Object.fromEntries(PARTS.map((p) => [p, found[p] ?? ANCHOR]));
+  return {
+    bases: Object.fromEntries(PARTS.map((p) => [p, found[p] ?? ANCHOR])),
+    behind: capped ? PARTS.filter((p) => !found[p]) : [],
+  };
 }
 
 /** Newer runs that started deploying `part` (the reason to refuse), as "#<number> (<conclusion>)" strings. */
@@ -110,7 +125,10 @@ async function main() {
     return res.json();
   };
   if (mode === 'bases') {
-    const b = await bases(api, GITHUB_REPOSITORY, GITHUB_RUN_ID);
+    const { bases: b, behind } = await bases(api, GITHUB_REPOSITORY, GITHUB_RUN_ID);
+    for (const p of behind) {
+      console.error(`::warning title=${p} counts from the anchor::No run in the last ${MAX_RUNS} left ${p} up to date, so it deploys everything since ${ANCHOR} (safe to repeat).`);
+    }
     console.log(JSON.stringify(b));
     console.error(`(${calls} API calls)`);
     return;

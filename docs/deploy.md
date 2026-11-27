@@ -55,9 +55,13 @@ because the deploy refuses anything else.
   other parts back nor makes every merge redeploy them, and its changes stay pending until it succeeds. One
   pass over the run history finds all four (usually in the previous run).
 - **Never deployed by this pipeline:** a part counts from `76f388d`, `main`'s head when the pipeline was
-  introduced; everything up to there was deployed by hand or by the earlier painter pipeline. If 100 runs
-  go by without the part being up to date in any of them, the plan stops rather than guess: find the last
-  commit that part was deployed from and redeploy it by hand.
+  introduced; everything up to there was deployed by hand or by the earlier painter pipeline. So does a part
+  that no run in the last 100 left up to date (the plan says so in a warning): every step is safe to repeat,
+  so it deploys everything since the anchor, more rather than less, and a part that's behind (an app update
+  waiting long for a native build) never blocks the others.
+- **Cancelled runs and missing jobs:** in a cancelled run only jobs that succeeded count (a cancel skips jobs
+  that had work to do), and a job missing from a run never counts, so renaming a job can't make a part look
+  deployed.
 - **Never older code over newer.** The plan refuses a run whose commit is older than where a part already
   is, and every deploying job first checks that no newer run has started deploying its part, whether that
   job succeeded or failed partway (one platform published, some functions deployed). GitHub lets a run be

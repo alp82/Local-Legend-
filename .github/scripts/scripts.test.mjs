@@ -168,7 +168,7 @@ function history(runs) {
   // runs: [{ n, jobs: { name: conclusion } }], any order; run ids = numbers
   return async (path) => {
     if (path.includes('/workflows/deploy.yml/runs')) {
-      return { workflow_runs: path.includes('page=1') ? runs.map((r) => ({ id: r.n, run_number: r.n, head_sha: S(r.n % 10), status: r.status ?? 'completed' })) : [] };
+      return { workflow_runs: path.includes('page=1') ? runs.map((r) => ({ id: r.n, run_number: r.n, head_sha: S(r.n % 10), status: r.status ?? 'completed', conclusion: r.conclusion ?? 'success' })) : [] };
     }
     return { jobs: Object.entries(runs.find((r) => r.n === Number(path.match(/runs\/(\d+)\/jobs/)[1])).jobs).map(([name, conclusion]) => ({ name, conclusion })) };
   };
@@ -186,6 +186,12 @@ test('up to date: a successful job, or skipped because nothing of the part chang
   assert.equal(upToDate(painterCalled).painter, false, 'a failed release');
   assert.equal(upToDate(painterCalled).app, false, 'and the app update after it was skipped for that reason');
   assert.deepEqual(upToDate({ [JOBS.plan]: 'failure' }), { migrations: false, functions: false, painter: false, app: false });
+  // cancelled between jobs: migrations succeeded, the rest were skipped by the cancel, not for lack of changes
+  assert.deepEqual(upToDate(ran({ [JOBS.migrations]: 'success' }), 'cancelled'), { migrations: true, functions: false, painter: false, app: false });
+  // a job missing from the run (renamed): never up to date, nor anything after it
+  const renamed = ran();
+  delete renamed[JOBS.functions];
+  assert.deepEqual(upToDate(renamed), { migrations: true, functions: false, painter: false, app: false });
 });
 
 test('bases: one pass, each part from its newest up-to-date run; the anchor when history runs out; fail at the cap', async () => {
@@ -195,13 +201,17 @@ test('bases: one pass, each part from its newest up-to-date run; the anchor when
     { n: 3, jobs: ran({ [JOBS.appCheck]: 'success', [JOBS.app]: 'skipped' }) },
     { n: 2, jobs: ran({ [JOBS.appCheck]: 'success', [JOBS.app]: 'success' }) },
   ]);
-  assert.deepEqual(await bases(api, 'o/r', 5), { migrations: S(4), functions: S(3), painter: S(3), app: S(2) });
-  // a part never deployed (functions failed in every run): the anchor
+  assert.deepEqual(await bases(api, 'o/r', 5), { bases: { migrations: S(4), functions: S(3), painter: S(3), app: S(2) }, behind: [] });
+  // a part never deployed (functions failed in every run): the anchor, everything since it is deployed
   const never = history([{ n: 2, jobs: ran({ [JOBS.functions]: 'failure' }) }, { n: 1, jobs: ran({ [JOBS.functions]: 'failure' }) }]);
-  assert.equal((await bases(never, 'o/r', 9)).functions, ANCHOR);
-  // more failing runs than the cap: refuse to guess
-  const many = history(Array.from({ length: 8 }, (_, i) => ({ n: i + 1, jobs: ran({ [JOBS.functions]: 'failure' }) })));
-  await assert.rejects(bases(many, 'o/r', 99, { maxRuns: 5 }), /no deploy of functions, painter, app in the last 5 runs/);
+  assert.equal((await bases(never, 'o/r', 9)).bases.functions, ANCHOR);
+  // an app update waiting longer than the cap: only the app falls back to the anchor; the others go on
+  const waiting = history(Array.from({ length: 8 }, (_, i) => ({ n: i + 1, jobs: ran({ [JOBS.appCheck]: 'success', [JOBS.app]: 'skipped' }) })));
+  assert.deepEqual(await bases(waiting, 'o/r', 99, { maxRuns: 5 }),
+    { bases: { migrations: S(8), functions: S(8), painter: S(8), app: ANCHOR }, behind: ['app'] });
+  // a cancelled run's skipped jobs don't count
+  const cancelled = history([{ n: 2, conclusion: 'cancelled', jobs: ran({ [JOBS.migrations]: 'success' }) }, { n: 1, jobs: ran() }]);
+  assert.deepEqual((await bases(cancelled, 'o/r', 9)).bases, { migrations: S(2), functions: S(1), painter: S(1), app: S(1) });
 });
 
 test('the guard: a newer run that started deploying the part, even if it failed partway', async () => {
