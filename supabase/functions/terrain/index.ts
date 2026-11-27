@@ -1,3 +1,4 @@
+// Deployed by the deploy pipeline on merge (docs/deploy.md, Edge Functions).
 // terrain: classifies the terrain of the areas where the signed-in player has
 // walking pay waiting for it, and stores it, which pays the waiting terrain
 // resources.
