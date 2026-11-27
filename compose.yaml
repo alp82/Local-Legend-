@@ -2,7 +2,7 @@
 # so it can't starve the host's other stacks, and no way out but an allow-list proxy.
 # Runbook: docs/legend-map-deploy.md.
 #
-# Rendered by deploy/render-deploy.mjs from 7babda87244a072263483173651aff4ad26cbebd (https://github.com/alp82/Local-Legend-/actions/runs/45942229667). Don't edit this branch.
+# Rendered by deploy/render-deploy.mjs from 1d8e4401d9e734dff3c38332ac187cfdbd885d5e (https://github.com/alp82/Local-Legend-/actions/runs/45946449937). Don't edit this branch.
 #
 # Deployed by Coolify as a Git-based Docker Compose application in raw mode ("deploy file as-is"),
 # from the legend-map-deploy branch: there deploy/render-deploy.mjs has pinned the worker
@@ -29,7 +29,7 @@ name: legend-map-renderer
 
 services:
   worker:
-    image: ghcr.io/alp82/local-legend-map-renderer@sha256:6fe3136be84ef0a05543144da533a6cf6e2c6983cdbc7520183272697a3a5b12
+    image: ghcr.io/alp82/local-legend-map-renderer@sha256:b7bc8795251a135578e695aa646a54740dac90971a049ef3f39d6bddb050b1f4
     restart: unless-stopped
     env_file: ${LEGEND_MAP_RENDERER_DIR:-/opt/legend-map-renderer}/worker.env
     environment:
@@ -100,13 +100,88 @@ services:
   egress:
     image: node:24-alpine@sha256:116b800c3754b440ee0aa3ed2f20f5bf3d99a554bfd9adeea09ea8017f6e85f5
     user: node
-    command: ["node", "/egress/egress-proxy.mjs"]
-    volumes:
-      # next to this file in the repository; deploy/ship.sh copies it and sets LEGEND_MAP_EGRESS_SCRIPT
-      - ./egress-proxy.mjs:/egress/egress-proxy.mjs:ro
+    # EGRESS_SCRIPT (src/egress-proxy.mjs of this commit) is written to a tmpfs and run; the root file
+    # system stays read-only
+    command: ["sh", "-c", "printf '%s' \"$$EGRESS_SCRIPT\" > /egress/egress-proxy.mjs && exec node /egress/egress-proxy.mjs"]
+    tmpfs:
+      - /egress:uid=1000,gid=1000,mode=0700,size=1m
     restart: unless-stopped
     environment:
       EGRESS_ALLOW: ${LEGEND_MAP_SUPABASE_HOST:?},tiles.openfreemap.org,elevation-tiles-prod.s3.amazonaws.com
+      EGRESS_SCRIPT: |
+        #!/usr/bin/env node
+        // The worker's only way out: an HTTPS (CONNECT) proxy that lets through exactly the hosts
+        // in EGRESS_ALLOW, on port 443, and never a private, loopback or link-local address. The
+        // worker container sits on a Docker network with no route out (deploy/compose.yaml); this
+        // proxy sits on that network and on the outside one. The host the worker runs on shares a
+        // private network with other machines, which the worker therefore can't reach.
+        //
+        // Each name is resolved here and the connection goes to the address that was checked, so a
+        // DNS answer can't switch it to a private address in between.
+        //
+        //   EGRESS_ALLOW=<project>.supabase.co,tiles.openfreemap.org,elevation-tiles-prod.s3.amazonaws.com node src/egress-proxy.mjs
+        import { lookup } from 'node:dns/promises';
+        import { createServer } from 'node:http';
+        import { BlockList, isIP, connect } from 'node:net';
+
+        const PORT = Number(process.env.EGRESS_PORT || 3128);
+        const allow = new Set((process.env.EGRESS_ALLOW || '').split(',').map((h) => h.trim().toLowerCase()).filter(Boolean));
+
+        const blocked = new BlockList();
+        for (const [net, bits] of [['0.0.0.0', 8], ['10.0.0.0', 8], ['100.64.0.0', 10], ['127.0.0.0', 8], ['169.254.0.0', 16],
+          ['172.16.0.0', 12], ['192.0.0.0', 24], ['192.168.0.0', 16], ['198.18.0.0', 15], ['224.0.0.0', 4], ['240.0.0.0', 4]]) {
+          blocked.addSubnet(net, bits, 'ipv4');
+        }
+        // (No ::ffff:0:0/96 rule: BlockList checks plain IPv4 addresses against it too.)
+        for (const [net, bits] of [['::', 128], ['::1', 128], ['fc00::', 7], ['fe80::', 10], ['ff00::', 8]]) {
+          blocked.addSubnet(net, bits, 'ipv6');
+        }
+        const isPrivate = (address) => blocked.check(address, isIP(address) === 6 ? 'ipv6' : 'ipv4');
+
+        /** The address to connect to for host:port, or the reason it is refused. */
+        export async function resolveAllowed(host, port, allowed = allow) {
+          const name = String(host).toLowerCase().replace(/^\[|\]$$/g, '');
+          if (Number(port) !== 443) return { refused: `port $${port} not allowed` };
+          if (isIP(name)) return { refused: 'addresses are not allowed, only names' };
+          if (!allowed.has(name)) return { refused: `$${name} is not on the allow list` };
+          // IPv4 first: containers often have no IPv6 route.
+          const addresses = (await lookup(name, { all: true }).catch(() => [])).sort((a, b) => a.family - b.family);
+          if (!addresses.length) return { refused: `$${name} does not resolve` };
+          const ok = addresses.find((a) => !isPrivate(a.address));
+          if (!ok) return { refused: `$${name} resolves only to private addresses` };
+          return { address: ok.address };
+        }
+
+        const log = (msg) => console.log(`$${new Date().toISOString()} egress $${msg}`);
+
+        const server = createServer((req, res) => {
+          // Plain HTTP is never forwarded: everything the worker needs is HTTPS.
+          res.writeHead(403).end('only CONNECT to allowed hosts on port 443\n');
+        });
+
+        server.on('connect', async (req, client, head) => {
+          const [host, port] = String(req.url).split(/:(?=\d+$$)/);
+          const r = await resolveAllowed(host, port);
+          if (r.refused) {
+            log(`refused $${req.url}: $${r.refused}`);
+            client.end('HTTP/1.1 403 Forbidden\r\n\r\n');
+            return;
+          }
+          const upstream = connect(Number(port), r.address, () => {
+            client.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+            if (head?.length) upstream.write(head);
+            upstream.pipe(client);
+            client.pipe(upstream);
+          });
+          upstream.on('error', () => client.destroy());
+          client.on('error', () => upstream.destroy());
+        });
+
+        if (import.meta.url === `file://$${process.argv[1]}`) {
+          if (!allow.size) throw new Error('EGRESS_ALLOW is empty');
+          server.listen(PORT, '0.0.0.0', () => log(`listening on $${PORT}, allowing $${[...allow].join(', ')}`));
+        }
+        export { server, isPrivate };
     networks:
       - inside
       - outside
