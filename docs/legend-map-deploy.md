@@ -20,7 +20,8 @@ There is no store build and no `production` channel. How the pieces fit is descr
 ## Before you begin
 
 - The branch `legend-map-layer` is merged to `main`, and you're on an up-to-date `main`.
-- The Supabase CLI is linked to the hosted project. `npx supabase projects list` marks
+- The Supabase CLI is linked to the hosted project. Its commands work on the local stack unless given
+  `--remote` (CLI 3.4.0), so every command here that means the hosted project says `--remote`. `npx supabase projects list` marks
   **Local Legend App** as linked.
 - `WORKER` holds the worker host's ssh login (`export WORKER=root@<worker host>`), `ssh "$WORKER"` works with your key, and Docker runs on this machine.
 - The EAS CLI is logged in as `alperortac` (see [test-distribution.md](test-distribution.md)).
@@ -52,8 +53,8 @@ npx supabase db query --remote --read-only "select max(n) from (select count(*) 
 Then, from the repository root:
 
 ```sh
-npx supabase db push --dry-run   # lists the Legend map migrations the project doesn't have yet
-npx supabase db push
+npx supabase db push --remote --dry-run   # lists the Legend map migrations the project doesn't have yet
+npx supabase db push --remote
 ```
 
 The migrations create the map switched off, with the launch values (see
@@ -481,7 +482,7 @@ Then restart the worker, which adopts the new number as its own.
 ### Follow-up: migrations
 
 CI doesn't apply database migrations. A release whose worker needs a new migration must have
-that migration pushed (`npx supabase db push`) before it's merged. Applying migrations from CI
+that migration pushed (`npx supabase db push --remote`) before it's merged. Applying migrations from CI
 is a follow-up.
 
 ## Set up automatic releases (once)
@@ -704,8 +705,8 @@ Do the steps in order. Steps 4 to 7 are the pause: do them in one sitting.
    live painter in the same step, so no worker ever "adopts" version 1:
 
    ```sh
-   npx supabase db push --dry-run   # lists 20261126150000_fantasy_releases.sql and 20261126200000_legend_map_rename.sql
-   npx supabase db push
+   npx supabase db push --remote --dry-run   # lists 20261126150000_fantasy_releases.sql and 20261126200000_legend_map_rename.sql
+   npx supabase db push --remote
    FP=$(node supabase/legend-map-renderer/src/fingerprint.mjs)
    npx supabase db query --remote "update public.legend_map_config set fingerprint = '$FP' where id"
    npx supabase db query --remote "insert into public.legend_map_versions (version, fingerprint, released_at, webp_quality) select version, fingerprint, now(), webp_quality from public.legend_map_config"
@@ -718,7 +719,7 @@ Do the steps in order. Steps 4 to 7 are the pause: do them in one sitting.
 
    The rename waits at most 3 seconds for its locks (it locks `storage.objects`, which every
    bucket's reads use, until it commits). **On a lock timeout or a deadlock, run
-   `npx supabase db push` again:** a failed attempt applies nothing of that migration, and the
+   `npx supabase db push --remote` again:** a failed attempt applies nothing of that migration, and the
    earlier names keep answering.
 7. **Stop the old worker, move its source store, the renderer's new name, deploy.**
 
