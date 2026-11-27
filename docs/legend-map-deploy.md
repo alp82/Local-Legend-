@@ -506,19 +506,21 @@ pulls the images and runs `docker compose up`.
 - **No approval anywhere.** Releases go out on merge with no reviewer and no approval click.
   What protects them is that nothing reaches `main` or the deploy branch without a pull request
   (step A2) or the environment's deploy key (step A6).
-- **The Coolify token in GitHub has broad reach.** The owner kept the existing Coolify team and
-  the existing API token, with the **write** and **deploy** permissions (not root). Stored as the
-  GitHub environment secret `COOLIFY_DEPLOY_TOKEN`, it can do anything in that team except root
-  actions:
-  - create, change, delete, deploy, stop and restart every application, database and service
-    in the team, on every server the team has;
-  - change those servers' settings and proxies, and run rollbacks and preview deploys.
-  Coolify's documentation says the write permission "has root access to every server that runs
-  a resource inside its scope". So a leak of that GitHub secret is root on every server of the
-  owner's Coolify team, not only the worker host. Only jobs in the `legend-map-release`
-  environment, on `main`, can read it. A token with only **deploy** ticked would narrow this
-  (start, stop, restart and deploy, no changes); creating one takes a minute under **Keys &
-  Tokens > API tokens**.
+- **The Coolify token in GitHub can deploy and read.** Since November 27, 2026 the GitHub
+  environment secret `COOLIFY_DEPLOY_TOKEN` is a token created for this purpose with
+  **deploy**, and it can also **read** (checked: it lists the team's servers and an
+  application's variable names). The owner accepted that: "the tokens are okay to have more
+  permissions". It can start, stop, restart and deploy every resource in the owner's Coolify
+  team and read their settings, but not change them. Only jobs in the `legend-map-release`
+  environment, on `main`, can read it. A token with only **deploy** ticked would narrow it.
+- **The package token is broader than needed.** `LEGEND_MAP_PACKAGES_TOKEN` is a classic token
+  of the owner's account (alp82) with **repo** and **write:packages** and no expiry date
+  (checked November 27, 2026 through the `X-OAuth-Scopes` header; GitHub sent no expiry
+  header). **repo** gives full control of every repository that account can reach. The owner
+  accepted it. To tighten it, create a token with only **write:packages** (untick **repo**)
+  and an expiry, and replace the secret.
+- **The setup token** (Coolify **read**, **write** and **deploy**, used by hand for the
+  cut-over) never leaves the operator's machine.
 
 ### A. GitHub settings (repository admin)
 

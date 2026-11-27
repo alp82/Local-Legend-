@@ -176,7 +176,14 @@ jobs:
           PACKAGES_TOKEN: ${{ secrets.LEGEND_MAP_PACKAGES_TOKEN }}
         run: |
           printf '%s' "$PACKAGES_TOKEN" | docker login ghcr.io -u "$OWNER" --password-stdin
-          docker push "$IMAGE:sha-${SHA:0:12}"
+          # The registry sometimes refuses the manifest of a fresh push ("unknown blob", seen on the first
+          # push on November 27, 2026); the same push then goes through.
+          for attempt in 1 2 3; do
+            docker push "$IMAGE:sha-${SHA:0:12}" && break
+            [ "$attempt" = 3 ] && { docker logout ghcr.io; exit 1; }
+            echo "::warning::push attempt $attempt failed; retrying in 15 s"
+            sleep 15
+          done
           docker logout ghcr.io
           ref=$(docker inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$IMAGE:sha-${SHA:0:12}" | grep -m1 "^$IMAGE@sha256:")
           digest="${ref#*@}"
