@@ -5,7 +5,7 @@
 //
 // Mount order is draw order (each layer is appended on top of the base style), so the
 // map screen renders them bottom to top:
-//   base map → fantasy map (components/fantasy-layer.tsx, pinned under the parchment) →
+//   base map → Legend map (components/legend-map-layer.tsx, pinned under the parchment) →
 //   parchment → Mist → reveal → territory border → alignment grid → sites →
 //   detour offers → track → user location (native puck, always on top).
 //

@@ -1,5 +1,5 @@
 // Map switches shared between the Debug screen and the map. The debug switches are in
-// memory only and reset when the app restarts; the fantasy map switch is kept in local
+// memory only and reset when the app restarts; the Legend map switch is kept in local
 // storage.
 import 'expo-sqlite/localStorage/install';
 
@@ -12,29 +12,36 @@ export type DebugSettings = {
   fakeTerritory: boolean;
   /** Show the perf readout on the map (always on with the fake territory). */
   perfReadout: boolean;
-  /** Show the painted fantasy map over the street map (on by default; saved). */
-  fantasyMap: boolean;
+  /** Show the painted Legend map over the street map (on by default; saved). */
+  legendMap: boolean;
 };
 
-const FANTASY_KEY = 'fantasyMapOff';
+const LEGEND_MAP_KEY = 'legendMapOff';
+/** The same switch under the layer's earlier name; read once, then moved (remove after December 2026). */
+const OLD_KEY = 'fantasyMapOff';
 
-function storedFantasyMap(): boolean {
+function storedLegendMap(): boolean {
   try {
-    return globalThis.localStorage?.getItem(FANTASY_KEY) !== '1';
+    const ls = globalThis.localStorage;
+    if (ls?.getItem(OLD_KEY) === '1') {
+      ls.setItem(LEGEND_MAP_KEY, '1');
+      ls.removeItem(OLD_KEY);
+    }
+    return ls?.getItem(LEGEND_MAP_KEY) !== '1';
   } catch {
     return true;
   }
 }
 
-let settings: DebugSettings = { alignmentGrid: false, fakeTerritory: false, perfReadout: false, fantasyMap: storedFantasyMap() };
+let settings: DebugSettings = { alignmentGrid: false, fakeTerritory: false, perfReadout: false, legendMap: storedLegendMap() };
 const listeners = new Set<() => void>();
 
 export function setDebugSetting<K extends keyof DebugSettings>(key: K, value: DebugSettings[K]) {
   settings = { ...settings, [key]: value };
-  if (key === 'fantasyMap') {
+  if (key === 'legendMap') {
     try {
-      if (value) globalThis.localStorage?.removeItem(FANTASY_KEY);
-      else globalThis.localStorage?.setItem(FANTASY_KEY, '1');
+      if (value) globalThis.localStorage?.removeItem(LEGEND_MAP_KEY);
+      else globalThis.localStorage?.setItem(LEGEND_MAP_KEY, '1');
     } catch {}
   }
   for (const fn of listeners) fn();

@@ -188,8 +188,8 @@ export default function DebugScreen() {
 
         <Text style={[styles.heading, text]}>Map overlays</Text>
         {toggle(
-          'fantasyMap',
-          'Fantasy map',
+          'legendMap',
+          'Legend map',
           'The painted map over the street map. While it shows, the map does not zoom out past where the painting ends. Where a tile is not painted yet, the street map shows. Kept after a restart.',
         )}
         {toggle('alignmentGrid', 'Show alignment grid', 'Claim cell outlines (zoom 21 tiles) at map zoom 17+.')}

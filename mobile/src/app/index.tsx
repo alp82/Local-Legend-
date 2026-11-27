@@ -14,12 +14,12 @@ import {
   TerritoryLayer,
   TrackLayer,
 } from '@/components/map-layers';
-import { FantasyLayer } from '@/components/fantasy-layer';
+import { LegendMapLayer } from '@/components/legend-map-layer';
 import { PerfReadout, type PerfStats } from '@/components/perf-readout';
 import { ResourceBar } from '@/components/resource-bar';
 import { useDetours } from '@/hooks/use-detours';
 import { useEconomy } from '@/hooks/use-economy';
-import { useFantasyMap } from '@/hooks/use-fantasy-map';
+import { useLegendMap } from '@/hooks/use-legend-map';
 import { useFollowCamera } from '@/hooks/use-follow-camera';
 import { useSites } from '@/hooks/use-sites';
 import { useZoomFloor } from '@/hooks/use-zoom-floor';
@@ -153,7 +153,7 @@ export default function MapScreen() {
   const sitesData = useMemo(() => sitesJson(sites), [sites]);
 
   const detoursState = useDetours(!debug.fakeTerritory);
-  const fantasy = useFantasyMap(view, debug.fantasyMap, process.env.EXPO_PUBLIC_SUPABASE_URL);
+  const legendMap = useLegendMap(view, debug.legendMap, process.env.EXPO_PUBLIC_SUPABASE_URL);
   const offers = useMemo(() => (fakeOn ? [] : (detoursState.detours?.offers ?? [])), [fakeOn, detoursState.detours]);
   const detoursData = useMemo(() => detoursJson(offers), [offers]);
   const offer: DetourOffer | null = offers.find((o) => o.id === selectedOffer) ?? null;
@@ -314,13 +314,13 @@ export default function MapScreen() {
 
   const cam = useFollowCamera(cameraRef, canShowLocation);
   const economy = useEconomy();
-  // While the fantasy map shows, the map can't zoom out past where the painting ends.
-  const fantasyActive = !!fantasy.tiles && fantasy.visible;
-  const minZoom = useZoomFloor(cameraRef, fantasyActive, view?.zoom ?? null);
-  // Opened further out than that with the fantasy map on: start at the floor.
+  // While the Legend map shows, the map can't zoom out past where the painting ends.
+  const legendMapActive = !!legendMap.tiles && legendMap.visible;
+  const minZoom = useZoomFloor(cameraRef, legendMapActive, view?.zoom ?? null);
+  // Opened further out than that with the Legend map on: start at the floor.
   const [initialViewState] = useState(() => {
     const v = cam.initialViewState;
-    return typeof v.zoom === 'number' ? { ...v, zoom: clampZoom(v.zoom, fantasyActive) } : v;
+    return typeof v.zoom === 'number' ? { ...v, zoom: clampZoom(v.zoom, legendMapActive) } : v;
   });
 
   return (
@@ -345,8 +345,8 @@ export default function MapScreen() {
         }}>
         <Camera ref={cameraRef} initialViewState={initialViewState} minZoom={minZoom} />
         {/* Bottom to top; see components/map-layers.tsx. */}
-        {fantasy.tiles && (
-          <FantasyLayer tiles={fantasy.tiles} revision={fantasy.revision} labels={fantasy.labels} visible={fantasy.visible} />
+        {legendMap.tiles && (
+          <LegendMapLayer tiles={legendMap.tiles} revision={legendMap.revision} labels={legendMap.labels} visible={legendMap.visible} />
         )}
         <ParchmentLayer />
         <FogLayer data={prepared.fogJson} visible={showMist} />
@@ -398,7 +398,7 @@ export default function MapScreen() {
               <Text style={styles.statusText}>Loading sites…</Text>
             </View>
           )}
-          {fantasy.tiles && fantasy.visible && fantasy.pendingOnScreen > 0 && (
+          {legendMap.tiles && legendMap.visible && legendMap.pendingOnScreen > 0 && (
             <View style={styles.loadingPill}>
               <ActivityIndicator size="small" color="#fff" />
               <Text style={styles.statusText}>Painting the map…</Text>

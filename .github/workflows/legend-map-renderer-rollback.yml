@@ -1,0 +1,99 @@
+# Rolls the Legend map renderer back (or forward) to an image an earlier release run built: points the
+# legend-map-deploy branch at that digest and tells Coolify to deploy. Only digests that are
+#   - recorded in the deploy branch's releases.ndjson by a release run, and
+#   - covered by a build provenance attestation from .github/workflows/legend-map-renderer.yml on refs/heads/main of
+#     this repository (checked with gh attestation verify)
+# are accepted; never a tag. The worker then reports that image's painter fingerprint, and phones switch back to
+# its tile version if those tiles still exist (otherwise it's painted again).
+#
+# Afterwards revert the bad commit on main: the next merge that touches the renderer releases main again.
+# Run it from the Actions tab (people with write access can; the legend-map-release environment's rules apply).
+name: Legend map renderer rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      digest:
+        description: "Image digest to deploy (sha256:…, from RELEASE.json or releases.ndjson on the legend-map-deploy branch)"
+        required: true
+        type: string
+
+permissions: {}
+
+# its own group: a release run queued at the same time can't cancel it (GitHub cancels an older pending run in
+# the same group, whatever cancel-in-progress says)
+concurrency:
+  group: legend-map-renderer-rollback
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    if: github.repository == 'alp82/Local-Legend-' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: legend-map-release
+    permissions:
+      contents: read
+      attestations: read
+      packages: read
+    steps:
+      - name: Find the release record
+        id: record
+        env:
+          DIGEST: ${{ inputs.digest }}
+          REPO: ${{ github.repository }}
+        run: |
+          [[ "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "::error::digest must look like sha256:<64 hex>"; exit 1; }
+          curl -fsSL "https://raw.githubusercontent.com/$REPO/legend-map-deploy/releases.ndjson" -o releases.ndjson
+          line=$(jq -c --arg d "$DIGEST" 'select(.digest == $d)' releases.ndjson | tail -1)
+          [ -n "$line" ] || { echo "::error::$DIGEST was never released by the release workflow"; exit 1; }
+          {
+            echo "commit=$(jq -r .commit <<< "$line")"
+            echo "fingerprint=$(jq -r .fingerprint <<< "$line")"
+            echo "image=$(jq -r '.image | split("@")[0]' <<< "$line")"
+          } >> "$GITHUB_OUTPUT"
+      - name: Verify its build provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          IMAGE: ${{ steps.record.outputs.image }}
+          DIGEST: ${{ inputs.digest }}
+          COMMIT: ${{ steps.record.outputs.commit }}
+          ACTOR: ${{ github.actor }}
+        run: |
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$ACTOR" --password-stdin
+          gh attestation verify "oci://$IMAGE@$DIGEST" --repo "$REPO" \
+            --signer-workflow "$REPO/.github/workflows/legend-map-renderer.yml" --source-ref refs/heads/main \
+            --deny-self-hosted-runners --format json > provenance.json
+          docker logout ghcr.io
+          # the record's commit must be the one the attestation names
+          grep -q "$COMMIT" provenance.json || { echo "::error::the attestation doesn't name commit $COMMIT"; exit 1; }
+          echo "Verified: $IMAGE@$DIGEST was built by the release workflow on main from $COMMIT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ steps.record.outputs.commit }}
+          persist-credentials: false
+      - name: Point the deploy branch at it
+        env:
+          DEPLOY_KEY: ${{ secrets.LEGEND_MAP_DEPLOY_KEY }}
+          REPO: ${{ github.repository }}
+          IMAGE: ${{ steps.record.outputs.image }}
+          DIGEST: ${{ inputs.digest }}
+          FINGERPRINT: ${{ steps.record.outputs.fingerprint }}
+          SHA: ${{ steps.record.outputs.commit }}
+          RUN: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          [ -n "$DEPLOY_KEY" ] || { echo "::error::LEGEND_MAP_DEPLOY_KEY isn't set"; exit 1; }
+          # the image's own commit: its deploy files (compose.yaml, egress-proxy.mjs) and its script
+          bash supabase/legend-map-renderer/deploy/push-deploy-branch.sh
+      - name: Tell Coolify to deploy
+        env:
+          COOLIFY_DEPLOY_URL: ${{ secrets.COOLIFY_DEPLOY_URL }}
+          COOLIFY_DEPLOY_TOKEN: ${{ secrets.COOLIFY_DEPLOY_TOKEN }}
+        run: |
+          if [ -z "$COOLIFY_DEPLOY_URL" ] || [ -z "$COOLIFY_DEPLOY_TOKEN" ]; then
+            echo "::notice::The Coolify deploy webhook isn't configured; the deploy branch moved but nothing was deployed."
+            exit 0
+          fi
+          printf 'Authorization: Bearer %s\n' "$COOLIFY_DEPLOY_TOKEN" |
+            curl --fail-with-body --silent --show-error --max-time 60 -X POST -H @- "$COOLIFY_DEPLOY_URL"

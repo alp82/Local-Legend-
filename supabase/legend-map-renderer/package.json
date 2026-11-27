@@ -1,0 +1,19 @@
+{
+  "name": "legend-map-renderer",
+  "private": true,
+  "type": "module",
+  "description": "Paints Legend map tiles with the Legend map painter in headless Chromium.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "paint": "node src/cli.mjs",
+    "worker": "node src/worker.mjs",
+    "test": "node --test --test-concurrency=1 test/*.test.mjs",
+    "golden:update": "GOLDEN_UPDATE=1 node --test test/golden.test.mjs",
+    "fingerprint": "node src/fingerprint.mjs"
+  },
+  "dependencies": {
+    "playwright": "1.65.1"
+  }
+}

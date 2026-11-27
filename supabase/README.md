@@ -400,23 +400,23 @@ App opens, walks, detours, builds, recruits, and surge results, stored in
 - `analytics_events`: one row per event. Clients can only `SELECT` their own
   rows and write nothing.
 
-## Fantasy map
+## Legend map
 
-The painted fantasy map is drawn as raster tiles in the public `fantasy-tiles` bucket, which
+The painted Legend map is drawn as raster tiles in the public `legend-map-tiles` bucket, which
 the app shows above the street map. A worker outside Supabase paints them
-(`fantasy-renderer/`), from a queue in Postgres. The migrations
+(`legend-map-renderer/`), from a queue in Postgres. The migrations
 `migrations/*_fantasy_tiles.sql` and `migrations/*_fantasy_renderer_role.sql` define it:
 
 | Function | Who | Purpose |
 | --- | --- | --- |
-| `get_fantasy_config()` | Anyone | The kill switch, the tile version and the bucket |
-| `request_fantasy_tiles(p_tiles, p_visible)` | Players | Queues unpainted tiles around the player (daily cap) and returns those still pending |
-| `lease_fantasy_tiles`, `finish_fantasy_tile`, `queue_fantasy_tiles` | The renderer | Paint and pre-paint |
-| `fantasy_status()` | The renderer, SQL editor | Queue depth, tiles painted, storage, last error |
+| `get_legend_map_config()` | Anyone | The kill switch, the tile version and the bucket |
+| `request_legend_map_tiles(p_tiles, p_visible)` | Players | Queues unpainted tiles around the player (daily cap) and returns those still pending |
+| `lease_legend_map_tiles`, `finish_legend_map_tile`, `queue_legend_map_tiles` | The renderer | Paint and pre-paint |
+| `legend_map_status()` | The renderer, SQL editor | Queue depth, tiles painted, storage, last error |
 
 The renderer is the service role or the auth user whose `app_metadata` has
-`"fantasy_renderer": true`. `public.fantasy_config` holds the switches. Deploying and rolling
-back are covered in [docs/fantasy-map-deploy.md](../docs/fantasy-map-deploy.md).
+`"legend_map_renderer": true`. `public.legend_map_config` holds the switches. Deploying and rolling
+back are covered in [docs/legend-map-deploy.md](../docs/legend-map-deploy.md).
 
 ## Before you begin
 
