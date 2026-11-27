@@ -1,0 +1,5 @@
+{
+  "_comment": "Runtime versions (fingerprints) of the native builds testers have on the preview channel, per platform. The deploy pipeline publishes an over-the-air update only when the app's fingerprint is listed here for both platforms (docs/deploy.md, App updates). Add a build's runtime when it is distributed; remove it when no tester runs it any more. android: the preview build of November 15, 2026 (EAS build list). ios: no iOS build that testers run is known to exist (iOS testing is deferred, docs/test-distribution.md); the entry is the app's current iOS fingerprint, so iOS updates are published for a build that may not exist yet, which is harmless. Replace it with the real build's runtime once there is one.",
+  "android": ["9a7d01507a267455935fb24f0ba772cc5f474935"],
+  "ios": ["290857d25ef8e4ef500d44c44b43105e4625b2e4"]
+}

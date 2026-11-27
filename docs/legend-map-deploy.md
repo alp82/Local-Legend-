@@ -495,11 +495,11 @@ update public.legend_map_config set version = version + 1, fingerprint = null wh
 
 Then restart the worker, which adopts the new number as its own.
 
-### Follow-up: migrations
+### Migrations
 
-CI doesn't apply database migrations. A release whose worker needs a new migration must have
-that migration pushed (`npx supabase db push --remote`) before it's merged. Applying migrations from CI
-is a follow-up.
+Since November 27, 2026 the deploy pipeline applies migrations on merge, before the painter's release
+([deploy.md](deploy.md)), so a worker that needs a new migration never starts before it. Put both in the
+same pull request.
 
 ## Set up automatic releases (once)
 

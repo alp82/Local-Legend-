@@ -1,8 +1,10 @@
-# The Legend map renderer: tests on every pull request that touches it, and a release on every merge to main.
+# The Legend map renderer: tests on every pull request that touches it, and a release on every merge to main that
+# touches it, called by the deploy pipeline (.github/workflows/deploy.yml) after the database migrations, so a
+# painter that needs a new migration never goes live before it.
 #
 #   pull request  → renderer tests in the pinned Chromium, database tests on a local Supabase stack, and the
 #                   golden tiles painted in the worker image itself
-#   push to main  → the same, then the image is pushed to GitHub's container registry as sha-<commit>, its
+#   deploy.yml    → the same, then (with release: true) the image is pushed to GitHub's container registry as sha-<commit>, its
 #                   digest gets a build provenance attestation, the legend-map-deploy branch is pointed at
 #                   that digest, and that push makes Coolify deploy the branch (a signed GitHub webhook). No deploy ever goes through a tag. The worker
 #                   reports its painter fingerprint when it starts; a new one paints a new tile version in the
@@ -13,7 +15,7 @@
 #   may write packages.
 # - pull_request only (never pull_request_target): a fork's pull request runs with a read-only token and no
 #   secrets, and the release job never runs for pull requests.
-# - The release job runs only for pushes to main in this repository, in the "legend-map-release" environment
+# - The release job runs only when deploy.yml calls it for a push to main in this repository, in the "legend-map-release" environment
 #   (deployment branch main, set by an admin). Everything that can publish is that environment's secret: the
 #   classic token that pushes the image (the repository's own Actions access to the package is Read, so a
 #   workflow on another branch can't push) and the deploy key that alone may update the deploy branch (a ruleset).
@@ -24,19 +26,23 @@
 name: Legend map renderer
 
 on:
+  # every pull request: the checks are required by the main ruleset, so they must always report; the
+  # changes job skips them (a skipped job counts as passed) when nothing they cover changed
   pull_request:
-    paths:
-      - supabase/legend-map-renderer/**
-      - supabase/migrations/**
-      - supabase/tests/**
-      - .github/workflows/legend-map-renderer.yml
-  push:
-    branches: [main]
-    paths:
-      - supabase/legend-map-renderer/**
-      - supabase/migrations/**
-      - supabase/tests/**
-      - .github/workflows/legend-map-renderer.yml
+  # deploy.yml calls it on pushes to main whose changes touch the renderer
+  workflow_call:
+    inputs:
+      release:
+        description: Release the tested image (only on a push to main in this repository)
+        type: boolean
+        default: false
+    # a called workflow gets only the secrets the caller passes (a missing one is an empty string, with no
+    # error), so both are declared and required
+    secrets:
+      LEGEND_MAP_PACKAGES_TOKEN:
+        required: true
+      LEGEND_MAP_DEPLOY_KEY:
+        required: true
 
 permissions: {}
 
@@ -45,8 +51,39 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  changes:
+    name: What the renderer checks cover
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      run: ${{ steps.paths.outputs.run }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: github.event_name == 'pull_request'
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Changed paths
+        id: paths
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # called by deploy.yml: always (it only calls when the renderer changed)
+          if [ "$GITHUB_EVENT_NAME" != pull_request ]; then echo "run=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          if git diff --name-only "$(git merge-base "$BASE" "$HEAD")" "$HEAD" |
+              grep -qE '^(supabase/legend-map-renderer/|supabase/migrations/|supabase/tests/|\.github/workflows/legend-map-renderer\.yml$|\.github/scripts/)'; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
   renderer:
     name: Renderer tests (pinned Chromium)
+    needs: changes
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     permissions:
@@ -72,6 +109,8 @@ jobs:
 
   database:
     name: Database tests (local Supabase stack)
+    needs: changes
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -93,6 +132,12 @@ jobs:
       - name: Queue and release API tests
         working-directory: supabase/legend-map-renderer
         run: node --test test/queue.test.mjs
+      - name: The deploy's migration dry run, as it runs in Actions (JSON on stdout, no coding agent detected)
+        run: |
+          # the same CLI call and parser as deploy.yml, with every agent variable cleared
+          env -i PATH="$PATH" HOME="$HOME" supabase db push --dry-run --output-format json > dry-run.json
+          migrations=$(node .github/scripts/dry-run-migrations.mjs dry-run.json)
+          echo "would apply: ${migrations:-nothing (up to date)}"
       - name: Stop the stack (the upgrade rehearsal starts a throwaway one of its own)
         run: supabase stop --no-backup
       - name: Upgrade from the hosted project's state (earlier names, held lock, rename, bucket copy)
@@ -100,6 +145,8 @@ jobs:
 
   golden:
     name: Golden tiles in the worker image
+    needs: changes
+    if: needs.changes.outputs.run == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -117,30 +164,37 @@ jobs:
 
   release:
     name: Release (image by digest, deploy branch)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'alp82/Local-Legend-'
+    if: inputs.release && github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'alp82/Local-Legend-'
     needs: [renderer, database, golden]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     environment: legend-map-release
     # GITHUB_TOKEN can't push the image (the repository's Actions access to the package is Read): the
-    # environment's classic token does. It only signs the build provenance.
+    # environment's classic token does. It only signs the build provenance and reads earlier runs (the guard).
     permissions:
       contents: read
+      actions: read
       id-token: write
       attestations: write
     steps:
-      - name: Credentials
+      - name: Credentials (a release without them fails; it never passes having published nothing)
         id: creds
         env:
           PACKAGES_TOKEN: ${{ secrets.LEGEND_MAP_PACKAGES_TOKEN }}
           DEPLOY_KEY: ${{ secrets.LEGEND_MAP_DEPLOY_KEY }}
         run: |
-          if [ -n "$PACKAGES_TOKEN" ]; then echo "publish=yes" >> "$GITHUB_OUTPUT"; else echo "::notice::LEGEND_MAP_PACKAGES_TOKEN isn't set: nothing is published (docs/legend-map-deploy.md, Set up automatic releases)."; fi
-          if [ -n "$DEPLOY_KEY" ]; then echo "deploy_branch=yes" >> "$GITHUB_OUTPUT"; fi
+          [ -n "$PACKAGES_TOKEN" ] || { echo "::error::LEGEND_MAP_PACKAGES_TOKEN is empty: deploy.yml must pass it, and the legend-map-release environment must have it"; exit 1; }
+          [ -n "$DEPLOY_KEY" ] || { echo "::error::LEGEND_MAP_DEPLOY_KEY is empty: deploy.yml must pass it, and the legend-map-release environment must have it"; exit 1; }
+          echo "publish=yes" >> "$GITHUB_OUTPUT"
+          echo "deploy_branch=yes" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        if: steps.creds.outputs.publish == 'yes'
         with:
+          fetch-depth: 0
           persist-credentials: false
+      - name: Guard (never deploy older code over newer)
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node .github/scripts/deployed.mjs guard --component painter
       - name: Build
         id: build
         if: steps.creds.outputs.publish == 'yes'
