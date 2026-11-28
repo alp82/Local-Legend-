@@ -151,14 +151,12 @@ Later builds of the same version usually skip review. A new version, such as `1.
 
 ### Ship OTA updates to iPhone testers
 
-Publish each update for both platforms:
+Merged changes under `mobile/` publish themselves to the `preview` channel for both platforms ([deploy.md](deploy.md), "App updates"). The pipeline publishes only for runtimes listed in `.github/app-runtimes.json`, so after the first TestFlight build reaches testers:
 
-```sh
-npm run update:preview -- "Describe the change" --platform android
-npm run update:preview -- "Describe the change" --platform ios
-```
+1. Get the build's runtime version from `npx eas-cli build:list --platform ios` in `mobile/`.
+2. Put it in the `ios` list of `.github/app-runtimes.json` (it holds a placeholder until then) and merge that in a pull request.
 
-If the iOS fingerprint changes, for example after you add a native package, create and submit a new TestFlight build.
+If the iOS fingerprint changes, for example after you add a native package, create and submit a new TestFlight build and add its runtime the same way.
 
 ## Use development builds day to day
 
