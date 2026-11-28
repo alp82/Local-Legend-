@@ -20,6 +20,7 @@ import { ResourceBar } from '@/components/resource-bar';
 import { useDetours } from '@/hooks/use-detours';
 import { useEconomy } from '@/hooks/use-economy';
 import { useLegendMap } from '@/hooks/use-legend-map';
+import { useLegendMapPanBounds } from '@/hooks/use-legend-map-reach';
 import { useFollowCamera } from '@/hooks/use-follow-camera';
 import { useSites } from '@/hooks/use-sites';
 import { useZoomFloor } from '@/hooks/use-zoom-floor';
@@ -317,6 +318,8 @@ export default function MapScreen() {
   // While the Legend map shows, the map can't zoom out past where the painting ends.
   const legendMapActive = !!legendMap.tiles && legendMap.visible;
   const minZoom = useZoomFloor(cameraRef, legendMapActive, view?.zoom ?? null);
+  // …and can't pan past where the painter reaches.
+  const maxBounds = useLegendMapPanBounds(legendMapActive, canShowLocation, view?.bounds ?? null);
   // Opened further out than that with the Legend map on: start at the floor.
   const [initialViewState] = useState(() => {
     const v = cam.initialViewState;
@@ -343,7 +346,7 @@ export default function MapScreen() {
           setSelected(null);
           setSelectedOffer(null);
         }}>
-        <Camera ref={cameraRef} initialViewState={initialViewState} minZoom={minZoom} />
+        <Camera ref={cameraRef} initialViewState={initialViewState} minZoom={minZoom} maxBounds={maxBounds} />
         {/* Bottom to top; see components/map-layers.tsx. */}
         {legendMap.tiles && (
           <LegendMapLayer tiles={legendMap.tiles} revision={legendMap.revision} labels={legendMap.labels} visible={legendMap.visible} />

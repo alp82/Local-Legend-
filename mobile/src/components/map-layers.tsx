@@ -5,7 +5,8 @@
 //
 // Mount order is draw order (each layer is appended on top of the base style), so the
 // map screen renders them bottom to top:
-//   base map → Legend map (components/legend-map-layer.tsx, pinned under the parchment) →
+//   base map → Legend map (components/legend-map-layer.tsx: its parchment ground, the painting
+//   and the names, pinned under the parchment) →
 //   parchment → Mist → reveal → territory border → alignment grid → sites →
 //   detour offers → track → user location (native puck, always on top).
 //
@@ -29,14 +30,14 @@ export const FOG_COLOR = '#5b6b85';
 export const FOG_OPACITY = 0.5;
 /** Mist opacity on the zoomed-out parchment map, darker so unclaimed land stays readable. */
 const FOG_OPACITY_FAR = 0.72;
-const PARCHMENT = '#eadcb4';
+export const PARCHMENT = '#eadcb4';
 const INK = '#3d2b1f';
 /** Parchment starts fading in below this zoom… */
 const FADE_START = 14.5;
 /** …and is fully in (0.9) at this one. */
 const FADE_END = 13;
 
-const WORLD = JSON.stringify({
+export const WORLD = JSON.stringify({
   type: 'Feature',
   properties: {},
   geometry: {

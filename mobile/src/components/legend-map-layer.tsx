@@ -1,11 +1,13 @@
 // The painted Legend map: server-painted raster tiles (supabase/legend-map-renderer) drawn
-// above the street map and under every game overlay. Where a tile isn't painted yet, the
-// layer is empty there and the street map shows through, so a missing tile needs no code.
+// above the street map and under every game overlay.
 //
 // Tiles exist at z15 and z16 (1024 px, shown at 512 to match the painter's 2x resolution).
 // MapLibre picks the nearest tile zoom for raster sources, so z16 tiles cover zooms 15.5 to
 // 16.5 and are stretched above that; z15 tiles cover 14.5 to 15.5. Below LEGEND_MAP_MIN_ZOOM
 // the parchment layer covers everything, as it always has.
+//
+// Under the painting lies parchment, so ground not painted yet (or out of the painter's
+// reach) never shows the street map.
 //
 // Village names are painted into the tiles. Road and water names are live labels from each
 // tile's label file: the painter places them at fixed spots, only on roads it drew and on
@@ -16,6 +18,8 @@ import { GeoJSONSource, Layer, LogManager, RasterSource } from '@maplibre/maplib
 import { memo, useState } from 'react';
 
 import { LEGEND_MAP_MIN_ZOOM } from '@/lib/legendMapTiles';
+
+import { PARCHMENT, WORLD } from './map-layers';
 
 /**
  * Every layer goes under the parchment, the first game overlay, whenever it mounts: the
@@ -72,6 +76,17 @@ export const LegendMapLayer = memo(function LegendMapLayer({
             'text-halo-width': 1.4,
             'text-halo-blur': 0.8,
           }}
+        />
+      </GeoJSONSource>
+      {/* Mounted before the raster, which then goes between it and the names. */}
+      <GeoJSONSource id={`legend-map-ground-${m}`} data={WORLD}>
+        <Layer
+          type="fill"
+          id={`legend-map-ground-fill-${m}`}
+          beforeId={names}
+          minzoom={LEGEND_MAP_MIN_ZOOM}
+          layout={{ visibility }}
+          paint={{ 'fill-color': PARCHMENT }}
         />
       </GeoJSONSource>
       {/* New ids on each mount and revision. MapLibre then asks again for tiles that were
