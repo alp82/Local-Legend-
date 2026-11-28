@@ -6,7 +6,7 @@ import {
   labelsGeoJSON,
   MAX_TILES_PER_REQUEST,
   nextPoll,
-  PENDING_LIMIT_MS,
+  STALL_LIMIT_MS,
   tileKey,
   tileSetKey,
   tilesOfSetKey,
@@ -94,30 +94,43 @@ describe('labels', () => {
 });
 
 describe('polling', () => {
-  it('backs off 1.5, 3, 6 ... up to 60 s while tiles on screen are being painted', () => {
+  it('backs off 1.5, 3, 6, 10 ... up to 15 s while tiles on screen are being painted', () => {
     let state: PollState | null = null;
     const delays: (number | null)[] = [];
     let now = 0;
     for (let i = 0; i < 6; i++) {
-      const r = nextPoll(state, now, true);
+      const r = nextPoll(state, now, true, 20);
       delays.push(r.delayMs);
       state = r.state;
       now += r.delayMs ?? 0;
     }
-    expect(delays).toEqual([1500, 3000, 6000, 12000, 24000, 48000]);
-    expect(nextPoll({ attempt: 9, since: 0 }, 1000, true).delayMs).toBe(60000);
+    expect(delays).toEqual([1500, 3000, 6000, 10000, 15000, 15000]);
   });
 
-  it('stops when nothing on screen is pending, and after the time limit', () => {
-    expect(nextPoll({ attempt: 2, since: 0 }, 5000, false)).toEqual({ delayMs: null, state: null });
-    expect(nextPoll({ attempt: 3, since: 0 }, PENDING_LIMIT_MS, true).delayMs).toBeNull();
+  it('stops when nothing on screen is pending', () => {
+    expect(nextPoll({ attempt: 2, since: 0, pending: 3 }, 5000, false, 3)).toEqual({ delayMs: null, state: null });
   });
 
-  it('keeps its time limit as long as the tile set is the same', () => {
-    // a camera move inside the same tiles keeps the state, so the limit still runs from the first poll
-    const first = nextPoll(null, 10_000, true).state!;
-    expect(first).toEqual({ attempt: 1, since: 10_000 });
-    expect(nextPoll(first, 10_000 + PENDING_LIMIT_MS, true).delayMs).toBeNull();
+  it('keeps asking as long as requested tiles keep getting painted', () => {
+    // a pan queues more tiles than one painter finishes in minutes: every painted tile restarts the limit
+    let state: PollState | null = null;
+    let now = 0;
+    let pending = 30;
+    for (let i = 0; i < 100; i++) {
+      const r = nextPoll(state, now, true, pending);
+      expect(r.delayMs).not.toBeNull();
+      state = r.state;
+      now += r.delayMs!;
+      if (i % 2 === 1) pending--; // one tile per two polls, about one every 30 s
+    }
+    expect(now).toBeGreaterThan(STALL_LIMIT_MS * 2);
+  });
+
+  it('stops after the stall limit without a painted tile, even when the camera moves inside the same tiles', () => {
+    const first = nextPoll(null, 10_000, true, 5).state!;
+    expect(first).toEqual({ attempt: 1, since: 10_000, pending: 5 });
+    expect(nextPoll(first, 10_000 + STALL_LIMIT_MS - 1, true, 5).delayMs).not.toBeNull();
+    expect(nextPoll(first, 10_000 + STALL_LIMIT_MS, true, 5).delayMs).toBeNull();
   });
 });
 

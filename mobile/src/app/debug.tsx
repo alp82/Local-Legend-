@@ -12,7 +12,7 @@ import { batchLog, getDiagnostics, sessionLog } from '@/lib/diagnostics';
 import { uploadNow } from '@/lib/queue';
 
 // Change this value and publish with `npm run update:preview -- "message"` to verify OTA delivery.
-const BUILD_MARKER = 'v4';
+const BUILD_MARKER = 'v5';
 
 function formatDate(date: Date | null) {
   return date ? date.toISOString() : '—';

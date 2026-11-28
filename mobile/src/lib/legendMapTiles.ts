@@ -80,25 +80,35 @@ export function labelsGeoJSON(files: LegendMapLabel[][]): string {
   return JSON.stringify({ type: 'FeatureCollection', features });
 }
 
-/** How long to keep asking for tiles on screen that are being painted, per tile set. */
-export const PENDING_LIMIT_MS = 120_000;
-const POLL_STEPS_MS = [1500, 3000, 6000, 12_000, 24_000, 48_000, 60_000];
+/**
+ * How long to keep asking while tiles on screen are being painted but none of the requested
+ * tiles gets painted. A pan queues more tiles than the one painter finishes in a few minutes
+ * (about 10 s each), and a player's tiles are painted in the order they were asked for, so
+ * the limit restarts with every painted tile instead of running from the first poll.
+ */
+export const STALL_LIMIT_MS = 300_000;
+const POLL_STEPS_MS = [1500, 3000, 6000, 10_000, 15_000];
 
-/** Polling for one set of tiles: how many polls so far, since when. */
-export type PollState = { attempt: number; since: number };
+/** Polling for one set of tiles: polls so far, the last time a requested tile got painted, and how many were pending then. */
+export type PollState = { attempt: number; since: number; pending: number };
 
 /**
- * When to ask again: only while tiles on screen are being painted, backing off 1.5, 3, 6 ...
- * up to 60 s, until PENDING_LIMIT_MS after the first poll for this tile set. The caller starts
- * a new PollState (null) only when the set of tiles changes, never on a mere camera move.
- * Returns the delay (null: stop) and the state to keep.
+ * When to ask again: only while tiles on screen are being painted, backing off 1.5, 3, 6, 10
+ * up to 15 s, until STALL_LIMIT_MS pass without the requested tiles' `pending` count going
+ * down. The caller starts a new PollState (null) only when the set of tiles changes, never on
+ * a mere camera move. Returns the delay (null: stop) and the state to keep.
  */
-export function nextPoll(state: PollState | null, now: number, onScreenPending: boolean): { delayMs: number | null; state: PollState | null } {
+export function nextPoll(
+  state: PollState | null,
+  now: number,
+  onScreenPending: boolean,
+  pending: number,
+): { delayMs: number | null; state: PollState | null } {
   if (!onScreenPending) return { delayMs: null, state: null };
-  const s = state ?? { attempt: 0, since: now };
-  if (now - s.since >= PENDING_LIMIT_MS) return { delayMs: null, state: s };
+  const s = !state ? { attempt: 0, since: now, pending } : pending < state.pending ? { ...state, since: now, pending } : state;
+  if (now - s.since >= STALL_LIMIT_MS) return { delayMs: null, state: s };
   const delayMs = POLL_STEPS_MS[Math.min(s.attempt, POLL_STEPS_MS.length - 1)];
-  return { delayMs, state: { attempt: s.attempt + 1, since: s.since } };
+  return { delayMs, state: { ...s, attempt: s.attempt + 1 } };
 }
 
 /** An order-free key for the tiles a view needs: the same set gives the same key. */
