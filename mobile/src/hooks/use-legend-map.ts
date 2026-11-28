@@ -7,7 +7,8 @@
 //   changes, not on every camera move (the walking camera moves every second or so). The
 //   server queues the ones never painted near the player's own ground, within its limits.
 // - While tiles on screen are being painted the request repeats, backing off from 1.5 s to
-//   60 s, for at most PENDING_LIMIT_MS per set of tiles (lib/legendMapTiles.ts, nextPoll).
+//   15 s, until no requested tile got painted for STALL_LIMIT_MS (lib/legendMapTiles.ts,
+//   nextPoll). Then "Painting the map" goes away; the next pan or return to the app asks again.
 // - MapLibre doesn't fetch a missing tile again while it stays in view, so when a pending
 //   tile on screen becomes ready, `revision` changes and the layer is mounted afresh under a
 //   new source id (painted tiles come back from MapLibre's cache, without the network).
@@ -84,7 +85,8 @@ export function useLegendMap(
   const [capped, setCapped] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pollTick, setPollTick] = useState(0);
-  const lastPending = useRef<string[]>([]);
+  /** Tiles reported unpainted since the layer was last mounted: MapLibre may hold a failed fetch for any of them. */
+  const unpainted = useRef(new Set<string>());
   /** Polling for the current tile set; reset only when the set changes. */
   const poll = useRef<{ key: string; state: PollState | null }>({ key: '', state: null });
   /** Label files of one tile version by tile key (only painted tiles are asked for). */
@@ -125,7 +127,13 @@ export function useLegendMap(
   useEffect(() => {
     OfflineManager.setMaximumAmbientCacheSize(AMBIENT_CACHE_BYTES).catch(() => {});
     loadConfig();
-    const sub = AppState.addEventListener('change', (s) => s === 'active' && loadConfig());
+    const sub = AppState.addEventListener('change', (s) => {
+      if (s !== 'active') return;
+      loadConfig();
+      // tiles painted while the app was away: ask again, with a fresh stall limit
+      poll.current = { key: '', state: null };
+      setPollTick((t) => t + 1);
+    });
     return () => sub.remove();
   }, []);
 
@@ -152,9 +160,13 @@ export function useLegendMap(
           if (cancelled) return;
           const now = r.pending.map(tileKey);
           const onScreen = new Set(tiles.slice(0, visible).map(tileKey));
-          // A tile on screen that was pending and isn't any more has just been painted.
-          if (lastPending.current.some((k) => onScreen.has(k) && !now.includes(k))) setRevision((v) => v + 1);
-          lastPending.current = now;
+          // A tile on screen reported unpainted since the layer mounted is painted now: mount it
+          // afresh so MapLibre fetches it again. The new mount has fetched nothing that's
+          // unpainted yet, so only the tiles still pending are kept.
+          if (r.ready.some((t) => onScreen.has(tileKey(t)) && unpainted.current.has(tileKey(t)))) {
+            setRevision((v) => v + 1);
+            unpainted.current = new Set(now);
+          } else for (const k of now) unpainted.current.add(k);
           const waiting = now.filter((k) => onScreen.has(k)).length;
           setPending(now);
           setPendingOnScreen(waiting);
@@ -163,9 +175,11 @@ export function useLegendMap(
           if (!r.enabled) setConfig((c) => (c ? { ...c, enabled: false } : c));
           showLabels(tileUrl, tiles, r.ready);
           // Ask again only for tiles on screen being painted (or a call that came too soon).
-          const next = nextPoll(poll.current.state, Date.now(), waiting > 0 || r.reason === 'throttled');
+          const next = nextPoll(poll.current.state, Date.now(), waiting > 0 || r.reason === 'throttled', now.length);
           poll.current = { key: setKey, state: next.state };
           if (next.delayMs !== null) pollTimer = setTimeout(() => !cancelled && setPollTick((t) => t + 1), next.delayMs);
+          // given up waiting: don't show "Painting the map" for tiles nobody is waiting for any more
+          else setPendingOnScreen(0);
         },
         (e: unknown) => {
           if (cancelled) return;
